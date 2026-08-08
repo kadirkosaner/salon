@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Flame, Loader2, Trophy, Weight } from "lucide-react";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -13,51 +14,45 @@ import {
 import { getDashboard, getExerciseProgress } from "@/lib/server/dashboard";
 import { MAIN_LIFTS } from "@/data/library";
 import { cn, formatDateTR } from "@/lib/utils";
+import { AppSelect } from "@/components/ui/select";
+import { qk } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/")({ component: DashboardPage });
 
-type Dash = Awaited<ReturnType<typeof getDashboard>>;
 type ChartMode = "volume" | "progress";
 
 function DashboardPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
-  const [data, setData] = useState<Dash | null>(null);
-  const [loading, setLoading] = useState(true);
   const [chartMode, setChartMode] = useState<ChartMode>("volume");
   const [progressName, setProgressName] = useState<string>(MAIN_LIFTS[0]);
-  const [progress, setProgress] = useState<{ date: string; weight: number }[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setLoading(true);
-    getDashboard()
-      .then((d) => {
-        if (cancelled) return;
-        setData(d);
-        setProgressName(d.progressExercise || MAIN_LIFTS[0]);
-        setProgress(d.progress);
-      })
-      .catch(() => {
-        if (!cancelled) setData(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  const dashQuery = useQuery({
+    queryKey: qk.dashboard,
+    queryFn: () => getDashboard(),
+    enabled: !!userId,
+  });
+  const data = dashQuery.data ?? null;
+  const loading = dashQuery.isLoading;
 
-  async function changeProgress(name: string) {
+  const progressQuery = useQuery({
+    queryKey: [...qk.dashboard, "progress", progressName] as const,
+    queryFn: () => getExerciseProgress({ data: progressName }),
+    enabled: !!userId && !!progressName,
+    initialData: () =>
+      data && progressName === (data.progressExercise || MAIN_LIFTS[0])
+        ? data.progress
+        : undefined,
+  });
+  const progress = progressQuery.data ?? [];
+
+  useEffect(() => {
+    if (data?.progressExercise) setProgressName(data.progressExercise);
+  }, [data?.progressExercise]);
+
+  function changeProgress(name: string) {
     setProgressName(name);
-    try {
-      setProgress(await getExerciseProgress({ data: name }));
-    } catch {
-      setProgress([]);
-    }
   }
 
   if (isPending) return <AuthGateSkeleton />;
@@ -168,17 +163,13 @@ function DashboardPage() {
               />
             ) : (
               <div className="space-y-3">
-                <select
+                <AppSelect
                   value={progressName}
-                  onChange={(e) => void changeProgress(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-line bg-surface2 px-3 text-sm"
-                >
-                  {MAIN_LIFTS.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(v) => void changeProgress(v)}
+                  options={MAIN_LIFTS.map((n) => ({ value: n, label: n }))}
+                  triggerClassName="h-10 rounded-lg"
+                  aria-label="İlerleme hareketi"
+                />
                 <ProgressAreaChart
                   data={progress}
                   xKey="date"

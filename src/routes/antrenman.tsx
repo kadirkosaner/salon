@@ -224,6 +224,18 @@ function WorkoutPage() {
     }
   }
 
+  async function unskipWorkout() {
+    if (!workout) return;
+    try {
+      await updateWorkout({ data: { id: workout.id, status: "planned" } });
+      setWorkout({ ...workout, status: "planned" });
+      toast.success(t("workout.unskipped"));
+      await loadCal();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("common.error"));
+    }
+  }
+
   async function createFromProgram(programDayId?: number | null) {
     try {
       const w = await createWorkout({
@@ -396,6 +408,7 @@ function WorkoutPage() {
             locale={locale}
             onFinish={() => void finishWorkout()}
             onSkip={() => setSkipOpen(true)}
+            onUnskip={() => void unskipWorkout()}
             onRest={setRest}
             onSetSave={scheduleSetSave}
             onSetComplete={onSetComplete}
@@ -486,7 +499,7 @@ function ContinuousCalendar({
   const center = selected;
   const days = useMemo(() => {
     const arr: string[] = [];
-    for (let i = -28; i <= 35; i++) arr.push(addDaysISO(center, i));
+    for (let i = -10; i <= 21; i++) arr.push(addDaysISO(center, i));
     return arr;
   }, [center]);
 
@@ -560,7 +573,7 @@ function ContinuousCalendar({
 
       <div
         ref={scroller}
-        className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {days.map((d) => {
           const tn = tone(d);
@@ -664,6 +677,7 @@ function WorkoutBody({
   locale,
   onFinish,
   onSkip,
+  onUnskip,
   onRest,
   onSetSave,
   onSetComplete,
@@ -679,6 +693,7 @@ function WorkoutBody({
   locale: string;
   onFinish: () => void;
   onSkip: () => void;
+  onUnskip: () => void;
   onRest: (s: RestTimerState) => void;
   onSetSave: (
     id: number,
@@ -709,9 +724,17 @@ function WorkoutBody({
           <p className="mt-0.5 text-xs text-muted">
             {workout.exercises.length} · {statusLabel}
           </p>
+          {workout.status === "skipped" ? (
+            <p className="mt-1 text-[11px] text-dim">{t("workout.skippedHint")}</p>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {workout.status !== "completed" && workout.status !== "skipped" && (
+          {workout.status === "skipped" ? (
+            <Btn variant="secondary" size="sm" onClick={onUnskip}>
+              <ArrowLeftRight className="size-4" />
+              {t("workout.unskip")}
+            </Btn>
+          ) : workout.status !== "completed" ? (
             <>
               <Btn variant="ghost" size="sm" onClick={onSkip}>
                 <SkipForward className="size-4" />
@@ -722,7 +745,7 @@ function WorkoutBody({
                 {t("workout.finish")}
               </Btn>
             </>
-          )}
+          ) : null}
           <Btn
             variant="icon"
             className="!size-11 text-muted hover:text-red"

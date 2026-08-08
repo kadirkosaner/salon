@@ -528,3 +528,15 @@ export const DOW_LABELS: Record<number, string> = {
   6: "Cumartesi",
   7: "Pazar",
 };
+
+
+/** Unique short weekday labels (ISO 1=Mon … 7=Sun). Avoids Pazartesi/Pazar and Cuma/Cumartesi clash. */
+export const DOW_SHORT: Record<number, string> = {
+  1: "Pt",
+  2: "Sa",
+  3: "Ça",
+  4: "Pe",
+  5: "Cu",
+  6: "Ct",
+  7: "Pz",
+};

@@ -11,7 +11,7 @@ import {
   type PublicProgramCard,
 } from "@/lib/server/share";
 import { generateWorkouts } from "@/lib/server/workouts";
-import { DOW_LABELS } from "@/data/library";
+import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { todayISO, addDaysISO, cn, isoDow } from "@/lib/utils";
 
@@ -367,7 +367,7 @@ function StartProgramModal({
                         ) : null}
                       </span>
                       <span className="shrink-0 text-[11px] text-dim">
-                        {DOW_LABELS[d.dow]?.slice(0, 3)}
+                        {DOW_SHORT[d.dow] ?? DOW_LABELS[d.dow]?.slice(0, 2)}
                       </span>
                     </button>
                   </li>

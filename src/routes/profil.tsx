@@ -348,7 +348,7 @@ function ProfilePage() {
                       </ul>
                     )}
                   </PageSection>
-                  <PageSection title={`· (${followers.length})`}>
+                  <PageSection title={`${t("profile.followers")} (${followers.length})`}>
                     {followers.length === 0 ? (
                       <EmptyState hint="—" />
                     ) : (

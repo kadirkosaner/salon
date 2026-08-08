@@ -32,6 +32,7 @@ import {
 } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
+import { AppSelect } from "@/components/ui/select";
 
 const SAMPLE_PASTE = `Kişisel Program
 Pazartesi - PUSH A
@@ -272,21 +273,19 @@ export function ScheduleModal({
             <span className="w-20 shrink-0 text-sm font-medium text-muted sm:w-24">
               {DOW_LABELS[dow]}
             </span>
-            <select
-              value={slots[dow] ?? ""}
-              onChange={(e) => {
-                const v = e.target.value;
-                setSlot(dow, v === "" ? null : Number(v));
-              }}
-              className="h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-sm"
-            >
-              <option value="">Dinlenme</option>
-              {program.days.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
+            <AppSelect
+              value={slots[dow] != null ? String(slots[dow]) : "__none__"}
+              onValueChange={(v) => setSlot(dow, v === "__none__" ? null : Number(v))}
+              options={[
+                { value: "__none__", label: "Dinlenme" },
+                ...program.days.map((d) => ({
+                  value: String(d.id),
+                  label: d.name,
+                })),
+              ]}
+              triggerClassName="h-11 min-w-0 flex-1 rounded-md border-line bg-surface"
+              aria-label={DOW_LABELS[dow]}
+            />
           </label>
         ))}
       </div>
@@ -351,17 +350,15 @@ export function DaySettingsModal({
       </label>
       <label className="mt-3 block space-y-1">
         <span className="text-xs text-muted">Hangi hafta günü?</span>
-        <select
-          value={dow}
-          onChange={(e) => setDow(Number(e.target.value))}
-          className="h-12 w-full rounded-md border border-line bg-surface2 px-3"
-        >
-          {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-            <option key={d} value={d}>
-              {DOW_LABELS[d]}
-            </option>
-          ))}
-        </select>
+        <AppSelect
+          value={String(dow)}
+          onValueChange={(v) => setDow(Number(v))}
+          options={[1, 2, 3, 4, 5, 6, 7].map((d) => ({
+            value: String(d),
+            label: DOW_LABELS[d]!,
+          }))}
+          aria-label="Hafta günü"
+        />
       </label>
       <button
         type="button"
@@ -709,17 +706,16 @@ export function EditModal({
         <NumField label="Tekrar min" value={repLo} onChange={setRepLo} />
         <NumField label="Tekrar max" value={repHi} onChange={setRepHi} />
       </div>
-      <select
+      <AppSelect
         value={tag}
-        onChange={(e) => setTag(e.target.value)}
-        className="mt-3 h-12 w-full rounded-md border border-line bg-surface2 px-3"
-      >
-        {(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => (
-          <option key={k} value={k}>
-            {LOAD_TAG_LABELS[k]}
-          </option>
-        ))}
-      </select>
+        onValueChange={setTag}
+        options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+          value: k,
+          label: LOAD_TAG_LABELS[k],
+        }))}
+        className="mt-3"
+        aria-label="Yük"
+      />
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -1020,17 +1016,17 @@ export function AddModal({
           onChange={setRepHi}
         />
       </div>
-      <select
+      <AppSelect
         value={tag}
-        onChange={(e) => setTag(e.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-      >
-        {(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => (
-          <option key={k} value={k}>
-            {LOAD_TAG_LABELS[k]}
-          </option>
-        ))}
-      </select>
+        onValueChange={setTag}
+        options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+          value: k,
+          label: LOAD_TAG_LABELS[k],
+        }))}
+        className="mt-2"
+        triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+        aria-label="Yük"
+      />
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -1745,17 +1741,16 @@ function DraftExEditor({
       </div>
       <label className="block space-y-1">
         <span className="text-xs text-muted">Yük</span>
-        <select
+        <AppSelect
           value={ex.load_tag}
-          onChange={(e) => onChange({ load_tag: e.target.value })}
-          className="h-11 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-        >
-          {(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => (
-            <option key={k} value={k}>
-              {LOAD_TAG_LABELS[k]}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => onChange({ load_tag: v })}
+          options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+            value: k,
+            label: LOAD_TAG_LABELS[k],
+          }))}
+          triggerClassName="h-11 rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+          aria-label="Yük"
+        />
       </label>
     </div>
   );
@@ -1996,17 +1991,16 @@ function ExerciseQuickPicker({
             </div>
             <label className="block space-y-1">
               <span className="text-xs text-muted">Yük</span>
-              <select
+              <AppSelect
                 value={tag}
-                onChange={(e) => setTag(e.target.value)}
-                className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-              >
-                {(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => (
-                  <option key={k} value={k}>
-                    {LOAD_TAG_LABELS[k]}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setTag}
+                options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+                  value: k,
+                  label: LOAD_TAG_LABELS[k],
+                }))}
+                triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                aria-label="Yük"
+              />
             </label>
             <div className="flex gap-2 pt-1">
               <button

@@ -55,7 +55,7 @@ import {
 } from "@/lib/server/exercises";
 import { abandonProgram } from "@/lib/server/share";
 import { clearFutureWorkouts } from "@/lib/server/workouts";
-import { DOW_LABELS } from "@/data/library";
+import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/program")({
@@ -103,7 +103,7 @@ function ProgramPage() {
         if (!cancelled) setLibrary(lib);
       })
       .catch(() => {
-        if (!cancelled) toast.error("Program yüklenemedi.");
+        if (!cancelled) toast.error(t("common.error"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -131,9 +131,9 @@ function ProgramPage() {
   }
 
   async function removeEx(id: number) {
-    if (!confirm("Bu hareketi silmek istediğine emin misin?")) return;
+    if (!confirm(t("common.delete") + "?")) return;
     await deleteProgramExercise({ data: id });
-    toast.success("Silindi");
+    toast.success(t("common.success"));
     await reload();
   }
 
@@ -203,7 +203,7 @@ function ProgramPage() {
                 onClick={() => setMoreOpen((o) => !o)}
                 className="grid size-12 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95 active:text-yellow"
 
-                aria-label="Diğer"
+                aria-label={t("program.more")}
               >
                 <MoreHorizontal className="size-4" />
               </button>
@@ -212,7 +212,7 @@ function ProgramPage() {
                   <button
                     type="button"
                     className="fixed inset-0 z-40"
-                    aria-label="Kapat"
+                    aria-label={t("common.close")}
                     onClick={() => setMoreOpen(false)}
                   />
                   <div className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-52 overflow-hidden rounded-xl border border-line bg-surface shadow-xl">
@@ -236,7 +236,7 @@ function ProgramPage() {
                       }}
                     >
                       <FileText className="size-4 text-muted" />
-                      Ad & açıklama
+                      {t("program.meta")}
                     </button>
                     <button
                       type="button"
@@ -247,7 +247,7 @@ function ProgramPage() {
                       }}
                     >
                       <ClipboardPaste className="size-4 text-muted" />
-                      Metinden aktar
+                      {t("program.fromPaste")}
                     </button>
                     <button
                       type="button"
@@ -327,7 +327,7 @@ function ProgramPage() {
                   )}
                 >
                   <span className="text-[9px] text-muted">
-                    {DOW_LABELS[dow]?.slice(0, 3)}
+                    {DOW_SHORT[dow] ?? DOW_LABELS[dow]?.slice(0, 2)}
                   </span>
                   <span
                     className={cn(

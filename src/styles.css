@@ -4,14 +4,18 @@
   --color-bg: #0c0c10;
   --color-surface: #14141a;
   --color-surface2: #1c1c24;
-  --color-line: #2a2a34;
+  --color-elevated: #22222c;
+  --color-line: #33333f;
+  --color-line-strong: #62626d;
   --color-text: #f0f0f4;
   --color-muted: #9b9ba8;
-  --color-dim: #6b6b78;
+  --color-dim: #8a8a99;
   --color-yellow: #f5c542;
   --color-green: #3dd68c;
   --color-red: #f07178;
   --color-softblue: #7eb8ff;
+  --color-orange: #f0a060;
+  --color-blue: #7eb8ff;
 
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bebas Neue", "Impact", ui-sans-serif, system-ui, sans-serif;
@@ -52,6 +56,23 @@
   select,
   textarea {
     font-size: 16px;
+  }
+
+  /* Keyboard focus — only when using keyboard, not mouse */
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-yellow);
+    outline-offset: 2px;
+  }
+
+  /* Interactive controls use the stronger border token */
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    border-color: var(--color-line-strong);
   }
 
   ::selection {

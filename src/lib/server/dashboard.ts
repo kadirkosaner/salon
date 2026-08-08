@@ -3,37 +3,19 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { MAIN_LIFTS } from "@/data/library";
 import { ensureUserSeeded } from "./seed";
-
-function startOfWeekMonday(d = new Date()): string {
-  const x = new Date(d);
-  const day = x.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  x.setDate(x.getDate() + diff);
-  const y = x.getFullYear();
-  const m = String(x.getMonth() + 1).padStart(2, "0");
-  const dd = String(x.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
-
-function addDays(iso: string, n: number): string {
-  const d = new Date(iso + "T12:00:00");
-  d.setDate(d.getDate() + n);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-}
+import { todayForUser, startOfWeekMonday as startOfWeekPg } from "./time";
+import { v, shortText } from "@/lib/validation";
+import { addDaysISO } from "@/lib/utils";
 
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
-    const weekStart = startOfWeekMonday();
-    const weekEnd = addDays(weekStart, 6);
-    const today = new Date();
-    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const rangeStart = addDays(weekStart, -7 * 11);
+    const todayIso = await todayForUser(sql, context.userId);
+    const weekStart = await startOfWeekPg(sql, todayIso);
+    const weekEnd = addDaysISO(weekStart, 6);
+    const rangeStart = addDaysISO(weekStart, -7 * 11);
 
     const weekWorkouts = await sql<{
       id: number;
@@ -70,8 +52,8 @@ export const getDashboard = createServerFn({ method: "GET" })
     const volumeByWeek: { week: string; tonnage: number }[] = [];
     let weekVolume = 0;
     for (let i = 11; i >= 0; i--) {
-      const ws = addDays(weekStart, -7 * i);
-      const we = addDays(ws, 6);
+      const ws = addDaysISO(weekStart, -7 * i);
+      const we = addDaysISO(ws, 6);
       let tonnage = 0;
       for (const row of volumeByDate) {
         if (row.date >= ws && row.date <= we) tonnage += Number(row.tonnage);
@@ -84,13 +66,13 @@ export const getDashboard = createServerFn({ method: "GET" })
       select date::text as date from workouts
       where user_id = ${context.userId}
         and status = 'completed'
-        and date >= ${addDays(weekStart, -7 * 52)}::date
+        and date >= ${addDaysISO(weekStart, -7 * 52)}::date
     `;
     let streak = 0;
     const startI = completedThisWeek >= 4 ? 0 : 1;
     for (let i = startI; i < 52; i++) {
-      const ws = addDays(weekStart, -7 * i);
-      const we = addDays(ws, 6);
+      const ws = addDaysISO(weekStart, -7 * i);
+      const we = addDaysISO(ws, 6);
       const n = completedByDate.filter((r) => r.date >= ws && r.date <= we).length;
       if (n >= 4) streak += 1;
       else break;
@@ -159,6 +141,7 @@ export const getDashboard = createServerFn({ method: "GET" })
         ) as tonnage
       from workouts w
       where w.user_id = ${context.userId}
+        and w.status = 'completed'
       order by w.date desc
       limit 5
     `;
@@ -208,7 +191,7 @@ export const getDashboard = createServerFn({ method: "GET" })
 
 export const getExerciseProgress = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((name: string) => name)
+  .validator(v(shortText(120)))
   .handler(async ({ context, data: name }) => {
     const sql = await getSql();
     const series = await sql<{ date: string; weight: string }>`
