@@ -3,6 +3,10 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { addDaysISO, isoDow } from "@/lib/utils";
 import { ensureUserSeeded } from "./seed";
+import {
+  emitPersonalRecordIfAny,
+  emitWorkoutCompleted,
+} from "./activity";
 
 export type WorkoutSetRow = {
   id: number;
@@ -155,6 +159,13 @@ export const updateWorkout = createServerFn({ method: "POST" })
     if (owned.length === 0) throw new Error("Antrenman bulunamadı.");
     if (data.status !== undefined) {
       await sql`update workouts set status = ${data.status} where id = ${data.id}`;
+      if (data.status === "completed") {
+        try {
+          await emitWorkoutCompleted(sql, context.userId, data.id);
+        } catch {
+          /* non-fatal */
+        }
+      }
     }
     if (data.notes !== undefined) {
       await sql`update workouts set notes = ${data.notes} where id = ${data.id}`;
@@ -368,6 +379,12 @@ export const updateWorkoutSet = createServerFn({ method: "POST" })
     if (data.rir !== undefined) {
       await sql`update workout_sets set rir = ${data.rir} where id = ${data.id}`;
     }
+    let pr: {
+      exercise_name: string;
+      weight: number;
+      prev_weight: number | null;
+      unit: string;
+    } | null = null;
     if (data.completed !== undefined) {
       await sql`update workout_sets set completed = ${data.completed} where id = ${data.id}`;
       if (data.completed) {
@@ -383,8 +400,18 @@ export const updateWorkoutSet = createServerFn({ method: "POST" })
           where ws.id = ${data.id}
           group by w.id
         `;
+        try {
+          pr = await emitPersonalRecordIfAny(sql, context.userId, data.id);
+        } catch {
+          /* non-fatal */
+        }
         if (stats[0] && stats[0].total > 0 && stats[0].total === stats[0].done) {
           await sql`update workouts set status = 'completed' where id = ${stats[0].workout_id}`;
+          try {
+            await emitWorkoutCompleted(sql, context.userId, stats[0].workout_id);
+          } catch {
+            /* non-fatal */
+          }
         } else if (stats[0]) {
           await sql`
             update workouts set status = 'planned'
@@ -393,7 +420,7 @@ export const updateWorkoutSet = createServerFn({ method: "POST" })
         }
       }
     }
-    return { ok: true };
+    return { ok: true as const, pr };
   });
 
 export const addWorkoutExercise = createServerFn({ method: "POST" })

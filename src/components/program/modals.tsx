@@ -33,6 +33,7 @@ import {
 import { copyText } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 import { AppSelect } from "@/components/ui/select";
+import { AppSheet } from "@/components/ui/sheet";
 
 const SAMPLE_PASTE = `Kişisel Program
 Pazartesi - PUSH A
@@ -1057,36 +1058,9 @@ export function Modal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0"
-        aria-label="Kapat"
-        onClick={onClose}
-      />
-      <div
-        className="relative z-10 flex max-h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-line bg-surface sm:rounded-2xl"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="flex justify-center pt-2 sm:hidden">
-          <span className="h-1 w-10 rounded-full bg-line" />
-        </div>
-        <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
-          <h3 className="font-display text-xl tracking-wide">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-line text-muted active:bg-surface2"
-            aria-label="Modalı kapat"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
-          {children}
-        </div>
-      </div>
-    </div>
+    <AppSheet title={title} onClose={onClose}>
+      {children}
+    </AppSheet>
   );
 }
 

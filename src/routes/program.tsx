@@ -7,7 +7,6 @@ import {
   ClipboardPaste,
   Eraser,
   FileText,
-  Loader2,
   MoreHorizontal,
   Plus,
   Search,
@@ -26,6 +25,7 @@ import { btnClass } from "@/components/ui/btn";
 import { LoadTagBadge } from "@/components/load-tag";
 import { MuscleBadge } from "@/components/muscle-badge";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
+import { ProgramCardSkeleton } from "@/components/ui/skeleton";
 import {
   AddModal,
   CreateProgramWizard,
@@ -140,9 +140,7 @@ function ProgramPage() {
   return (
     <AppShell title={t("program.title")} subtitle={program?.name ?? t("program.none")}>
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="size-8 animate-spin text-yellow" />
-        </div>
+        <ProgramCardSkeleton />
       ) : !program ? (
         <div className="space-y-3">
           <div className="rounded-2xl bg-surface px-4 py-8 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">

@@ -1,6 +1,6 @@
 import { o as __toESM, r as __exportAll } from "../_runtime.mjs";
 import { t as __exportAll$1 } from "./rolldown-runtime-D7D4PA-g.mjs";
-import { R as require_react } from "../_libs/@tanstack/react-router+[...].mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
 import { Bt as toKebabCase, Ht as createFetch, Ut as isSafeUrlScheme, zt as capitalizeFirstLetter } from "../_libs/@better-auth/core+[...].mjs";
 import { n as PACKAGE_VERSION, r as getBaseURL, t as GENERIC_OAUTH_ERROR_CODES } from "./url-CBX8wGYU.mjs";
 import { i as atom, n as onMount, r as onSet, t as listenKeys } from "../_libs/nanostores.mjs";

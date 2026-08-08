@@ -3,15 +3,20 @@ import { useState } from "react";
 import { Activity, Loader2 } from "lucide-react";
 import { authClient, authEnabled, GROK_PROVIDERS, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useT } from "@/lib/i18n/provider";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
 function LoginPage() {
   const { user, isPending } = useCurrentUserState();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   if (isPending) {
     return (
@@ -26,7 +31,7 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı. Daha uzun bir şifre dene.");
+      setError(t("auth.passwordMin"));
       return;
     }
     setLoading(true);
@@ -38,16 +43,53 @@ function LoginPage() {
       if (err) {
         setError(
           err.message?.includes("Invalid") || err.message?.includes("credentials")
-            ? "E-posta veya şifre hatalı. Bilgileri kontrol edip tekrar dene."
-            : err.message || "Giriş yapılamadı. Bilgileri kontrol edip tekrar dene.",
+            ? t("auth.invalidCredentials")
+            : err.message || t("auth.loginFailed"),
         );
         return;
       }
       window.location.href = "/";
     } catch {
-      setError("Bağlantı hatası. İnternetini kontrol edip tekrar dene.");
+      setError(t("auth.networkError"));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function onForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setForgotLoading(true);
+    try {
+      const client = authClient as {
+        forgetPassword?: (opts: {
+          email: string;
+          redirectTo?: string;
+        }) => Promise<{ error?: { message?: string } | null }>;
+        requestPasswordReset?: (opts: {
+          email: string;
+          redirectTo?: string;
+        }) => Promise<{ error?: { message?: string } | null }>;
+      };
+      const fn =
+        client.forgetPassword?.bind(client) ??
+        client.requestPasswordReset?.bind(client);
+      if (fn) {
+        const { error: err } = await fn({
+          email: email.trim(),
+          redirectTo: "/login",
+        });
+        if (err) {
+          // Still show success-style message to avoid email enumeration
+          setForgotSent(true);
+          return;
+        }
+      }
+      setForgotSent(true);
+    } catch {
+      setForgotSent(true);
+    } finally {
+      setForgotLoading(false);
     }
   }
 
@@ -58,62 +100,133 @@ function LoginPage() {
           <Activity className="size-7" strokeWidth={2.25} />
         </div>
         <h1 className="font-display text-4xl tracking-wide text-text">SALON</h1>
-        <p className="mt-1 text-sm text-muted">Antrenmanını kaydet, ilerlemeni gör</p>
+        <p className="mt-1 text-sm text-muted">{t("auth.tagline")}</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-line bg-surface p-5">
-        <h2 className="font-display text-xl tracking-wide">Giriş yap</h2>
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">E-posta</span>
-          <input
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
-            placeholder="ornek@mail.com"
-          />
-        </label>
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">Şifre</span>
-          <input
-            type="password"
-            autoComplete="current-password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
-            placeholder="En az 8 karakter"
-          />
-        </label>
-        {error && (
-          <p className="rounded-md border border-red/30 bg-red/10 px-3 py-2 text-sm text-red" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+      {forgotMode ? (
+        <form
+          onSubmit={(e) => void onForgot(e)}
+          className="space-y-3 rounded-xl border border-line bg-surface p-5"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-          Giriş yap
-        </button>
-        <p className="text-center text-sm text-muted">
-          Hesabın yok mu?{" "}
-          <Link to="/register" className="font-medium text-yellow underline-offset-2 hover:underline">
-            Kayıt ol
-          </Link>
-        </p>
-      </form>
+          <h2 className="font-display text-xl tracking-wide">
+            {t("auth.forgotTitle")}
+          </h2>
+          <p className="text-sm text-muted">{t("auth.forgotHint")}</p>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-muted">{t("auth.email")}</span>
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+              placeholder="ornek@mail.com"
+            />
+          </label>
+          {forgotSent ? (
+            <p className="rounded-md border border-green/30 bg-green/10 px-3 py-2 text-sm text-green">
+              {t("auth.forgotSent")}
+            </p>
+          ) : null}
+          {error && (
+            <p
+              className="rounded-md border border-red/30 bg-red/10 px-3 py-2 text-sm text-red"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={forgotLoading}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+          >
+            {forgotLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+            {t("auth.sendReset")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setForgotMode(false);
+              setForgotSent(false);
+              setError(null);
+            }}
+            className="w-full text-center text-sm font-medium text-yellow"
+          >
+            {t("auth.backToLogin")}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-line bg-surface p-5">
+          <h2 className="font-display text-xl tracking-wide">{t("auth.login")}</h2>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-muted">{t("auth.email")}</span>
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+              placeholder="ornek@mail.com"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-muted">{t("auth.password")}</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+              placeholder={t("auth.passwordPlaceholder")}
+            />
+          </label>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setForgotMode(true)}
+              className="text-xs font-medium text-yellow underline-offset-2 hover:underline"
+            >
+              {t("auth.forgotPassword")}
+            </button>
+          </div>
+          {error && (
+            <p
+              className="rounded-md border border-red/30 bg-red/10 px-3 py-2 text-sm text-red"
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+            {t("auth.login")}
+          </button>
+          <p className="text-center text-sm text-muted">
+            {t("auth.noAccount")}{" "}
+            <Link
+              to="/register"
+              className="font-medium text-yellow underline-offset-2 hover:underline"
+            >
+              {t("auth.register")}
+            </Link>
+          </p>
+        </form>
+      )}
 
-      {authEnabled && (
+      {authEnabled && !forgotMode && (
         <div className="mt-5 space-y-2">
           <div className="flex items-center gap-3 text-xs text-dim">
             <div className="h-px flex-1 bg-line" />
-            veya
+            {t("auth.or")}
             <div className="h-px flex-1 bg-line" />
           </div>
           {GROK_PROVIDERS.map((p) => (
@@ -123,7 +236,7 @@ function LoginPage() {
               onClick={() => void signIn(p.providerId, { callbackURL: "/" })}
               className="h-12 w-full rounded-md border border-line bg-surface text-sm font-medium text-text hover:bg-surface2"
             >
-              {p.label} ile devam et
+              {p.label}
             </button>
           ))}
         </div>

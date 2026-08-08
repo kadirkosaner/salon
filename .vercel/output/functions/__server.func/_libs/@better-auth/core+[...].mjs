@@ -1993,6 +1993,24 @@ var $ZodEnum = /*@__PURE__*/ $constructor("$ZodEnum", (inst, def) => {
 		return payload;
 	};
 });
+var $ZodLiteral = /*@__PURE__*/ $constructor("$ZodLiteral", (inst, def) => {
+	$ZodType.init(inst, def);
+	if (def.values.length === 0) throw new Error("Cannot create literal schema with no valid values");
+	const values = new Set(def.values);
+	inst._zod.values = values;
+	inst._zod.pattern = new RegExp(`^(${def.values.map((o) => typeof o === "string" ? escapeRegex(o) : o ? escapeRegex(o.toString()) : String(o)).join("|")})$`);
+	inst._zod.parse = (payload, _ctx) => {
+		const input = payload.value;
+		if (values.has(input)) return payload;
+		payload.issues.push({
+			code: "invalid_value",
+			values: def.values,
+			input,
+			inst
+		});
+		return payload;
+	};
+});
 var $ZodTransform = /*@__PURE__*/ $constructor("$ZodTransform", (inst, def) => {
 	$ZodType.init(inst, def);
 	inst._zod.optin = "optional";
@@ -3149,6 +3167,27 @@ var enumProcessor = (schema, _ctx, json, _params) => {
 	if (values.every((v) => typeof v === "string")) json.type = "string";
 	json.enum = values;
 };
+var literalProcessor = (schema, ctx, json, _params) => {
+	const def = schema._zod.def;
+	const vals = [];
+	for (const val of def.values) if (val === void 0) {
+		if (ctx.unrepresentable === "throw") throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+	} else if (typeof val === "bigint") if (ctx.unrepresentable === "throw") throw new Error("BigInt literals cannot be represented in JSON Schema");
+	else vals.push(Number(val));
+	else vals.push(val);
+	if (vals.length === 0) {} else if (vals.length === 1) {
+		const val = vals[0];
+		json.type = val === null ? "null" : typeof val;
+		if (ctx.target === "draft-04" || ctx.target === "openapi-3.0") json.enum = [val];
+		else json.const = val;
+	} else {
+		if (vals.every((v) => typeof v === "number")) json.type = "number";
+		if (vals.every((v) => typeof v === "string")) json.type = "string";
+		if (vals.every((v) => typeof v === "boolean")) json.type = "boolean";
+		if (vals.every((v) => v === null)) json.type = "null";
+		json.enum = vals;
+	}
+};
 var customProcessor = (_schema, ctx, _json, _params) => {
 	if (ctx.unrepresentable === "throw") throw new Error("Custom types cannot be represented in JSON Schema");
 };
@@ -4026,6 +4065,23 @@ function _enum(values, params) {
 	return new ZodEnum({
 		type: "enum",
 		entries: Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values,
+		...normalizeParams(params)
+	});
+}
+var ZodLiteral = /*@__PURE__*/ $constructor("ZodLiteral", (inst, def) => {
+	$ZodLiteral.init(inst, def);
+	ZodType.init(inst, def);
+	inst._zod.processJSONSchema = (ctx, json, params) => literalProcessor(inst, ctx, json, params);
+	inst.values = new Set(def.values);
+	Object.defineProperty(inst, "value", { get() {
+		if (def.values.length > 1) throw new Error("This schema contains multiple valid literal values. Use `.values` instead.");
+		return def.values[0];
+	} });
+});
+function literal(value, params) {
+	return new ZodLiteral({
+		type: "literal",
+		values: Array.isArray(value) ? value : [value],
 		...normalizeParams(params)
 	});
 }
@@ -5198,6 +5254,76 @@ function splitWords(input) {
 function toKebabCase(input) {
 	return splitWords(input).map((word) => word.toLowerCase()).join("-");
 }
+//#endregion
+//#region node_modules/@better-auth/utils/dist/index.mjs
+function getWebcryptoSubtle() {
+	const cr = typeof globalThis !== "undefined" && globalThis.crypto;
+	if (cr && typeof cr.subtle === "object" && cr.subtle != null) return cr.subtle;
+	throw new Error("crypto.subtle must be defined");
+}
+//#endregion
+//#region node_modules/@better-auth/utils/dist/base64.mjs
+function getAlphabet(urlSafe) {
+	return urlSafe ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+}
+function base64Encode(data, alphabet, padding) {
+	let result = "";
+	let buffer = 0;
+	let shift = 0;
+	for (const byte of data) {
+		buffer = buffer << 8 | byte;
+		shift += 8;
+		while (shift >= 6) {
+			shift -= 6;
+			result += alphabet[buffer >> shift & 63];
+		}
+	}
+	if (shift > 0) result += alphabet[buffer << 6 - shift & 63];
+	if (padding) {
+		const padCount = (4 - result.length % 4) % 4;
+		result += "=".repeat(padCount);
+	}
+	return result;
+}
+function base64Decode(data, alphabet) {
+	const decodeMap = /* @__PURE__ */ new Map();
+	for (let i = 0; i < alphabet.length; i++) decodeMap.set(alphabet[i], i);
+	const result = [];
+	let buffer = 0;
+	let bitsCollected = 0;
+	for (const char of data) {
+		if (char === "=") break;
+		const value = decodeMap.get(char);
+		if (value === void 0) throw new Error(`Invalid Base64 character: ${char}`);
+		buffer = buffer << 6 | value;
+		bitsCollected += 6;
+		if (bitsCollected >= 8) {
+			bitsCollected -= 8;
+			result.push(buffer >> bitsCollected & 255);
+		}
+	}
+	return Uint8Array.from(result);
+}
+var base64 = {
+	encode(data, options = {}) {
+		const alphabet = getAlphabet(false);
+		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
+	},
+	decode(data) {
+		if (typeof data !== "string") data = new TextDecoder().decode(data);
+		const alphabet = getAlphabet(data.includes("-") || data.includes("_"));
+		return base64Decode(data, alphabet);
+	}
+};
+var base64Url = {
+	encode(data, options = {}) {
+		const alphabet = getAlphabet(true);
+		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
+	},
+	decode(data) {
+		return base64Decode(data, getAlphabet(data.includes("-") || data.includes("_")));
+	}
+};
 //#endregion
 //#region node_modules/@better-auth/core/dist/db/adapter/get-default-model-name.mjs
 var initGetDefaultModelName = ({ usePlural, schema }) => {
@@ -13690,76 +13816,6 @@ function decodeJwt(jwt) {
 	return result;
 }
 //#endregion
-//#region node_modules/@better-auth/utils/dist/index.mjs
-function getWebcryptoSubtle() {
-	const cr = typeof globalThis !== "undefined" && globalThis.crypto;
-	if (cr && typeof cr.subtle === "object" && cr.subtle != null) return cr.subtle;
-	throw new Error("crypto.subtle must be defined");
-}
-//#endregion
-//#region node_modules/@better-auth/utils/dist/base64.mjs
-function getAlphabet(urlSafe) {
-	return urlSafe ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-}
-function base64Encode(data, alphabet, padding) {
-	let result = "";
-	let buffer = 0;
-	let shift = 0;
-	for (const byte of data) {
-		buffer = buffer << 8 | byte;
-		shift += 8;
-		while (shift >= 6) {
-			shift -= 6;
-			result += alphabet[buffer >> shift & 63];
-		}
-	}
-	if (shift > 0) result += alphabet[buffer << 6 - shift & 63];
-	if (padding) {
-		const padCount = (4 - result.length % 4) % 4;
-		result += "=".repeat(padCount);
-	}
-	return result;
-}
-function base64Decode(data, alphabet) {
-	const decodeMap = /* @__PURE__ */ new Map();
-	for (let i = 0; i < alphabet.length; i++) decodeMap.set(alphabet[i], i);
-	const result = [];
-	let buffer = 0;
-	let bitsCollected = 0;
-	for (const char of data) {
-		if (char === "=") break;
-		const value = decodeMap.get(char);
-		if (value === void 0) throw new Error(`Invalid Base64 character: ${char}`);
-		buffer = buffer << 6 | value;
-		bitsCollected += 6;
-		if (bitsCollected >= 8) {
-			bitsCollected -= 8;
-			result.push(buffer >> bitsCollected & 255);
-		}
-	}
-	return Uint8Array.from(result);
-}
-var base64 = {
-	encode(data, options = {}) {
-		const alphabet = getAlphabet(false);
-		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
-	},
-	decode(data) {
-		if (typeof data !== "string") data = new TextDecoder().decode(data);
-		const alphabet = getAlphabet(data.includes("-") || data.includes("_"));
-		return base64Decode(data, alphabet);
-	}
-};
-var base64Url = {
-	encode(data, options = {}) {
-		const alphabet = getAlphabet(true);
-		return base64Encode(typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data), alphabet, options.padding ?? true);
-	},
-	decode(data) {
-		return base64Decode(data, getAlphabet(data.includes("-") || data.includes("_")));
-	}
-};
-//#endregion
 //#region node_modules/@better-auth/core/dist/utils/db.mjs
 /**
 * Filters output data by removing fields with the `returned: false` attribute.
@@ -18702,4 +18758,4 @@ var socialProviders = {
 };
 var SocialProviderListEnum = _enum(Object.keys(socialProviders)).or(string());
 //#endregion
-export { encode as $, isProduction as $t, jwtVerify as A, getCurrentAdapter as At, jweAlgorithm as B, toKebabCase as Bt, toResponse as C, withSpan as Ct, getWebcryptoSubtle as D, import_src as Dt, base64Url as E, ATTR_OPERATION_ID as Et, JWE_RECOGNIZED as F, initGetModelName as Ft, decodeBase64url as G, createLogger as Gt, prepareKey as H, createFetch as Ht, JWS_RECOGNIZED as I, initGetFieldName as It, parseJoseHeader as J, ENV as Jt, digest as K, logger as Kt, validateAlgorithms as L, generateId as Lt, validateClaimsSet as M, runWithAdapter as Mt, jwsAlgorithm as N, runWithTransaction as Nt, decodeJwt as O, safeJSONParse as Ot, sign as P, getBetterAuthVersion as Pt, isObject as Q, isDevelopment as Qt, validateCrit as R, createRandomStringGenerator as Rt, serializeSignedCookie as S, createAdapterFactory as St, base64 as T, ATTR_HOOK_TYPE as Tt, jwkToKey as U, isSafeUrlScheme as Ut, jweEncryption as V, betterFetch as Vt, assertNotSet as W, normalizePathname as Wt, isDisjoint as X, getBooleanEnvVar as Xt, unprotected as Y, env as Yt, isJWK as Z, getEnvVar as Zt, runWithRequestState as _, string as _n, concat as _t, createAuthorizationURL as a, defineErrorCodes as an, JOSENotSupported as at, createRouter$1 as b, uint32be as bt, createRateLimitKey as c, any as cn, JWKInvalid as ct, deprecate as d, email as dn, JWTExpired as dt, isTest as en, assertCryptoKey as et, createAuthEndpoint as f, looseObject as fn, JWTInvalid as ft, hasRequestState as g, record as gn, checkUsage as gt, defineRequestState as h, optional as hn, checkModulusLength as ht, refreshAccessToken as i, BASE_ERROR_CODES as in, JOSEAlgNotAllowed as it, JWTClaimsBuilder as j, queueAfterTransactionHook as jt, decodeProtectedHeader as k, getAuthTables as kt, findInvalidTrustedProxies as l, array as ln, JWSInvalid as lt, isAPIError as m, object as mn, checkCryptoKey as mt, socialProviders as n, BetterAuthError as nn, isKeyLike as nt, applyDefaultAccessTokenExpiry as o, ZodBoolean as on, JWEDecryptionFailed as ot, createAuthMiddleware as p, number as pn, invalidKeyInput as pt, encodeBase64url as q, shouldPublishLog as qt, validateAuthorizationCode as r, kAPIErrorHeaderSymbol as rn, isKeyObject as rt, isLoopbackHost as s, ZodString as sn, JWEInvalid as st, SocialProviderListEnum as t, APIError as tn, isCryptoKey as tt, getIp as u, boolean as un, JWTClaimValidationFailed as ut, getCurrentAuthContext as v, _coercedBoolean as vn, decoder as vt, filterOutputFields as w, ATTR_CONTEXT as wt, serializeCookie as x, uint64be as xt, runWithEndpointContext as y, _coercedString as yn, encode$1 as yt, validateCritDuplicates as z, capitalizeFirstLetter as zt };
+export { isKeyLike as $, isProduction as $t, jwsAlgorithm as A, runWithTransaction as At, jwkToKey as B, toKebabCase as Bt, toResponse as C, ATTR_OPERATION_ID as Ct, jwtVerify as D, getCurrentAdapter as Dt, decodeProtectedHeader as E, getAuthTables as Et, validateCrit as F, createRandomStringGenerator as Ft, parseJoseHeader as G, createLogger as Gt, decodeBase64url as H, createFetch as Ht, validateCritDuplicates as I, base64 as It, isJWK as J, ENV as Jt, unprotected as K, logger as Kt, jweAlgorithm as L, base64Url as Lt, JWE_RECOGNIZED as M, initGetModelName as Mt, JWS_RECOGNIZED as N, initGetFieldName as Nt, JWTClaimsBuilder as O, queueAfterTransactionHook as Ot, validateAlgorithms as P, generateId as Pt, isCryptoKey as Q, isDevelopment as Qt, jweEncryption as R, getWebcryptoSubtle as Rt, serializeSignedCookie as S, ATTR_HOOK_TYPE as St, decodeJwt as T, safeJSONParse as Tt, digest as U, isSafeUrlScheme as Ut, assertNotSet as V, betterFetch as Vt, encodeBase64url as W, normalizePathname as Wt, encode as X, getBooleanEnvVar as Xt, isObject as Y, env as Yt, assertCryptoKey as Z, getEnvVar as Zt, runWithRequestState as _, optional as _n, uint32be as _t, createAuthorizationURL as a, defineErrorCodes as an, JWKInvalid as at, createRouter$1 as b, _coercedBoolean as bn, withSpan as bt, createRateLimitKey as c, _enum as cn, JWTExpired as ct, deprecate as d, boolean as dn, checkCryptoKey as dt, isTest as en, isKeyObject as et, createAuthEndpoint as f, email as fn, checkModulusLength as ft, hasRequestState as g, object as gn, encode$1 as gt, defineRequestState as h, number as hn, decoder as ht, refreshAccessToken as i, BASE_ERROR_CODES as in, JWEInvalid as it, sign as j, getBetterAuthVersion as jt, validateClaimsSet as k, runWithAdapter as kt, findInvalidTrustedProxies as l, any as ln, JWTInvalid as lt, isAPIError as m, looseObject as mn, concat as mt, socialProviders as n, BetterAuthError as nn, JOSENotSupported as nt, applyDefaultAccessTokenExpiry as o, ZodBoolean as on, JWSInvalid as ot, createAuthMiddleware as p, literal as pn, checkUsage as pt, isDisjoint as q, shouldPublishLog as qt, validateAuthorizationCode as r, kAPIErrorHeaderSymbol as rn, JWEDecryptionFailed as rt, isLoopbackHost as s, ZodString as sn, JWTClaimValidationFailed as st, SocialProviderListEnum as t, APIError as tn, JOSEAlgNotAllowed as tt, getIp as u, array as un, invalidKeyInput as ut, getCurrentAuthContext as v, record as vn, uint64be as vt, filterOutputFields as w, import_src as wt, serializeCookie as x, _coercedString as xn, ATTR_CONTEXT as xt, runWithEndpointContext as y, string as yn, createAdapterFactory as yt, prepareKey as z, capitalizeFirstLetter as zt };

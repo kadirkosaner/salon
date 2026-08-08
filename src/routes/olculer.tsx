@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -16,6 +17,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState, PageSection } from "@/components/ui/section";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import {
   MultiLineChart,
   ProgressAreaChart,
@@ -28,6 +30,7 @@ import {
   type MeasurementRow,
 } from "@/lib/server/measurements";
 import { cn, formatDateTR, todayISO } from "@/lib/utils";
+import { qk } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/olculer")({ component: MeasurementsPage });
 
@@ -65,8 +68,7 @@ function deltaOf(
 function MeasurementsPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
-  const [rows, setRows] = useState<MeasurementRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("charts");
   const [date, setDate] = useState(todayISO());
   const [bw, setBw] = useState("");
@@ -82,28 +84,17 @@ function MeasurementsPage() {
     thigh: true,
   });
 
-  async function reload() {
-    setRows(await listMeasurements());
-  }
+  const listQuery = useQuery({
+    queryKey: qk.measurements,
+    queryFn: () => listMeasurements(),
+    enabled: !!userId,
+  });
+  const rows = listQuery.data ?? [];
+  const loading = listQuery.isLoading;
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setLoading(true);
-    listMeasurements()
-      .then((data) => {
-        if (!cancelled) setRows(data);
-      })
-      .catch(() => {
-        if (!cancelled) toast.error("Ölçüler yüklenemedi");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  async function reload() {
+    await queryClient.invalidateQueries({ queryKey: qk.measurements });
+  }
 
   // Prefill today's form from latest snapshot
   useEffect(() => {
@@ -190,9 +181,7 @@ function MeasurementsPage() {
   return (
     <AppShell title="Ölçüler" subtitle="Vücut kompozisyonu">
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="size-8 animate-spin text-yellow" />
-        </div>
+        <PageSkeleton rows={3} />
       ) : (
         <div className="w-full min-w-0 space-y-4">
           {/* Hero snapshot */}
@@ -368,7 +357,9 @@ function MeasurementsPage() {
             <>
               {rows.length === 0 ? (
                 <EmptyState
-                  hint="Henüz ölçüm yok. Giriş sekmesinden ilk kaydı ekle — trend burada görünecek."
+                  icon={Scale}
+                  title="Henüz ölçüm yok"
+                  hint="Giriş sekmesinden ilk kaydı ekle — trend burada görünecek."
                 />
               ) : (
                 <>
@@ -469,7 +460,11 @@ function MeasurementsPage() {
           {tab === "history" && (
             <PageSection title="Kayıtlar" description="Yeniden eskiye">
               {rows.length === 0 ? (
-                <EmptyState hint="Henüz ölçüm yok." />
+                <EmptyState
+                  icon={Scale}
+                  title="Henüz ölçüm yok"
+                  hint="İlk ölçü kaydını ekleyince geçmiş burada görünür."
+                />
               ) : (
                 <ul className="divide-y divide-line">
                   {[...rows]

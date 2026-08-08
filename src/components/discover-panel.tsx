@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { LoadTagBadge } from "@/components/load-tag";
 import { EmptyState } from "@/components/ui/section";
+import { ProgramCardSkeleton } from "@/components/ui/skeleton";
 import {
   cloneProgram,
   getPublicProgramDetail,
@@ -15,7 +16,7 @@ import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { todayISO, addDaysISO, cn, isoDow } from "@/lib/utils";
 
-type Pending = {
+export type Pending = {
   kind: "id" | "code";
   id?: number;
   name: string;
@@ -173,9 +174,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="size-7 animate-spin text-yellow" />
-        </div>
+        <ProgramCardSkeleton />
       ) : (
         <>
           <SectionHead
@@ -183,11 +182,15 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
             title="Katalog"
           />
           {catalog.length === 0 ? (
-            <EmptyState hint="Katalog boş." />
+            <EmptyState
+              icon={BookOpen}
+              title="Katalog boş"
+              hint="Yakında hazır programlar eklenecek."
+            />
           ) : (
             <div className="space-y-2.5">
               {catalog.map((p) => (
-                <Card
+                <ProgramCard
                   key={p.id}
                   p={p}
                   busy={cloning}
@@ -206,11 +209,17 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
             title="Topluluk"
           />
           {community.length === 0 ? (
-            <EmptyState hint="Henüz paylaşım yok. Program’dan Paylaş ile ekle." />
+            <EmptyState
+              icon={Users}
+              title="Henüz paylaşım yok"
+              hint="Program’dan Paylaş ile topluluğa ekle."
+              actionLabel="Programa git"
+              actionTo="/program"
+            />
           ) : (
             <div className="space-y-2.5">
               {community.map((p) => (
-                <Card
+                <ProgramCard
                   key={p.id}
                   p={p}
                   busy={cloning}
@@ -250,7 +259,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
   );
 }
 
-function StartProgramModal({
+export function StartProgramModal({
   pending,
   busy,
   onCancel,
@@ -431,7 +440,7 @@ function SectionHead({ icon, title }: { icon: React.ReactNode; title: string }) 
   );
 }
 
-function Card({
+export function ProgramCard({
   p,
   busy,
   onOpen,
@@ -499,7 +508,7 @@ function Card({
   );
 }
 
-function DetailModal({
+export function DetailModal({
   id,
   busy,
   onClose,

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CountUp } from "@/components/ui/count-up";
 
 export function PageSection({
   title,
@@ -18,7 +19,7 @@ export function PageSection({
   return (
     <section
       className={cn(
-        "min-w-0 overflow-hidden rounded-xl border border-line bg-surface p-3.5 sm:p-4",
+        "card-surface min-w-0 overflow-hidden p-3.5 sm:p-4",
         className,
       )}
     >
@@ -45,13 +46,19 @@ export function PageSection({
 export function StatTile({
   label,
   value,
+  countValue,
+  countDecimals,
   hint,
   icon,
   onClick,
   accent,
 }: {
   label: string;
-  value: string;
+  /** Display string when not using countValue */
+  value?: React.ReactNode;
+  /** Numeric value for roll-up animation */
+  countValue?: number;
+  countDecimals?: number;
   hint?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
@@ -63,11 +70,11 @@ export function StatTile({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "min-w-0 rounded-xl border p-3 text-left transition",
+        "min-w-0 rounded-xl p-3 text-left transition active:scale-[0.96]",
         accent
-          ? "border-yellow/35 bg-yellow/10 hover:border-yellow/50"
-          : "border-line bg-surface hover:border-line",
-        onClick && "active:scale-[0.99]",
+          ? "card-accent"
+          : "card-surface hover:brightness-110",
+        onClick && "cursor-pointer",
       )}
     >
       <div className="flex items-center justify-between gap-1">
@@ -82,7 +89,11 @@ export function StatTile({
           accent ? "text-yellow" : "text-text",
         )}
       >
-        {value}
+        {countValue != null ? (
+          <CountUp value={countValue} decimals={countDecimals ?? 0} />
+        ) : (
+          value
+        )}
       </p>
       {hint ? <p className="mt-1 truncate text-xs text-muted">{hint}</p> : null}
     </Comp>
@@ -107,8 +118,8 @@ export function MenuRow({
   trailing?: React.ReactNode;
 }) {
   const className = cn(
-    "flex w-full min-w-0 items-center gap-3 rounded-xl border border-line bg-surface px-3 py-3 text-left transition hover:border-yellow/30 active:bg-surface2",
-    danger && "hover:border-red/40",
+    "card-surface flex w-full min-w-0 items-center gap-3 px-3 py-3 text-left transition active:scale-[0.98] hover:brightness-110",
+    danger && "hover:shadow-[0_0_0_1px_rgba(240,113,120,0.35)]",
   );
 
   const body = (
@@ -120,7 +131,6 @@ export function MenuRow({
         )}
       >
         <Icon className="size-5" />
-
       </span>
       <span className="min-w-0 flex-1">
         <span
@@ -162,11 +172,4 @@ export function MenuRow({
   );
 }
 
-export function EmptyState({ title, hint }: { title?: string; hint: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line px-4 py-8 text-center">
-      {title ? <p className="text-sm font-medium text-text">{title}</p> : null}
-      <p className="max-w-xs text-sm text-muted">{hint}</p>
-    </div>
-  );
-}
+export { EmptyState } from "@/components/ui/empty-state";

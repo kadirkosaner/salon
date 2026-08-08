@@ -1,5 +1,5 @@
 import { o as __toESM, r as __exportAll } from "../_runtime.mjs";
-import { R as require_react } from "./@tanstack/react-router+[...].mjs";
+import { u as require_react } from "./@floating-ui/react-dom+[...].mjs";
 import { t as clsx } from "./clsx.mjs";
 import { C as require_isFunction, S as require_memoize, _ as require_isNaN, a as require_range, b as require_isNil, c as require_last, d as require_min, f as require_max, g as require_upperFirst, h as require_uniqBy, i as require_some, l as require_isEqual, m as require_sortBy, n as require_every, o as require_isBoolean, p as require_throttle, r as require_mapValues, s as require_isPlainObject, t as require_find, u as require_flatMap, v as require_isNumber, w as require_isObject, x as require_get, y as require_isString } from "./lodash.mjs";
 import { t as require_react_is } from "./react-is.mjs";
@@ -13495,25 +13495,6 @@ var LineChart = generateCategoricalChart({
 	formatAxisMap
 });
 //#endregion
-//#region node_modules/recharts/es6/chart/BarChart.js
-/**
-* @fileOverview Bar Chart
-*/
-var BarChart = generateCategoricalChart({
-	chartName: "BarChart",
-	GraphicalChild: Bar,
-	defaultTooltipEventType: "axis",
-	validateTooltipEventTypes: ["axis", "item"],
-	axisComponents: [{
-		axisType: "xAxis",
-		AxisComp: XAxis
-	}, {
-		axisType: "yAxis",
-		AxisComp: YAxis
-	}],
-	formatAxisMap
-});
-//#endregion
 //#region node_modules/recharts/es6/chart/AreaChart.js
 /**
 * @fileOverview Area Chart
@@ -13531,4 +13512,4 @@ var AreaChart = generateCategoricalChart({
 	formatAxisMap
 });
 //#endregion
-export { XAxis as a, CartesianGrid as c, ResponsiveContainer as d, Tooltip as f, YAxis as i, Bar as l, BarChart as n, Area as o, LineChart as r, Line as s, AreaChart as t, Cell as u };
+export { Area as a, ResponsiveContainer as c, XAxis as i, Tooltip as l, LineChart as n, Line as o, YAxis as r, CartesianGrid as s, AreaChart as t };

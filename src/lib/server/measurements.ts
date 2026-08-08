@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
+import { v, isoDate, positiveId } from "@/lib/validation";
+import { z } from "zod";
 
 export type MeasurementRow = {
   id: number;
@@ -34,14 +36,16 @@ export const listMeasurements = createServerFn({ method: "GET" })
 export const saveMeasurement = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      date: string;
-      body_weight?: number | null;
-      waist?: number | null;
-      chest?: number | null;
-      arm?: number | null;
-      thigh?: number | null;
-    }) => d,
+    v(
+      z.object({
+        date: isoDate,
+        body_weight: z.number().min(0).max(500).nullable().optional(),
+        waist: z.number().min(0).max(300).nullable().optional(),
+        chest: z.number().min(0).max(300).nullable().optional(),
+        arm: z.number().min(0).max(100).nullable().optional(),
+        thigh: z.number().min(0).max(200).nullable().optional(),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -66,7 +70,7 @@ export const saveMeasurement = createServerFn({ method: "POST" })
 
 export const deleteMeasurement = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await sql`

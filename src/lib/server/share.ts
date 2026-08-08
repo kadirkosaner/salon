@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
+import { getSql, withTransaction, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureCatalogSeeded } from "./catalog";
 import { ensureUserSeeded } from "./seed";
 import { isoDow } from "@/lib/utils";
-import type { Sql } from "@/lib/db";
+import { todayForUser } from "./time";
+import { emitProgramPublished } from "./activity";
+import { parseOrThrow, v, positiveId, isoDate, optionalText } from "@/lib/validation";
+import { z } from "zod";
 
 export type PublicProgramCard = {
   id: number;
@@ -38,8 +41,7 @@ async function deleteUserPrograms(sql: Sql, userId: string) {
 
 /** Drop future planned shells so new program can fill the calendar. */
 async function clearFuturePlanned(sql: Sql, userId: string) {
-  const today = new Date();
-  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayIso = await todayForUser(sql, userId);
   await sql`
     delete from workouts
     where user_id = ${userId}
@@ -124,7 +126,7 @@ export const listDiscoverPrograms = createServerFn({ method: "GET" })
 
 export const getPublicProgramDetail = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await ensureCatalogSeeded(sql);
@@ -160,29 +162,43 @@ export const getPublicProgramDetail = createServerFn({ method: "GET" })
       order by sort, dow
     `;
 
-    const dayDetails = [];
-    for (const d of days) {
-      const exercises = await sql<{
-        id: number;
-        exercise_name: string;
-        detail: string | null;
-        sets: number;
-        rep_lo: number;
-        rep_hi: number;
-        rest_sec: number;
-        load_tag: string;
-        note: string | null;
-        form_cues: string | null;
-      }>`
-        select pe.id, e.name as exercise_name, pe.detail, pe.sets, pe.rep_lo, pe.rep_hi,
-               pe.rest_sec, pe.load_tag, pe.note, e.form_cues
-        from program_exercises pe
-        join exercises e on e.id = pe.exercise_id
-        where pe.program_day_id = ${d.id}
-        order by pe.sort
-      `;
-      dayDetails.push({ ...d, exercises });
+    const dayIds = days.map((d) => d.id);
+    const allEx =
+      dayIds.length === 0
+        ? []
+        : await sql<{
+            program_day_id: number;
+            id: number;
+            exercise_name: string;
+            detail: string | null;
+            sets: number;
+            rep_lo: number;
+            rep_hi: number;
+            rest_sec: number;
+            load_tag: string;
+            note: string | null;
+            form_cues: string | null;
+          }>`
+            select pe.program_day_id, pe.id, e.name as exercise_name, pe.detail,
+                   pe.sets, pe.rep_lo, pe.rep_hi, pe.rest_sec, pe.load_tag, pe.note,
+                   e.form_cues
+            from program_exercises pe
+            join exercises e on e.id = pe.exercise_id
+            where pe.program_day_id = any(${dayIds}::int[])
+            order by pe.program_day_id, pe.sort
+          `;
+    const byDay = new Map<number, typeof allEx>();
+    for (const ex of allEx) {
+      const list = byDay.get(ex.program_day_id) ?? [];
+      list.push(ex);
+      byDay.set(ex.program_day_id, list);
     }
+    const dayDetails = days.map((d) => ({
+      ...d,
+      exercises: (byDay.get(d.id) ?? []).map(
+        ({ program_day_id: _pd, ...rest }) => rest,
+      ),
+    }));
 
     const author = await sql<{ name: string | null }>`
       select name from "user" where id = ${p.user_id}
@@ -201,12 +217,14 @@ export const getPublicProgramDetail = createServerFn({ method: "GET" })
 export const publishProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      id: number;
-      is_public: boolean;
-      description?: string | null;
-      tags?: string | null;
-    }) => d,
+    v(
+      z.object({
+        id: positiveId,
+        is_public: z.boolean(),
+        description: optionalText(2000),
+        tags: optionalText(200),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -235,6 +253,13 @@ export const publishProgram = createServerFn({ method: "POST" })
         tags = coalesce(${data.tags ?? null}, tags)
       where id = ${data.id} and user_id = ${context.userId}
     `;
+    if (data.is_public) {
+      try {
+        await emitProgramPublished(sql, context.userId, data.id);
+      } catch {
+        /* non-fatal */
+      }
+    }
     return {
       ok: true as const,
       share_code: code,
@@ -245,12 +270,14 @@ export const publishProgram = createServerFn({ method: "POST" })
 export const updateProgramMeta = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      id: number;
-      name?: string;
-      description?: string | null;
-      tags?: string | null;
-    }) => d,
+    v(
+      z.object({
+        id: positiveId,
+        name: z.string().trim().min(1).max(80).optional(),
+        description: optionalText(2000),
+        tags: optionalText(200),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -283,27 +310,28 @@ export const updateProgramMeta = createServerFn({ method: "POST" })
  */
 export const cloneProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (d: {
-      programId?: number;
-      shareCode?: string;
-      setActive?: boolean;
-      name?: string;
-      /** YYYY-MM-DD — first day the program becomes active */
-      startDate?: string;
-      /** Source program_days.id that should land on startDate */
-      startSourceDayId?: number;
-    }) => d,
+  .validator((d: unknown) =>
+    parseOrThrow(
+      z.object({
+        programId: positiveId.optional(),
+        shareCode: z.string().trim().min(4).max(8).optional(),
+        setActive: z.boolean().optional(),
+        name: z.string().trim().max(80).optional(),
+        startDate: isoDate.optional(),
+        startSourceDayId: positiveId.optional(),
+      }),
+      d,
+    ),
   )
   .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    await ensureUserSeeded(sql, context.userId);
-    await ensureCatalogSeeded(sql);
+    const sql0 = await getSql();
+    await ensureUserSeeded(sql0, context.userId);
+    await ensureCatalogSeeded(sql0);
 
     let sourceId = data.programId ?? null;
     if (!sourceId && data.shareCode) {
       const code = data.shareCode.trim().toUpperCase();
-      const found = await sql<{ id: number }>`
+      const found = await sql0<{ id: number }>`
         select id from programs
         where share_code = ${code} and is_public = true
       `;
@@ -314,7 +342,7 @@ export const cloneProgram = createServerFn({ method: "POST" })
     }
     if (!sourceId) throw new Error("Program belirtilmedi.");
 
-    const src = await sql<{
+    const src = await sql0<{
       id: number;
       name: string;
       description: string | null;
@@ -331,108 +359,91 @@ export const cloneProgram = createServerFn({ method: "POST" })
       throw new Error("Bu program kopyalanamaz.");
     }
 
-    await deleteUserPrograms(sql, context.userId);
-    await clearFuturePlanned(sql, context.userId);
-
-    const today = new Date();
-    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const startDate =
-      data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate)
-        ? data.startDate
-        : todayIso;
-
+    const todayIso = await todayForUser(sql0, context.userId);
+    const startDate = data.startDate ?? todayIso;
     const newName = (data.name?.trim() || s.name).slice(0, 80);
 
-    const prog = await sql<{ id: number }>`
-      insert into programs (
-        user_id, name, description, tags, is_active, valid_from,
-        is_public, source_program_id
-      ) values (
-        ${context.userId}, ${newName}, ${s.description}, ${s.tags},
-        true, ${startDate}::date,
-        false, ${s.id}
-      )
-      returning id
-    `;
-    const newId = prog[0]!.id;
+    return withTransaction(async (sql) => {
+      await deleteUserPrograms(sql, context.userId);
+      await clearFuturePlanned(sql, context.userId);
 
-    const days = await sql<{
-      id: number;
-      dow: number;
-      name: string;
-      focus: string | null;
-      sort: number;
-    }>`
-      select id, dow, name, focus, sort from program_days
-      where program_id = ${s.id}
-      order by sort, dow
-    `;
-
-    // Anchor: chosen start session (or first by sort)
-    let anchor = days[0];
-    if (data.startSourceDayId) {
-      const hit = days.find((d) => d.id === data.startSourceDayId);
-      if (hit) anchor = hit;
-    }
-    const startDow = isoDow(startDate);
-    const anchorOrigDow = anchor?.dow ?? 1;
-
-    for (const d of days) {
-      const newDow = remapDow(d.dow, anchorOrigDow, startDow);
-      const dayRow = await sql<{ id: number }>`
-        insert into program_days (program_id, dow, name, focus, sort)
-        values (${newId}, ${newDow}, ${d.name}, ${d.focus}, ${d.sort})
+      const prog = await sql<{ id: number }>`
+        insert into programs (
+          user_id, name, description, tags, is_active, valid_from,
+          is_public, source_program_id
+        ) values (
+          ${context.userId}, ${newName}, ${s.description}, ${s.tags},
+          true, ${startDate}::date,
+          false, ${s.id}
+        )
         returning id
       `;
-      const newDayId = dayRow[0]!.id;
-      const exercises = await sql<{
-        exercise_id: number;
-        detail: string | null;
-        sets: number;
-        rep_lo: number;
-        rep_hi: number;
-        rest_sec: number;
-        load_tag: string;
-        note: string | null;
+      const newId = prog[0]!.id;
+
+      const days = await sql<{
+        id: number;
+        dow: number;
+        name: string;
+        focus: string | null;
         sort: number;
       }>`
-        select exercise_id, detail, sets, rep_lo, rep_hi, rest_sec, load_tag, note, sort
-        from program_exercises where program_day_id = ${d.id}
-        order by sort
+        select id, dow, name, focus, sort from program_days
+        where program_id = ${s.id}
+        order by sort, dow
       `;
-      for (const pe of exercises) {
+
+      let anchor = days[0];
+      if (data.startSourceDayId) {
+        const hit = days.find((d) => d.id === data.startSourceDayId);
+        if (hit) anchor = hit;
+      }
+      const startDow = isoDow(startDate);
+      const anchorOrigDow = anchor?.dow ?? 1;
+
+      for (const d of days) {
+        const newDow = remapDow(d.dow, anchorOrigDow, startDow);
+        const dayRow = await sql<{ id: number }>`
+          insert into program_days (program_id, dow, name, focus, sort)
+          values (${newId}, ${newDow}, ${d.name}, ${d.focus}, ${d.sort})
+          returning id
+        `;
+        const newDayId = dayRow[0]!.id;
+        // Set-based exercise copy
         await sql`
           insert into program_exercises (
             program_day_id, exercise_id, detail, sets, rep_lo, rep_hi,
             rest_sec, load_tag, note, sort
-          ) values (
-            ${newDayId}, ${pe.exercise_id}, ${pe.detail}, ${pe.sets},
-            ${pe.rep_lo}, ${pe.rep_hi}, ${pe.rest_sec}, ${pe.load_tag},
-            ${pe.note}, ${pe.sort}
           )
+          select
+            ${newDayId}, exercise_id, detail, sets, rep_lo, rep_hi,
+            rest_sec, load_tag, note, sort
+          from program_exercises
+          where program_day_id = ${d.id}
+          order by sort
         `;
       }
-    }
 
-    await sql`
-      update programs set clone_count = coalesce(clone_count, 0) + 1
-      where id = ${s.id}
-    `;
+      await sql`
+        update programs set clone_count = coalesce(clone_count, 0) + 1
+        where id = ${s.id}
+      `;
 
-    return {
-      id: newId,
-      name: newName,
-      startDate,
-      startDow,
-      startDayName: anchor?.name ?? null,
-    };
+      return {
+        id: newId,
+        name: newName,
+        startDate,
+        startDow,
+        startDayName: anchor?.name ?? null,
+      };
+    });
   });
 
 /** Leave / abandon current program entirely (no auto-replacement). */
 export const abandonProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const sql = await getSql();
-    await deleteUserPrograms(sql, context.userId);
-    return { ok: true as const };
+    return withTransaction(async (sql) => {
+      await deleteUserPrograms(sql, context.userId);
+      return { ok: true as const };
+    });
   });

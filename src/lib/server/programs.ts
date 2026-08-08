@@ -1,7 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
+import { getSql, withTransaction } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
+import {
+  v,
+  positiveId,
+  shortText,
+  optionalText,
+  optionalString,
+  dow,
+  sets,
+  restSec,
+  repRange,
+  loadTag,
+} from "@/lib/validation";
+import { z } from "zod";
 
 export type ProgramExerciseRow = {
   id: number;
@@ -98,7 +111,7 @@ export const getActiveProgram = createServerFn({ method: "GET" })
 
 export const getProgram = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }): Promise<ProgramDetail | null> => {
     const sql = await getSql();
     const progs = await sql<{
@@ -150,27 +163,42 @@ async function loadProgram(
     order by sort, dow
   `;
 
-  const resultDays: ProgramDayRow[] = [];
-  for (const d of days) {
-    const exercises = await sql<ProgramExerciseRow>`
-      select pe.id, pe.exercise_id, e.name as exercise_name,
-             pe.detail, e.unit, pe.sets, pe.rep_lo, pe.rep_hi,
-             pe.rest_sec, pe.load_tag, pe.note, pe.sort,
-             e.form_cues, coalesce(e.muscle_group, 'diger') as muscle_group
-      from program_exercises pe
-      join exercises e on e.id = pe.exercise_id
-      where pe.program_day_id = ${d.id}
-      order by pe.sort
-    `;
-    resultDays.push({ ...d, exercises });
+  const dayIds = days.map((d) => d.id);
+  const allEx =
+    dayIds.length === 0
+      ? ([] as (ProgramExerciseRow & { program_day_id: number })[])
+      : await sql<ProgramExerciseRow & { program_day_id: number }>`
+          select pe.program_day_id, pe.id, pe.exercise_id, e.name as exercise_name,
+                 pe.detail, e.unit, pe.sets, pe.rep_lo, pe.rep_hi,
+                 pe.rest_sec, pe.load_tag, pe.note, pe.sort,
+                 e.form_cues, coalesce(e.muscle_group, 'diger') as muscle_group
+          from program_exercises pe
+          join exercises e on e.id = pe.exercise_id
+          where pe.program_day_id = any(${dayIds}::int[])
+          order by pe.program_day_id, pe.sort
+        `;
+  const byDay = new Map<number, ProgramExerciseRow[]>();
+  for (const ex of allEx) {
+    const { program_day_id, ...rest } = ex;
+    const list = byDay.get(program_day_id) ?? [];
+    list.push(rest);
+    byDay.set(program_day_id, list);
   }
+  const resultDays: ProgramDayRow[] = days.map((d) => ({
+    ...d,
+    exercises: byDay.get(d.id) ?? [],
+  }));
 
   return { ...p, days: resultDays };
 }
 
 export const updateProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { id: number; name?: string; is_active?: boolean }) => d)
+  .validator(v(z.object({
+      id: positiveId,
+      name: z.string().trim().min(1).max(80).optional(),
+      is_active: z.boolean().optional(),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     if (data.name !== undefined) {
@@ -191,73 +219,86 @@ export const updateProgram = createServerFn({ method: "POST" })
 export const createProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      name: string;
-      description?: string;
-      /** Optional starter days: { dow, name, focus? }[] */
-      days?: Array<{ dow: number; name: string; focus?: string }>;
-    }) => d,
+    v(
+      z.object({
+        name: shortText(80),
+        description: optionalString(2000),
+        days: z
+          .array(
+            z.object({
+              dow: dow,
+              name: shortText(80),
+              focus: optionalString(120),
+            }),
+          )
+          .optional(),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
-    const sql = await getSql();
+    const { todayForUser } = await import("./time");
+    const sql0 = await getSql();
+    const todayIso = await todayForUser(sql0, context.userId);
 
-    // New program replaces active one (past completed workouts stay)
-    await sql`
-      update programs set is_active = false
-      where user_id = ${context.userId} and is_active = true
-    `;
-
-    // Drop future planned shells so horizon refills for the new program
-    const today = new Date();
-    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    await sql`
-      delete from workouts
-      where user_id = ${context.userId}
-        and date >= ${todayIso}::date
-        and status in ('planned', 'skipped', 'in_progress')
-    `;
-
-    const rows = await sql<{ id: number }>`
-      insert into programs (user_id, name, description, is_active, valid_from)
-      values (
-        ${context.userId},
-        ${data.name.trim() || "Yeni Program"},
-        ${data.description?.trim() || null},
-        true,
-        '2000-01-01'::date
-      )
-      returning id
-    `;
-    const programId = rows[0]!.id;
-
-    const days =
-      data.days && data.days.length > 0
-        ? data.days
-        : [
-            { dow: 1, name: "Gün 1", focus: undefined as string | undefined },
-            { dow: 2, name: "Gün 2", focus: undefined },
-            { dow: 3, name: "Gün 3", focus: undefined },
-          ];
-
-    let sort = 0;
-    for (const d of days) {
-      if (d.dow < 1 || d.dow > 7) continue;
+    return withTransaction(async (sql) => {
       await sql`
-        insert into program_days (program_id, dow, name, focus, sort)
-        values (
-          ${programId}, ${d.dow}, ${d.name.trim() || `Gün ${d.dow}`},
-          ${d.focus ?? null}, ${sort}
-        )
+        update programs set is_active = false
+        where user_id = ${context.userId} and is_active = true
       `;
-      sort += 1;
-    }
+      await sql`
+        delete from workouts
+        where user_id = ${context.userId}
+          and date >= ${todayIso}::date
+          and status in ('planned', 'skipped', 'in_progress')
+      `;
 
-    return { id: programId, name: data.name.trim() || "Yeni Program" };
+      const rows = await sql<{ id: number }>`
+        insert into programs (user_id, name, description, is_active, valid_from)
+        values (
+          ${context.userId},
+          ${data.name.trim() || "Yeni Program"},
+          ${data.description?.trim() || null},
+          true,
+          '2000-01-01'::date
+        )
+        returning id
+      `;
+      const programId = rows[0]!.id;
+
+      const days =
+        data.days && data.days.length > 0
+          ? data.days
+          : [
+              { dow: 1, name: "Gün 1", focus: undefined as string | undefined },
+              { dow: 2, name: "Gün 2", focus: undefined },
+              { dow: 3, name: "Gün 3", focus: undefined },
+            ];
+
+      let sort = 0;
+      for (const d of days) {
+        if (d.dow < 1 || d.dow > 7) continue;
+        await sql`
+          insert into program_days (program_id, dow, name, focus, sort)
+          values (
+            ${programId}, ${d.dow}, ${d.name.trim() || `Gün ${d.dow}`},
+            ${d.focus ?? null}, ${sort}
+          )
+        `;
+        sort += 1;
+      }
+
+      return { id: programId, name: data.name.trim() || "Yeni Program" };
+    });
   });
 
 export const addProgramDay = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { programId: number; dow: number; name: string; focus?: string }) => d)
+  .validator(v(z.object({
+      programId: positiveId,
+      dow: dow,
+      name: shortText(80),
+      focus: optionalString(120),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`
@@ -280,7 +321,12 @@ export const addProgramDay = createServerFn({ method: "POST" })
 
 export const updateProgramDay = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { id: number; name?: string; focus?: string | null; dow?: number }) => d)
+  .validator(v(z.object({
+      id: positiveId,
+      name: z.string().trim().min(1).max(80).optional(),
+      focus: optionalText(120),
+      dow: dow.optional(),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`
@@ -304,63 +350,71 @@ export const updateProgramDay = createServerFn({ method: "POST" })
 export const setWeekSchedule = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      programId: number;
-      schedule: Array<{ dow: number; programDayId: number | null }>;
-    }) => d,
+    v(
+      z.object({
+        programId: positiveId,
+        schedule: z.array(
+          z.object({
+            dow: dow,
+            programDayId: positiveId.nullable(),
+          }),
+        ),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    const owned = await sql`
-      select id from programs where id = ${data.programId} and user_id = ${context.userId}
-    `;
-    if (owned.length === 0) throw new Error("Program bulunamadı.");
-
-    const days = await sql<{ id: number; dow: number }>`
-      select id, dow from program_days where program_id = ${data.programId}
-    `;
-    const dayIds = new Set(days.map((d) => d.id));
-
-    let temp = 100;
-    for (const d of days) {
-      await sql`update program_days set dow = ${temp} where id = ${d.id}`;
-      temp += 1;
-    }
-
-    const usedDayIds = new Set<number>();
-    for (const slot of data.schedule) {
-      if (slot.dow < 1 || slot.dow > 7) continue;
-      if (slot.programDayId == null) continue;
-      if (!dayIds.has(slot.programDayId)) {
-        throw new Error("Geçersiz program günü.");
-      }
-      if (usedDayIds.has(slot.programDayId)) {
-        throw new Error("Aynı program günü iki hafta gününe atanamaz.");
-      }
-      usedDayIds.add(slot.programDayId);
-      await sql`
-        update program_days set dow = ${slot.dow} where id = ${slot.programDayId}
+    return withTransaction(async (sql) => {
+      const owned = await sql`
+        select id from programs where id = ${data.programId} and user_id = ${context.userId}
       `;
-    }
+      if (owned.length === 0) throw new Error("Program bulunamadı.");
 
-    const assignedDows = new Set(
-      data.schedule.filter((s) => s.programDayId != null).map((s) => s.dow),
-    );
-    const freeDows = [1, 2, 3, 4, 5, 6, 7].filter((d) => !assignedDows.has(d));
-    let freeIdx = 0;
-    for (const d of days) {
-      if (usedDayIds.has(d.id)) continue;
-      const park = freeDows[freeIdx] ?? 7;
-      freeIdx += 1;
-      await sql`update program_days set dow = ${park} where id = ${d.id}`;
-    }
+      const days = await sql<{ id: number; dow: number }>`
+        select id, dow from program_days where program_id = ${data.programId}
+      `;
+      const dayIds = new Set(days.map((d) => d.id));
 
-    return { ok: true };
+      let temp = 100;
+      for (const d of days) {
+        await sql`update program_days set dow = ${temp} where id = ${d.id}`;
+        temp += 1;
+      }
+
+      const usedDayIds = new Set<number>();
+      for (const slot of data.schedule) {
+        if (slot.dow < 1 || slot.dow > 7) continue;
+        if (slot.programDayId == null) continue;
+        if (!dayIds.has(slot.programDayId)) {
+          throw new Error("Geçersiz program günü.");
+        }
+        if (usedDayIds.has(slot.programDayId)) {
+          throw new Error("Aynı program günü iki hafta gününe atanamaz.");
+        }
+        usedDayIds.add(slot.programDayId);
+        await sql`
+          update program_days set dow = ${slot.dow} where id = ${slot.programDayId}
+        `;
+      }
+
+      const assignedDows = new Set(
+        data.schedule.filter((s) => s.programDayId != null).map((s) => s.dow),
+      );
+      const freeDows = [1, 2, 3, 4, 5, 6, 7].filter((d) => !assignedDows.has(d));
+      let freeIdx = 0;
+      for (const d of days) {
+        if (usedDayIds.has(d.id)) continue;
+        const park = freeDows[freeIdx] ?? 7;
+        freeIdx += 1;
+        await sql`update program_days set dow = ${park} where id = ${d.id}`;
+      }
+
+      return { ok: true };
+    });
   });
 
 export const deleteProgramDay = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await sql`
@@ -374,17 +428,19 @@ export const deleteProgramDay = createServerFn({ method: "POST" })
 export const addProgramExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      programDayId: number;
-      exerciseId: number;
-      detail?: string;
-      sets: number;
-      rep_lo: number;
-      rep_hi: number;
-      rest_sec: number;
-      load_tag: string;
-      note?: string;
-    }) => d,
+    v(
+      z.object({
+        programDayId: positiveId,
+        exerciseId: positiveId,
+        detail: optionalString(200),
+        sets: sets,
+        rep_lo: repRange,
+        rep_hi: repRange,
+        rest_sec: restSec,
+        load_tag: loadTag,
+        note: optionalString(500),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -412,17 +468,19 @@ export const addProgramExercise = createServerFn({ method: "POST" })
 export const updateProgramExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      id: number;
-      exerciseId?: number;
-      sets?: number;
-      rep_lo?: number;
-      rep_hi?: number;
-      rest_sec?: number;
-      load_tag?: string;
-      note?: string | null;
-      detail?: string | null;
-    }) => d,
+    v(
+      z.object({
+        id: positiveId,
+        exerciseId: positiveId.optional(),
+        sets: sets.optional(),
+        rep_lo: repRange.optional(),
+        rep_hi: repRange.optional(),
+        rest_sec: restSec.optional(),
+        load_tag: loadTag.optional(),
+        note: optionalText(500),
+        detail: optionalText(200),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -461,7 +519,7 @@ export const updateProgramExercise = createServerFn({ method: "POST" })
 
 export const deleteProgramExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await sql`
@@ -477,7 +535,10 @@ export const deleteProgramExercise = createServerFn({ method: "POST" })
 
 export const reorderProgramExercises = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { programDayId: number; orderedIds: number[] }) => d)
+  .validator(v(z.object({
+      programDayId: positiveId,
+      orderedIds: z.array(positiveId).max(100),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`

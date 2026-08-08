@@ -1,10 +1,11 @@
-import type { Sql } from "@/lib/db";
+import { withTransaction, type Sql } from "@/lib/db";
 import {
   DEFAULT_PROGRAM,
   DEFAULT_PROGRAM_DESCRIPTION,
   DEFAULT_PROGRAM_NAME,
   type ProgramDaySeed,
 } from "@/data/library";
+import { ensureExerciseLibrary } from "./seed";
 
 type CatalogProgram = {
   key: string;
@@ -20,7 +21,7 @@ const CATALOG: CatalogProgram[] = [
     key: "fullsplit6",
     name: DEFAULT_PROGRAM_NAME,
     description: DEFAULT_PROGRAM_DESCRIPTION,
-    tags: "katalog,fullsplit,6gun,ileri",
+    tags: "katalog,fullsplit,6gun,ileri,guc,hipertrofi,barbell",
     share_code: "FULL6X",
     days: DEFAULT_PROGRAM,
   },
@@ -29,7 +30,7 @@ const CATALOG: CatalogProgram[] = [
     name: "Full Body (3 gün)",
     description:
       "Başlangıç ve yoğun tempo için. Pazartesi / Çarşamba / Cuma full body.",
-    tags: "katalog,baslangic,fullbody",
+    tags: "katalog,baslangic,fullbody,3gun,hipertrofi,kilo,dumbbell",
     share_code: "FULL3X",
     days: [
       {
@@ -75,7 +76,7 @@ const CATALOG: CatalogProgram[] = [
     name: "Upper / Lower (4 gün)",
     description:
       "Dengeli 4 günlük üst-alt split. Pazartesi–Perşembe aktif, hafta sonu serbest.",
-    tags: "katalog,upperlower,orta",
+    tags: "katalog,upperlower,orta,4gun,guc,hipertrofi,barbell,dumbbell",
     share_code: "UL4DAY",
     days: [
       {
@@ -162,72 +163,73 @@ async function insertProgramDays(
   }
 }
 
-/** Seed / refresh Salon catalog (user_id = system). Always sync FULL SPLIT. */
+/** Seed / refresh Salon catalog (user_id = system). Always sync FULL SPLIT.
+ * Process-lifetime memoized — cold start only.
+ */
+const catalogGlobal = globalThis as typeof globalThis & {
+  __ensureCatalogSeeded__?: Promise<void>;
+};
+
 export async function ensureCatalogSeeded(sql: Sql): Promise<void> {
-  try {
-    await sql`select description, is_public, share_code from programs limit 0`;
-  } catch {
-    return;
+  if (catalogGlobal.__ensureCatalogSeeded__) {
+    return catalogGlobal.__ensureCatalogSeeded__;
   }
+  catalogGlobal.__ensureCatalogSeeded__ = (async () => {
+    await withTransaction(async (sql) => {
+    // Drop legacy PPL catalog if present
+    await sql`
+      delete from programs
+      where user_id = 'system' and share_code = 'PPL6XX'
+    `;
 
-  // Drop legacy PPL catalog if present
-  await sql`
-    delete from programs
-    where user_id = 'system' and share_code = 'PPL6XX'
-  `;
+    await ensureExerciseLibrary(sql);
 
-  const lib = await sql<{ id: number; name: string }>`
-    select id, name from exercises where owner_id is null
-  `;
-  // Ensure newer library names exist (Topuklara Dokunma, Makas)
-  for (const missing of ["Topuklara Dokunma", "Makas"]) {
-    if (!lib.some((e) => e.name === missing)) {
-      await sql`
-        insert into exercises (owner_id, name, detail, unit, muscle_group)
-        values (null, ${missing}, null, 'kg', 'core')
+    const lib2 = await sql<{ id: number; name: string }>`
+      select id, name from exercises where owner_id is null
+    `;
+    const byName = new Map(lib2.map((e) => [e.name, e.id]));
+
+    for (const cat of CATALOG) {
+      const existing = await sql<{ id: number; tags: string | null }>`
+        select id, tags from programs
+        where user_id = 'system' and share_code = ${cat.share_code}
       `;
-    }
-  }
-  const lib2 = await sql<{ id: number; name: string }>`
-    select id, name from exercises where owner_id is null
-  `;
-  const byName = new Map(lib2.map((e) => [e.name, e.id]));
 
-  for (const cat of CATALOG) {
-    const existing = await sql<{ id: number; tags: string | null }>`
-      select id, tags from programs
-      where user_id = 'system' and share_code = ${cat.share_code}
-    `;
-
-    if (existing.length > 0) {
-      const id = existing[0]!.id;
-      const tags = existing[0]!.tags ?? "";
-      // Rebuild if version marker missing (content refresh)
-      if (!tags.includes(CATALOG_VERSION) && cat.key === "fullsplit6") {
-        await sql`delete from program_days where program_id = ${id}`;
-        await sql`
-          update programs set
-            name = ${cat.name},
-            description = ${cat.description},
-            tags = ${`${cat.tags},${CATALOG_VERSION}`}
-          where id = ${id}
-        `;
-        await insertProgramDays(sql, id, cat.days, byName);
+      if (existing.length > 0) {
+        const id = existing[0]!.id;
+        const tags = existing[0]!.tags ?? "";
+        // Rebuild if version marker missing (content refresh)
+        if (!tags.includes(CATALOG_VERSION) && cat.key === "fullsplit6") {
+          await sql`delete from program_days where program_id = ${id}`;
+          await sql`
+            update programs set
+              name = ${cat.name},
+              description = ${cat.description},
+              tags = ${`${cat.tags},${CATALOG_VERSION}`}
+            where id = ${id}
+          `;
+          await insertProgramDays(sql, id, cat.days, byName);
+        }
+        continue;
       }
-      continue;
-    }
 
-    const prog = await sql<{ id: number }>`
-      insert into programs (
-        user_id, name, description, tags, is_active, valid_from,
-        is_public, share_code, clone_count
-      ) values (
-        'system', ${cat.name}, ${cat.description},
-        ${`${cat.tags},${CATALOG_VERSION}`},
-        false, current_date, true, ${cat.share_code}, 0
-      )
-      returning id
-    `;
-    await insertProgramDays(sql, prog[0]!.id, cat.days, byName);
-  }
+      const prog = await sql<{ id: number }>`
+        insert into programs (
+          user_id, name, description, tags, is_active, valid_from,
+          is_public, share_code, clone_count
+        ) values (
+          'system', ${cat.name}, ${cat.description},
+          ${`${cat.tags},${CATALOG_VERSION}`},
+          false, current_date, true, ${cat.share_code}, 0
+        )
+        returning id
+      `;
+      await insertProgramDays(sql, prog[0]!.id, cat.days, byName);
+    }
+    });
+  })().catch((err) => {
+    catalogGlobal.__ensureCatalogSeeded__ = undefined;
+    throw err;
+  });
+  return catalogGlobal.__ensureCatalogSeeded__;
 }

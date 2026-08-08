@@ -5,9 +5,9 @@ const TONE: Partial<Record<string, string>> = {
   gogus: "border-red/30 bg-red/10 text-red",
   sirt: "border-softblue/30 bg-softblue/10 text-softblue",
   omuz: "border-yellow/30 bg-yellow/10 text-yellow",
-  kol: "border-purple-400/30 bg-purple-400/10 text-purple-300",
+  kol: "border-blue/30 bg-blue/10 text-blue",
   bacak: "border-green/30 bg-green/10 text-green",
-  trapez: "border-orange-400/30 bg-orange-400/10 text-orange-300",
+  trapez: "border-orange/30 bg-orange/10 text-orange",
   core: "border-line bg-surface2 text-muted",
   diger: "border-line bg-surface2 text-dim",
 };

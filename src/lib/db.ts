@@ -44,6 +44,7 @@ export interface Sql {
  */
 const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
+  __pgPool__?: import("pg").Pool;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
 };
@@ -221,7 +222,61 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  */
 export function ensureDbReady(): Promise<void> {
   if (dbSource !== "pglite") return Promise.resolve();
-  return getSql().then(() => undefined);
+  return getSql().then(async (sql) => {
+    try {
+      const { ensureAdminUser } = await import("@/lib/server/seed");
+      await ensureAdminUser(sql);
+    } catch (err) {
+      console.error("[db] admin seed failed:", err);
+    }
+  });
+}
+
+/**
+ * Run work inside a single DB transaction (BEGIN/COMMIT/ROLLBACK).
+ * Supports Neon (pg pool client) and PGLite.
+ */
+export async function withTransaction<T>(
+  fn: (sql: Sql) => Promise<T>,
+): Promise<T> {
+  if (typeof window !== "undefined") {
+    throw new Error("withTransaction is server-only");
+  }
+
+  if (dbSource === "neon") {
+    await getSql();
+    const pool = globalRef.__pgPool__;
+    if (!pool) throw new Error("Neon pool not initialized");
+    const client = await pool.connect();
+    try {
+      await client.query("begin");
+      const txSql = toSql(async <TRow>(text: string, params: unknown[]) => {
+        const res = await client.query(text, params);
+        return res.rows as TRow[];
+      });
+      const result = await fn(txSql);
+      await client.query("commit");
+      return result;
+    } catch (err) {
+      try {
+        await client.query("rollback");
+      } catch {
+        /* ignore */
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  const pg = await getPglite();
+  return pg.transaction(async (tx) => {
+    const txSql = toSql(async <TRow>(text: string, params: unknown[]) => {
+      const result = await tx.query<TRow>(text, params);
+      return result.rows;
+    });
+    return fn(txSql);
+  });
 }
 
 // Server-only eager start: kick PGLite bootstrap as soon as this module loads in

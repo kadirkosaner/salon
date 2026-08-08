@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Play, X } from "lucide-react";
 import { getExercisePreview } from "@/data/exercise-previews";
 import { getExerciseMedia } from "@/lib/server/exercises";
-import {
-  mediaSrc,
-  resolveExerciseMedia,
-} from "@/lib/exercise-media-resolve";
+import { mediaSrc } from "@/lib/exercise-media";
 import { BodyMuscleMap } from "@/components/body-muscle-map";
 import { cn } from "@/lib/utils";
 
@@ -13,12 +10,14 @@ export function ExercisePreviewButton({
   name,
   formCues,
   gifUrl,
+  imageUrl,
   muscleGroup,
   className,
 }: {
   name: string;
   formCues?: string | null;
   gifUrl?: string | null;
+  imageUrl?: string | null;
   muscleGroup?: string | null;
   className?: string;
 }) {
@@ -42,6 +41,7 @@ export function ExercisePreviewButton({
           name={name}
           formCues={formCues}
           gifUrl={gifUrl}
+          imageUrl={imageUrl}
           muscleGroup={muscleGroup}
           onClose={() => setOpen(false)}
         />
@@ -54,17 +54,18 @@ export function ExercisePreviewModal({
   name,
   formCues,
   gifUrl,
+  imageUrl,
   muscleGroup,
   onClose,
 }: {
   name: string;
   formCues?: string | null;
   gifUrl?: string | null;
+  imageUrl?: string | null;
   muscleGroup?: string | null;
   onClose: () => void;
 }) {
   const fallback = getExercisePreview(name, formCues);
-  const local = useMemo(() => resolveExerciseMedia(name), [name]);
 
   const [remote, setRemote] = useState<{
     gif_url: string | null;
@@ -73,6 +74,7 @@ export function ExercisePreviewModal({
     default_note: string | null;
     muscle_group?: string;
   } | null>(null);
+  const [loading, setLoading] = useState(!gifUrl && !imageUrl);
 
   // 0 = proxy gif, 1 = raw gif, 2 = proxy still, 3 = raw still, 4 = none
   const [stage, setStage] = useState(0);
@@ -87,28 +89,31 @@ export function ExercisePreviewModal({
 
   useEffect(() => {
     setStage(0);
+    // If props already have media, skip fetch
+    if (gifUrl || imageUrl) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
+    setLoading(true);
     void getExerciseMedia({ data: name })
       .then((m) => {
-        if (!cancelled && m && (m.gif_url || m.image_url)) setRemote(m);
+        if (!cancelled && m) setRemote(m);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [name]);
+  }, [name, gifUrl, imageUrl]);
 
-  // Prefer local resolve (aliases/IDs) — remote only fills gaps or notes
-  const gif = local.gif_url || remote?.gif_url || gifUrl || null;
-  const still = local.image_url || remote?.image_url || null;
-  const group =
-    local.muscle_group || remote?.muscle_group || muscleGroup || null;
+  const gif = gifUrl || remote?.gif_url || null;
+  const still = imageUrl || remote?.image_url || null;
+  const group = remote?.muscle_group || muscleGroup || null;
   const cueSource =
-    formCues ||
-    local.form_cues ||
-    remote?.form_cues ||
-    remote?.default_note ||
-    "";
+    formCues || remote?.form_cues || remote?.default_note || "";
   const cueList = cueSource
     ? cueSource
         .split(/[|\n•·]+/)
@@ -147,9 +152,6 @@ export function ExercisePreviewModal({
             </p>
             <p className="mt-1 text-xs leading-snug text-muted">
               {fallback.summary}
-              {local.dataset_name ? (
-                <span className="text-dim"> · {local.dataset_name}</span>
-              ) : null}
             </p>
           </div>
           <button
@@ -164,7 +166,11 @@ export function ExercisePreviewModal({
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
           <div className="overflow-hidden rounded-2xl border border-line bg-[#0a0a0c]">
-            {displaySrc ? (
+            {loading ? (
+              <div className="grid h-40 place-items-center text-xs text-muted">
+                Yükleniyor…
+              </div>
+            ) : displaySrc ? (
               <img
                 key={displaySrc}
                 src={displaySrc}

@@ -49,6 +49,10 @@ import {
 } from "@/lib/server/exercises";
 import { useI18n } from "@/lib/i18n/provider";
 import { Btn, btnClass } from "@/components/ui/btn";
+import { Sheet } from "@/components/ui/sheet";
+import { WorkoutSkeleton } from "@/components/ui/skeleton";
+import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
+import { haptic } from "@/lib/haptics";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -85,6 +89,7 @@ function WorkoutPage() {
   const [swapFor, setSwapFor] = useState<WorkoutExerciseRow | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [savingProgram, setSavingProgram] = useState(false);
+  const [prMoment, setPrMoment] = useState<PrMoment | null>(null);
   const saveTimers = useRef<Map<number, number>>(new Map());
 
   // Continuous window around selected day — server auto-extends program while active
@@ -200,9 +205,12 @@ function WorkoutPage() {
     if (prev) window.clearTimeout(prev);
     const tmr = window.setTimeout(() => {
       void updateWorkoutSet({ data: { id: setId, ...patch } })
-        .then(() => {
+        .then((res) => {
           setSaveState("saved");
           window.setTimeout(() => setSaveState("idle"), 1200);
+          if (res && "pr" in res && res.pr) {
+            setPrMoment(res.pr);
+          }
         })
         .catch((e) => {
           toast.error(e instanceof Error ? e.message : t("common.error"));
@@ -273,7 +281,7 @@ function WorkoutPage() {
   }
 
   async function removeExercise(ex: WorkoutExerciseRow) {
-    if (!confirm(t("workout.removeExercise") + "?")) return;
+    if (!confirm(t("workout.removeConfirm"))) return;
     try {
       await deleteWorkoutExercise({ data: ex.id });
       setWorkout((prev) =>
@@ -336,6 +344,7 @@ function WorkoutPage() {
   function onSetComplete(exercise: WorkoutExerciseRow, setId: number, done: boolean) {
     scheduleSetSave(setId, { completed: done });
     if (done) {
+      haptic.setComplete();
       setRest({
         seconds: exercise.rest_sec || 90,
         exerciseName: exercise.exercise_name,
@@ -392,9 +401,7 @@ function WorkoutPage() {
         ) : null}
 
         {loading ? (
-          <div className="grid place-items-center py-16 text-muted">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
+          <WorkoutSkeleton />
         ) : !workout ? (
           <EmptyDay
             programDays={programDays}
@@ -449,6 +456,15 @@ function WorkoutPage() {
       </div>
 
       {rest && <RestTimerBar state={rest} onClose={() => setRest(null)} />}
+
+      {prMoment ? (
+        <PrCelebration
+          pr={prMoment}
+          displayName={user.displayName}
+          t={t}
+          onClose={() => setPrMoment(null)}
+        />
+      ) : null}
 
       {skipOpen && workout && (
         <SkipModal
@@ -609,18 +625,22 @@ function ContinuousCalendar({
         })}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-dim">
-        <span className="inline-flex items-center gap-1">
-          <span className="size-2 rounded-full bg-green" />
-          {locale === "en" ? "Done" : "Yapıldı"}
+      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] text-dim">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-md border border-green/40 bg-green/20" />
+          {locale === "en" ? "Completed" : "Tamamlandı"}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="size-2 rounded-full bg-red" />
-          {locale === "en" ? "Missed" : "Yapılmadı"}
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-md border border-red/40 bg-red/15" />
+          {locale === "en" ? "Missed / skipped" : "Kaçırıldı / atlandı"}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="size-2 rounded-full bg-yellow" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-md border border-yellow/40 bg-yellow/15" />
           {locale === "en" ? "Planned" : "Planlı"}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-3 rounded-md border border-line bg-transparent" />
+          {locale === "en" ? "Empty day" : "Boş gün"}
         </span>
       </div>
     </div>
@@ -1026,10 +1046,15 @@ function ExerciseCard({
           )}
 
           <div className="space-y-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="rounded-md bg-surface2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-dim">
+                {t("workout.targetReps")}: {exercise.target_rep_lo}–{exercise.target_rep_hi}
+              </span>
+            </div>
             <div className="set-grid text-[10px] font-semibold uppercase tracking-wide text-dim">
               <span>#</span>
-              <span>kg</span>
-              <span>rep</span>
+              <span>{exercise.unit || "kg"}</span>
+              <span>{t("workout.reps")}</span>
               <span />
             </div>
             {exercise.sets.map((s) => (
@@ -1039,25 +1064,27 @@ function ExerciseCard({
                   type="number"
                   inputMode="decimal"
                   value={s.weight ?? ""}
+                  placeholder="—"
                   onChange={(e) => {
                     const v = e.target.value;
                     onSetSave(s.id, {
                       weight: v === "" ? null : Number(v),
                     });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-line bg-surface2 px-2 text-center text-sm"
+                  className="h-11 min-w-0 rounded-lg border border-line-strong bg-bg px-2 text-center text-sm placeholder:text-dim"
                 />
                 <input
                   type="number"
                   inputMode="numeric"
                   value={s.reps ?? ""}
+                  placeholder="—"
                   onChange={(e) => {
                     const v = e.target.value;
                     onSetSave(s.id, {
                       reps: v === "" ? null : Number(v),
                     });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-line bg-surface2 px-2 text-center text-sm"
+                  className="h-11 min-w-0 rounded-lg border border-line-strong bg-bg px-2 text-center text-sm placeholder:text-dim"
                 />
                 <button
                   type="button"
@@ -1069,10 +1096,10 @@ function ExerciseCard({
                   className={cn(
                     "grid size-12 place-items-center rounded-2xl transition active:scale-95",
                     s.completed
-                      ? "bg-green/20 text-green shadow-[inset_0_0_0_1px_rgba(61,214,140,0.35)]"
+                      ? "set-done-pop bg-green/20 text-green shadow-[inset_0_0_0_1px_rgba(61,214,140,0.35)]"
                       : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
                   )}
-                  aria-label="complete set"
+                  aria-label={t("workout.completeSet")}
                 >
                   <Check className="size-4" />
                 </button>
@@ -1287,37 +1314,3 @@ function AddExModal({
   );
 }
 
-function Sheet({
-  title,
-  children,
-  onClose,
-}: {
-  title: string;
-  children: React.ReactNode;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:p-4">
-      <button type="button" className="absolute inset-0" aria-label="close" onClick={onClose} />
-      <div
-        className="relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-line bg-surface sm:rounded-2xl"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="flex justify-center pt-2 sm:hidden">
-          <span className="h-1 w-10 rounded-full bg-line" />
-        </div>
-        <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
-          <h3 className="font-display text-xl tracking-wide">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-11 place-items-center rounded-full bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:bg-surface"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-        <div className="p-4">{children}</div>
-      </div>
-    </div>
-  );
-}

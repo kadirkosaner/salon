@@ -19,7 +19,7 @@ import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as ProgramRouteImport } from './routes/program'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ApiExMediaRouteImport } from './routes/api/ex-media'
-import { Route as UUserIdRouteImport } from './routes/u.$userId'
+import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -72,9 +72,9 @@ const ApiExMediaRoute = ApiExMediaRouteImport.update({
   path: '/api/ex-media',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UUserIdRoute = UUserIdRouteImport.update({
-  id: '/u/$userId',
-  path: '/u/$userId',
+const UUsernameRoute = UUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -94,7 +94,7 @@ export interface FileRoutesByFullPath {
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/u/$userId': typeof UUserIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -108,7 +108,7 @@ export interface FileRoutesByTo {
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/u/$userId': typeof UUserIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -123,7 +123,7 @@ export interface FileRoutesById {
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/u/$userId': typeof UUserIdRoute
+  '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -139,7 +139,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
-    | '/u/$userId'
+    | '/u/$username'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -153,7 +153,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
-    | '/u/$userId'
+    | '/u/$username'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -167,7 +167,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
-    | '/u/$userId'
+    | '/u/$username'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -182,7 +182,7 @@ export interface RootRouteChildren {
   ProgramRoute: typeof ProgramRoute
   RegisterRoute: typeof RegisterRoute
   ApiExMediaRoute: typeof ApiExMediaRoute
-  UUserIdRoute: typeof UUserIdRoute
+  UUsernameRoute: typeof UUsernameRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -258,11 +258,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiExMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$userId': {
-      id: '/u/$userId'
-      path: '/u/$userId'
-      fullPath: '/u/$userId'
-      preLoaderRoute: typeof UUserIdRouteImport
+    '/u/$username': {
+      id: '/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof UUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -286,7 +286,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProgramRoute: ProgramRoute,
   RegisterRoute: RegisterRoute,
   ApiExMediaRoute: ApiExMediaRoute,
-  UUserIdRoute: UUserIdRoute,
+  UUsernameRoute: UUsernameRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

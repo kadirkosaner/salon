@@ -7,6 +7,8 @@ export function getRouter() {
     routeTree,
     defaultErrorComponent: AppErrorComponent,
     defaultPreload: "intent",
+    // Soft page fade when View Transitions API is available; ignored otherwise
+    defaultViewTransition: true,
   });
 }
 

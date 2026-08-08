@@ -451,3 +451,79 @@ export async function ensureUserSeeded(sql: Sql, userId: string): Promise<void> 
     on conflict (user_id) do nothing
   `;
 }
+
+/**
+ * Preview / local demo admin.
+ * Email: admin@salon.app · Password: admin1234
+ * Idempotent — re-seeds password on every process boot (PGLite is in-memory).
+ */
+const adminSeedGlobal = globalThis as typeof globalThis & {
+  __ensureAdminUser__?: Promise<void>;
+};
+
+export async function ensureAdminUser(sql: Sql): Promise<void> {
+  if (adminSeedGlobal.__ensureAdminUser__) return adminSeedGlobal.__ensureAdminUser__;
+  adminSeedGlobal.__ensureAdminUser__ = (async () => {
+    const email = "admin@salon.app";
+    const password = "admin1234";
+    const name = "Admin";
+
+    const existing = await sql<{ id: string }>`
+      select id from "user" where email = ${email} limit 1
+    `;
+
+    const { hashPassword } = await import("better-auth/crypto");
+    const hashed = await hashPassword(password);
+    const now = new Date().toISOString();
+
+    if (existing[0]) {
+      const uid = existing[0].id;
+      const acc = await sql<{ id: string }>`
+        select id from account
+        where "userId" = ${uid} and "providerId" = 'credential'
+        limit 1
+      `;
+      if (acc[0]) {
+        await sql`
+          update account set password = ${hashed}, "updatedAt" = ${now}
+          where id = ${acc[0].id}
+        `;
+      } else {
+        const accId = `admin-cred-${uid.slice(0, 12)}`;
+        await sql`
+          insert into account (
+            id, "accountId", "providerId", "userId", password,
+            "createdAt", "updatedAt"
+          ) values (
+            ${accId}, ${uid}, 'credential', ${uid}, ${hashed},
+            ${now}, ${now}
+          )
+        `;
+      }
+      return;
+    }
+
+    const userId = `admin-${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
+    const accId = `admin-acc-${userId.slice(0, 16)}`;
+    await sql`
+      insert into "user" (
+        id, name, email, "emailVerified", image, "createdAt", "updatedAt"
+      ) values (
+        ${userId}, ${name}, ${email}, true, null, ${now}, ${now}
+      )
+    `;
+    await sql`
+      insert into account (
+        id, "accountId", "providerId", "userId", password,
+        "createdAt", "updatedAt"
+      ) values (
+        ${accId}, ${userId}, 'credential', ${userId}, ${hashed},
+        ${now}, ${now}
+      )
+    `;
+  })().catch((err) => {
+    adminSeedGlobal.__ensureAdminUser__ = undefined;
+    console.error("[seed] ensureAdminUser failed:", err);
+  });
+  return adminSeedGlobal.__ensureAdminUser__;
+}

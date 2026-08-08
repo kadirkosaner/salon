@@ -1,241 +1,336 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Flame, Loader2, Trophy, Weight } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
-import { EmptyState, PageSection, StatTile } from "@/components/ui/section";
+import { EmptyState } from "@/components/ui/section";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
+import { ActivityCard } from "@/components/feed/activity-card";
+import { CommentSheet } from "@/components/feed/comment-sheet";
 import {
-  ProgressAreaChart,
-  VolumeBarChart,
-  formatChartDate,
-} from "@/components/ui/charts";
-import { getDashboard, getExerciseProgress } from "@/lib/server/dashboard";
-import { MAIN_LIFTS } from "@/data/library";
-import { cn, formatDateTR } from "@/lib/utils";
-import { AppSelect } from "@/components/ui/select";
+  followUser,
+} from "@/lib/server/social";
+import {
+  getDiscoverFeed,
+  getFeed,
+  getSuggestedAthletes,
+  type FeedItem,
+} from "@/lib/server/activity";
+import { getDashboard } from "@/lib/server/dashboard";
+import { listDiscoverPrograms } from "@/lib/server/share";
+import { useI18n } from "@/lib/i18n/provider";
 import { qk } from "@/lib/query-keys";
+import { cn, formatDateTR } from "@/lib/utils";
 
-export const Route = createFileRoute("/")({ component: DashboardPage });
+export const Route = createFileRoute("/")({ component: FeedPage });
 
-type ChartMode = "volume" | "progress";
-
-function DashboardPage() {
+function FeedPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
-  const [chartMode, setChartMode] = useState<ChartMode>("volume");
-  const [progressName, setProgressName] = useState<string>(MAIN_LIFTS[0]);
+  const { t } = useI18n();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [commentItem, setCommentItem] = useState<FeedItem | null>(null);
+  const [pullY, setPullY] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const touchStart = useRef<number | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const feedQuery = useInfiniteQuery({
+    queryKey: qk.feed,
+    queryFn: ({ pageParam }) =>
+      getFeed({
+        data: { cursor: pageParam as string | undefined, limit: 12 },
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last: { nextCursor: string | null }) =>
+      last.nextCursor ?? undefined,
+    enabled: !!userId,
+  });
+
+  const items: FeedItem[] =
+    feedQuery.data?.pages.flatMap((p: { items: FeedItem[] }) => p.items) ?? [];
+  const empty = !feedQuery.isLoading && items.length === 0;
 
   const dashQuery = useQuery({
     queryKey: qk.dashboard,
     queryFn: () => getDashboard(),
     enabled: !!userId,
   });
-  const data = dashQuery.data ?? null;
-  const loading = dashQuery.isLoading;
 
-  const progressQuery = useQuery({
-    queryKey: [...qk.dashboard, "progress", progressName] as const,
-    queryFn: () => getExerciseProgress({ data: progressName }),
-    enabled: !!userId && !!progressName,
-    initialData: () =>
-      data && progressName === (data.progressExercise || MAIN_LIFTS[0])
-        ? data.progress
-        : undefined,
+  const suggestedQuery = useQuery({
+    queryKey: qk.suggested,
+    queryFn: () => getSuggestedAthletes(),
+    enabled: !!userId && empty,
   });
-  const progress = progressQuery.data ?? [];
+
+  const discoverQuery = useQuery({
+    queryKey: [...qk.feed, "discover"] as const,
+    queryFn: () => getDiscoverFeed(),
+    enabled: !!userId && empty,
+  });
+
+  const programsQuery = useQuery({
+    queryKey: qk.discover,
+    queryFn: () => listDiscoverPrograms(),
+    enabled: !!userId && empty,
+  });
 
   useEffect(() => {
-    if (data?.progressExercise) setProgressName(data.progressExercise);
-  }, [data?.progressExercise]);
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
+          void feedQuery.fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage, items.length]);
 
-  function changeProgress(name: string) {
-    setProgressName(name);
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await qc.invalidateQueries({ queryKey: qk.feed });
+      await feedQuery.refetch();
+    } finally {
+      setRefreshing(false);
+      setPullY(0);
+    }
+  }, [qc, feedQuery]);
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (window.scrollY <= 0) touchStart.current = e.touches[0]!.clientY;
+    else touchStart.current = null;
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    if (touchStart.current == null) return;
+    const dy = e.touches[0]!.clientY - touchStart.current;
+    if (dy > 0 && window.scrollY <= 0) setPullY(Math.min(72, dy * 0.45));
+  }
+  async function onTouchEnd() {
+    if (pullY > 48) await refresh();
+    else setPullY(0);
+    touchStart.current = null;
+  }
+
+  async function follow(id: string) {
+    try {
+      await followUser({ data: id });
+      toast.success(t("common.success"));
+      void qc.invalidateQueries({ queryKey: qk.suggested });
+      void qc.invalidateQueries({ queryKey: qk.feed });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("common.error"));
+    }
   }
 
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;
 
   const greeting = user.displayName?.split(" ")[0] ?? "Sporcu";
+  const next = dashQuery.data?.next;
 
   return (
-    <AppShell title="Panel" subtitle={`Merhaba, ${greeting}`}>
-      {loading || !data ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="size-8 animate-spin text-yellow" />
+    <AppShell title={t("feed.title")} subtitle={t("panel.hello", { name: greeting })}>
+      <div
+        className="w-full min-w-0 space-y-4"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={() => void onTouchEnd()}
+      >
+        {/* pull indicator */}
+        <div
+          className="flex items-center justify-center overflow-hidden text-xs text-muted transition-all"
+          style={{ height: pullY || (refreshing ? 28 : 0) }}
+        >
+          <RefreshCw
+            className={cn("size-4", (refreshing || pullY > 48) && "animate-spin text-yellow")}
+          />
         </div>
-      ) : (
-        <div className="w-full min-w-0 space-y-4">
-          <button
-            type="button"
-            onClick={() => {
-              if (data.next) navigate({ to: "/antrenman", search: { date: data.next.date } });
-              else navigate({ to: "/antrenman" });
-            }}
-            className="flex w-full items-center gap-3 rounded-2xl border border-yellow/30 bg-gradient-to-br from-yellow/12 via-surface to-surface p-4 text-left transition active:scale-[0.99]"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-yellow">
-                Sıradaki
-              </p>
-              {data.next ? (
-                <>
-                  <p className="font-display mt-1 truncate text-3xl leading-none tracking-wide">
-                    {data.next.day_name}
-                  </p>
-                  <p className="mt-1.5 text-sm text-muted">
-                    {formatDateTR(data.next.date)} · {data.next.exercise_count} hareket
-                  </p>
-                </>
+
+        {/* Next workout strip */}
+        <button
+          type="button"
+          onClick={() => {
+            if (next) navigate({ to: "/antrenman", search: { date: next.date } });
+            else navigate({ to: "/antrenman" });
+          }}
+          className="card-accent flex w-full items-center gap-3 p-3.5 text-left transition active:scale-[0.99]"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-yellow">
+              {t("panel.next")}
+            </p>
+            {next ? (
+              <>
+                <p className="font-display mt-0.5 truncate text-2xl leading-none tracking-wide">
+                  {next.day_name}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {formatDateTR(next.date)} · {next.exercise_count} {t("feed.exercises")}
+                </p>
+              </>
+            ) : (
+              <p className="font-display mt-0.5 text-xl">{t("feed.planWorkout")}</p>
+            )}
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-yellow" />
+        </button>
+
+        {feedQuery.isLoading ? (
+          <DashboardSkeleton />
+        ) : empty ? (
+          <div className="space-y-5">
+            <EmptyState
+              icon={Users}
+              title={t("feed.emptyTitle")}
+              hint={t("feed.emptyHint")}
+              actionLabel={t("nav.discover")}
+              actionTo="/kesfet"
+            />
+
+            {(suggestedQuery.data?.length ?? 0) > 0 && (
+              <section>
+                <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {t("feed.suggested")}
+                </h2>
+                <ul className="space-y-2">
+                  {suggestedQuery.data!.map((u) => (
+                    <li
+                      key={u.id}
+                      className="flex items-center gap-3 rounded-xl border border-line bg-surface2/40 px-3 py-2.5"
+                    >
+                      <Link
+                        to="/u/$username"
+                        params={{ username: u.username || u.id }}
+                        className="flex min-w-0 flex-1 items-center gap-3"
+                      >
+                        <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-yellow/15 text-sm font-semibold text-yellow">
+                          {u.image ? (
+                            <img src={u.image} alt="" className="size-full object-cover" />
+                          ) : (
+                            u.name
+                              .split(/\s+/)
+                              .map((p) => p[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-medium">{u.name}</span>
+                          <span className="text-[11px] text-muted">
+                            {u.username ? `@${u.username}` : ""} · {u.followers}{" "}
+                            {t("profile.followers").toLowerCase()}
+                          </span>
+                        </span>
+                      </Link>
+                      {!u.is_following ? (
+                        <button
+                          type="button"
+                          onClick={() => void follow(u.id)}
+                          className="flex h-9 items-center gap-1 rounded-lg bg-yellow px-2.5 text-xs font-semibold text-bg"
+                        >
+                          <UserPlus className="size-3.5" />
+                          {t("profile.follow")}
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {(discoverQuery.data?.length ?? 0) > 0 && (
+              <section className="space-y-3">
+                <h2 className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {t("feed.publicActivity")}
+                </h2>
+                {discoverQuery.data!.map((item) => (
+                  <ActivityCard
+                    key={item.id}
+                    item={item}
+                    t={t}
+                    onComment={setCommentItem}
+                  />
+                ))}
+              </section>
+            )}
+
+            {(programsQuery.data?.length ?? 0) > 0 && (
+              <section>
+                <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {t("feed.featuredPrograms")}
+                </h2>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {programsQuery.data!.slice(0, 8).map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => navigate({ to: "/kesfet" })}
+                      className="w-40 shrink-0 rounded-xl border border-line bg-surface2/50 p-3 text-left"
+                    >
+                      <p className="truncate text-sm font-semibold">{p.name}</p>
+                      <p className="mt-1 text-[11px] text-muted">
+                        {p.day_count} {t("feed.days")} · {p.clone_count} kopya
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {items.map((item) => (
+              <ActivityCard
+                key={item.id}
+                item={item}
+                t={t}
+                onComment={setCommentItem}
+                onRemoved={() => void qc.invalidateQueries({ queryKey: qk.feed })}
+              />
+            ))}
+            <div ref={sentinelRef} className="flex justify-center py-3">
+              {feedQuery.isFetchingNextPage ? (
+                <Loader2 className="size-5 animate-spin text-muted" />
+              ) : feedQuery.hasNextPage ? (
+                <span className="text-xs text-dim">{t("feed.loadMore")}</span>
               ) : (
-                <>
-                  <p className="font-display mt-1 text-2xl">Antrenman planla</p>
-                  <p className="mt-1 text-sm text-muted">Takvimden başla</p>
-                </>
+                <span className="text-xs text-dim">{t("feed.end")}</span>
               )}
             </div>
-            <ChevronRight className="size-5 shrink-0 text-yellow" />
-          </button>
-
-          <div className="grid grid-cols-3 gap-2">
-            <StatTile
-              label="Hafta"
-              value={`${data.week.completed}/${data.week.planned || 6}`}
-              hint="seans"
-            />
-            <StatTile
-              label="Tonaj"
-              value={
-                data.week.volume >= 1000
-                  ? `${(data.week.volume / 1000).toFixed(1)}t`
-                  : String(data.week.volume)
-              }
-              hint="bu hafta"
-              icon={<Weight className="size-3.5 text-yellow" />}
-            />
-            <StatTile
-              label="Seri"
-              value={`${data.streak}`}
-              hint="hafta"
-              icon={<Flame className="size-3.5 text-orange" />}
-            />
           </div>
+        )}
+      </div>
 
-          {/* One chart card, two modes — less clutter */}
-          <PageSection
-            title="Grafikler"
-            description={
-              chartMode === "volume"
-                ? "Son 12 hafta antrenman hacmi"
-                : "Hareket max ağırlık trendi"
-            }
-            action={
-              <div className="flex rounded-lg border border-line bg-surface2 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setChartMode("volume")}
-                  className={cn(
-                    "rounded-md px-2.5 py-1.5 text-[11px] font-semibold",
-                    chartMode === "volume" ? "bg-yellow text-bg" : "text-muted",
-                  )}
-                >
-                  Hacim
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChartMode("progress")}
-                  className={cn(
-                    "rounded-md px-2.5 py-1.5 text-[11px] font-semibold",
-                    chartMode === "progress" ? "bg-yellow text-bg" : "text-muted",
-                  )}
-                >
-                  İlerleme
-                </button>
-              </div>
-            }
-          >
-            {chartMode === "volume" ? (
-              <VolumeBarChart
-                data={data.volumeByWeek}
-                emptyHint="Antrenman bitirdikçe dolacak."
-              />
-            ) : (
-              <div className="space-y-3">
-                <AppSelect
-                  value={progressName}
-                  onValueChange={(v) => void changeProgress(v)}
-                  options={MAIN_LIFTS.map((n) => ({ value: n, label: n }))}
-                  triggerClassName="h-10 rounded-lg"
-                  aria-label="İlerleme hareketi"
-                />
-                <ProgressAreaChart
-                  data={progress}
-                  xKey="date"
-                  yKey="weight"
-                  valueLabel="Max"
-                  valueUnit="kg"
-                  xFormatter={formatChartDate}
-                  emptyHint="Bu hareket için set tamamla."
-                />
-              </div>
-            )}
-          </PageSection>
-
-          {data.records.length > 0 && (
-            <PageSection title="Rekorlar">
-              <ul className="divide-y divide-line">
-                {data.records.slice(0, 5).map((r) => (
-                  <li key={r.name} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                    <Trophy className="size-4 shrink-0 text-yellow" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{r.name}</p>
-                      <p className="text-[11px] text-muted">{formatDateTR(r.date)}</p>
-                    </div>
-                    <span className="num text-xl text-yellow">{r.weight}</span>
-                    <span className="text-xs text-muted">kg</span>
-                  </li>
-                ))}
-              </ul>
-            </PageSection>
-          )}
-
-          <PageSection title="Son seanslar">
-            {data.recent.length === 0 ? (
-              <EmptyState hint="Henüz antrenman yok." />
-            ) : (
-              <ul className="space-y-2">
-                {data.recent.slice(0, 5).map((w) => (
-                  <li key={w.id}>
-                    <Link
-                      to="/antrenman"
-                      search={{ date: w.date }}
-                      className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-surface2/30 px-3 py-3 transition hover:border-yellow/30"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-display truncate text-lg leading-none">{w.day_name}</p>
-                        <p className="mt-1 text-xs text-muted">
-                          {formatDateTR(w.date)} ·{" "}
-                          {w.status === "completed"
-                            ? "Tamamlandı"
-                            : w.status === "skipped"
-                              ? "Atlandı"
-                              : "Planlandı"}
-                        </p>
-                      </div>
-                      <span className="num shrink-0 text-sm text-muted">
-                        {w.tonnage > 0 ? `${w.tonnage.toLocaleString("tr-TR")}` : "—"}
-                      </span>
-                      <ChevronRight className="size-4 shrink-0 text-dim" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </PageSection>
-        </div>
-      )}
+      {commentItem ? (
+        <CommentSheet
+          item={commentItem}
+          t={t}
+          onClose={() => setCommentItem(null)}
+          onAdded={() => {
+            void qc.invalidateQueries({ queryKey: qk.feed });
+          }}
+        />
+      ) : null}
     </AppShell>
   );
 }

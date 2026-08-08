@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { resolveExerciseMedia } from "@/lib/exercise-media-resolve";
+import { resolveExerciseMedia } from "@/lib/exercise-media-resolve.server";
 import {
   browseDatasetByMuscle,
   datasetCount,
@@ -10,6 +10,8 @@ import {
   resolveDataset,
   searchDataset,
 } from "./seed";
+import { v, positiveId, shortText, optionalString } from "@/lib/validation";
+import { z } from "zod";
 
 export type ExerciseRow = {
   id: number;
@@ -88,9 +90,16 @@ export const listExercises = createServerFn({ method: "GET" })
  */
 export const searchExerciseCatalog = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((d: { q?: string; muscleGroup?: string; limit?: number } | string) =>
-    typeof d === "string" ? { q: d } : d,
-  )
+  .validator((d: unknown) => {
+    if (typeof d === "string") return { q: d.slice(0, 120) };
+    return v(
+      z.object({
+        q: z.string().trim().max(120).optional(),
+        muscleGroup: z.string().trim().max(40).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+      }),
+    )(d);
+  })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureExerciseLibrary(sql);
@@ -176,7 +185,10 @@ export const searchExerciseCatalog = createServerFn({ method: "GET" })
 /** Materialize a dataset exercise into DB and return its id. */
 export const adoptDatasetExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { externalId?: string; exerciseId?: number }) => d)
+  .validator(v(z.object({
+      externalId: z.string().trim().max(32).optional(),
+      exerciseId: positiveId.optional(),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureExerciseLibrary(sql);
@@ -196,7 +208,10 @@ export const adoptDatasetExercise = createServerFn({ method: "POST" })
 
 export const getExercisePreview = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((d: { exerciseId?: number; name?: string }) => d)
+  .validator(v(z.object({
+      exerciseId: positiveId.optional(),
+      name: z.string().trim().max(120).optional(),
+    })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     if (data.exerciseId && data.exerciseId > 0) {
@@ -246,7 +261,7 @@ export const getExercisePreview = createServerFn({ method: "GET" })
 /** Lookup media by exercise name (preview button) — full 1324 dataset. */
 export const getExerciseMedia = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((name: string) => name)
+  .validator(v(shortText(120)))
   .handler(async ({ context, data: name }) => {
     const sql = await getSql();
     await ensureExerciseLibrary(sql);
@@ -328,7 +343,13 @@ export const getExerciseMedia = createServerFn({ method: "GET" })
 export const similarExercises = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(
-    (d: { exerciseId: number; excludeIds?: number[]; externalId?: string }) => d,
+    v(
+      z.object({
+        exerciseId: z.number().int().nonnegative(),
+        excludeIds: z.array(positiveId).max(50).optional(),
+        externalId: z.string().trim().max(32).optional(),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
@@ -398,13 +419,15 @@ function normName(s: string) {
 export const createExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (d: {
-      name: string;
-      detail?: string;
-      unit?: string;
-      muscle_group?: string;
-      default_note?: string;
-    }) => d,
+    v(
+      z.object({
+        name: shortText(120),
+        detail: optionalString(200),
+        unit: z.string().trim().max(20).optional(),
+        muscle_group: z.string().trim().max(40).optional(),
+        default_note: optionalString(500),
+      }),
+    ),
   )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
