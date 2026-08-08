@@ -80,7 +80,7 @@ for (let i = 0; i < Math.min(count, 80); i++) {
     try {
       await b.click({ timeout: 500 });
       clicked++;
-    } catch {}
+    } catch { /* ignore */ }
   }
 }
 console.log("clicked_set_like", clicked);

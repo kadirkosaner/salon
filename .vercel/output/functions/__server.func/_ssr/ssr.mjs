@@ -37,7 +37,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-IZ20Ryte.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-YMTgUTD5.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -59,279 +59,279 @@ async function getStartManifest(matchedRoutes) {
 var manifest = {
 	"0aa88f3b0eabf3b1b7d35bdf0f95f7c192faaecdbe09741c3383e9a4cd53c14a": {
 		functionName: "updateWorkoutSet_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"0abaad264c031de8d875ed3c3f2037cc5b223eb2089d8830ed8f3416a337d624": {
 		functionName: "saveWorkoutToProgram_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"0e182776be6283b912be100cdaf806931752666530bbee6f8ea2a74039c779ba": {
 		functionName: "updateSettings_createServerFn_handler",
-		importer: () => import("./settings-0Nx2qAWR.mjs")
+		importer: () => import("./settings-BzTZxwVZ.mjs")
 	},
 	"0fd7ffd0ad309e1a3b86498de81aa8d817b86201e8a02ebe9b35898dbf514be0": {
 		functionName: "swapWorkoutExercise_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"124a8196e107618fd2bfc73f3170758380308d2a732d8b12b09d6b2fdf3b1923": {
 		functionName: "deleteWorkout_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"12dd2d90164a34fb13b4cfbbb7e0f7ffaf45f65b4e0fad6c86c102bbd0897ab3": {
 		functionName: "listMeasurements_createServerFn_handler",
-		importer: () => import("./measurements-zgzqlNOV.mjs")
+		importer: () => import("./measurements-C4yszoM0.mjs")
 	},
 	"180e5f28add199b638c547f437ff49db577dcfb38a348ac1eb58726514921478": {
 		functionName: "addProgramDay_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"19d1cb38e56874c5c5f6510e87194380872bf11f93bf1cce71905e981218f32a": {
 		functionName: "getUserProfile_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"1a7786f874a3551aa8b4967f9b8f7da0acdaf8ce7081cbc3ad6bc5e28ce09ed8": {
 		functionName: "getExercisePreview_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"1d2a464c009ca9b8b62e8a6cd535660f8d5df3a1b1861cb9d1d28bd1c2fc21f7": {
 		functionName: "updateProgramExercise_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"2a36a9c41ce43e9ee92030ce0fbc7d52d4d084dd0aa7ebde03702e4780f21aee": {
 		functionName: "getExerciseMedia_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"2fdb5dc60c83dfbec29c79203d6e5f4f6c450805d2b8dc566f1fabcdf49a93b0": {
 		functionName: "cloneProgram_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"3c5511a3cd708b6e095746b8ac3a22c9e37285c642d9a134c0993487ec8c9a05": {
 		functionName: "deleteMeasurement_createServerFn_handler",
-		importer: () => import("./measurements-zgzqlNOV.mjs")
+		importer: () => import("./measurements-C4yszoM0.mjs")
 	},
 	"3ed198a712ba243748c19883d294a55c8673b5cb99729de6cea884039eec9619": {
 		functionName: "clearFutureWorkouts_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"423e37c6daeab9d0f4f6942a042f43d19935b23e347eff79c6b7bbfeae49a504": {
 		functionName: "addComment_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"4312477b45dbbfc69b6ed18219f898c149adb6df6eb1777809c50fcf94a806a5": {
 		functionName: "publishProgram_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"492c59b7ae7e87a93f0769074a3c2fa0854245b8937346ac25ac0fe0be29fbaa": {
 		functionName: "getActiveProgram_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"49c0636baaf4c59822a0bb0ebe0e0e84c255f416d06dc080f5f05871112453ce": {
 		functionName: "searchExerciseCatalog_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"4f16e469083809426eb9ce6433cde4dbda3c7f27ea3afae62a7d955a71e01655": {
 		functionName: "unifiedSearch_createServerFn_handler",
-		importer: () => import("./discover-CYcv0TB9.mjs")
+		importer: () => import("./discover-BRsSXbv3.mjs")
 	},
 	"5068934b9dde26ae93ddd83a0a2b8194a6c3c5e7f20ec10f7f2deed2d93e3017": {
 		functionName: "unfollowUser_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"51a99a75ec2b797b2a652d1abc3b9af80ebab339ca49be6d184880428fbecbe2": {
 		functionName: "updateProgramMeta_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"5740b898ff2b8a3912750e367ca6d84cec314df9865bdec0573f089208464972": {
 		functionName: "updateWorkout_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"58b4f02b7793785fc64c7613e546f98d7c8af2d6467867ee79df990ca6ef30d0": {
 		functionName: "unlikeActivity_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"594d4eb468e641b2e1946099093db375f6f1335f8f5b3d3720ed9d6ff2863e83": {
 		functionName: "listPrograms_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"5d9dcfe0ba767a8b7f8e4598dfde4f07e08af8efdb0827ea0bcd28da03832044": {
 		functionName: "generateWorkouts_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"61e9a16a1abc76676e3cf0c280b82fd182926a7567dc10b2a449c17d772964b0": {
 		functionName: "getProgram_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"6637fb9fa085c3e6eacb39f6981ae5ee927aff958e463ab6ec97a24a7aa1796b": {
 		functionName: "deleteProgramDay_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"6cb0c44585db7d8adacdd8c95d252849c501333dca44120d4aa2c9fe7ec0d939": {
 		functionName: "getDiscoverFeed_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"6d2b000444254eed06cba44d7955f6d54391af4ed14919699d492338be3cafcd": {
 		functionName: "listDiscoverPrograms_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"74ce8358fb9f645b4a65bddfa53b671c7cb791d330732af11f921ff837afbf30": {
 		functionName: "updateProgramDay_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"75941c3f22f18a3c6aef4550ffa7bc1475c743df3a517aaebe8057f21412cb03": {
 		functionName: "abandonProgram_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"773184e549ab922b8d89769e473ae3c026091da75cf449fa7ed279007e484eec": {
 		functionName: "addProgramExercise_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"77aefd561628bc160bf92f337ebc8febab564be724c1bb0d561ff8b10d5edd2a": {
 		functionName: "listFollowing_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"7d209b75950cfadfb3f425e5be3df3130811f3686b85de936ad37d1c9a0c1e67": {
 		functionName: "updateProgram_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"7fd971e076a0cb90d76d0d895765ba1c55eb0ec3cdccd5478850ef7f1c566420": {
 		functionName: "deleteMyAccount_createServerFn_handler",
-		importer: () => import("./settings-0Nx2qAWR.mjs")
+		importer: () => import("./settings-BzTZxwVZ.mjs")
 	},
 	"807140b5c76a90c2fad6097751739cd559fc4f2f5bd23001e96fc44ee9a9ad30": {
 		functionName: "listFollowers_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"815336a91630b55d7790f232560835ec12ae22f07542e483fa2f63e840a3c607": {
 		functionName: "getSuggestedAthletes_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"85d38fe238ed62e55e52afe9bdc24ec519e505fc89d618f452f6db1887b0a6e6": {
 		functionName: "getExerciseProgress_createServerFn_handler",
-		importer: () => import("./dashboard-CsR8aCuF.mjs")
+		importer: () => import("./dashboard-Dmmltmt8.mjs")
 	},
 	"879445236f81bc8637c1953d8ef815391e749af0f994bc78513ce6f22c30c6f9": {
 		functionName: "getWorkoutByDate_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"8a16d13a104ad0eb47aabfcb0ade826b60488383d12df868462b9100f3ac1c4d": {
 		functionName: "createProgram_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"8a6ef6d33b6ce0ad083bb720c90041620b058b1a4a1f936e060e6dc4cd22ad71": {
 		functionName: "skipWorkout_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"8ed95332c23efdc012d2d678efa7cc61217d2f31e89f6d84896e63e5d24a8fb0": {
 		functionName: "getPublicProgramDetail_createServerFn_handler",
-		importer: () => import("./share-8b_UJf08.mjs")
+		importer: () => import("./share-BATjbCK2.mjs")
 	},
 	"96e1b82b9f2474048cbb4be14e225026ad5b6b579f8087abe490b8784554afea": {
 		functionName: "setWeekSchedule_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"99da0c2636d87cf261b75fbbc00e9f514f5d93b67429467266c8b2d972db8fc2": {
 		functionName: "deleteProgramExercise_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"9a29518f49ca58d9919460754df5908d104fc228da7231db87004d6a5c531e28": {
 		functionName: "commitProgramImport_createServerFn_handler",
-		importer: () => import("./import-program-BgeAP6Wu.mjs")
+		importer: () => import("./import-program-Dhq9i962.mjs")
 	},
 	"9b36a4c1185958551fcc8de1b888777de8a08ebe75806d2780396ecc0b4eafe7": {
 		functionName: "getSettings_createServerFn_handler",
-		importer: () => import("./settings-0Nx2qAWR.mjs")
+		importer: () => import("./settings-BzTZxwVZ.mjs")
 	},
 	"9db85427a1c24a4946624e0d3df9e6cbf4f6db0a0617124b39eec33b6ee26c12": {
 		functionName: "getDashboard_createServerFn_handler",
-		importer: () => import("./dashboard-CsR8aCuF.mjs")
+		importer: () => import("./dashboard-Dmmltmt8.mjs")
 	},
 	"9e5f71464f06d65f04e609cc76804a0bd79ac52f3a4ffdeb214f6a65d638305c": {
 		functionName: "similarExercises_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"a044e278ec1c2b11f87b769d51ef8016bbbd8c280f81537be435a24a0cfa4ea0": {
 		functionName: "deleteActivity_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"a44538cec3761e97a74f2c188ba695b160f7d023a550829ceab7769bd128c2d2": {
 		functionName: "ensureWorkoutHorizon_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"ac897f0a9d04feec42896d48947c132ac44208b96298cf5c5eaf86b6a523ab72": {
 		functionName: "reorderProgramExercises_createServerFn_handler",
-		importer: () => import("./programs-Ca0YDPIx.mjs")
+		importer: () => import("./programs-MUmHoyj4.mjs")
 	},
 	"afd9eb4b0241257f6bb5a71448b2a6e8d646cc52cbb317e94f625819f21299f9": {
 		functionName: "listExercises_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"b66254c464d8c31c49eea4fc973c144639a8a31522c53452a4e60348ff47cf14": {
 		functionName: "likeActivity_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"c470ce496b95c9afdde529cbf005d46ee94dc975539d9b6621c922d51795a182": {
 		functionName: "listWorkoutsInRange_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"c4f46824e85c9c073ba7de6e21f0c434366e69a27c7d3244ddd1814614a613ec": {
 		functionName: "getDiscoverHome_createServerFn_handler",
-		importer: () => import("./discover-CYcv0TB9.mjs")
+		importer: () => import("./discover-BRsSXbv3.mjs")
 	},
 	"c7a400c7f9b0406c032c6adbaba9a904b310de1d4d2546b4498d581195683f76": {
 		functionName: "followUser_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"d05e65867b4933b54ef5627cd1ae652e99f56d8ef8b17e77de48c8b6202812c1": {
 		functionName: "searchUsers_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"d15162f3aac5ef71e27a4432278e1b880f9f5a5acf078e52eb9a73b92685b5a8": {
 		functionName: "deleteWorkoutExercise_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"d40ffa3c9cdaff90f8fff0323912a677c99a2c48b39a936b2863aea0e549db7a": {
 		functionName: "adoptDatasetExercise_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"da6f4422ac456ec8d3de4e92022c49907399b21f4818e1991f97c80565997136": {
 		functionName: "addWorkoutExercise_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"dc275b09650b9414d526fd6f324f03568cdbe778fcadee66808955cd53c7596b": {
 		functionName: "createExercise_createServerFn_handler",
-		importer: () => import("./exercises-B1NwYmrr.mjs")
+		importer: () => import("./exercises-BnDuH6DG.mjs")
 	},
 	"dcffd40a8afe60207067f5b87cecae9756d9504ba2c8232485aae25fbe0e1074": {
 		functionName: "getMyProfileHub_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"ddc04f5e713c3ee6337569cc64d4af84a9252a35bbc71179e77999333b8ab76e": {
 		functionName: "getFeed_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	},
 	"e182973a651642b29b1973d1c35de9338c54625555633269f5cc40ea83ace408": {
 		functionName: "createWorkout_createServerFn_handler",
-		importer: () => import("./workouts-B1ySdXq9.mjs")
+		importer: () => import("./workouts-Ck4BLLVq.mjs")
 	},
 	"e70b887802d47d726afcf47a06dddba5f338a5cd98547832400a2c3259439f88": {
 		functionName: "saveMeasurement_createServerFn_handler",
-		importer: () => import("./measurements-zgzqlNOV.mjs")
+		importer: () => import("./measurements-C4yszoM0.mjs")
 	},
 	"ef6b1785d1951b525ca21d36ad0a0468815741b3ab610edc1a12ded206599685": {
 		functionName: "updateMyProfile_createServerFn_handler",
-		importer: () => import("./social-CK87fAqc.mjs")
+		importer: () => import("./social-BIRP38x6.mjs")
 	},
 	"f234a67bab3f7e8438c0cb607261fbb8bcc91ecc48658176705bb3bcbd5fb747": {
 		functionName: "exportMyData_createServerFn_handler",
-		importer: () => import("./settings-0Nx2qAWR.mjs")
+		importer: () => import("./settings-BzTZxwVZ.mjs")
 	},
 	"f62c3ba0958cf27510d34f1a7b9998449d848f0e1635234b0ab0e160e8d4f6ed": {
 		functionName: "previewProgramImport_createServerFn_handler",
-		importer: () => import("./import-program-BgeAP6Wu.mjs")
+		importer: () => import("./import-program-Dhq9i962.mjs")
 	},
 	"fd090c0d36f73268aca4ab7f0e9a95212df4560e2020a912fac561986c5dce02": {
 		functionName: "listComments_createServerFn_handler",
-		importer: () => import("./activity-DeHsyRlP.mjs")
+		importer: () => import("./activity-nIgrslDT.mjs")
 	}
 };
 async function getServerFnById(id, access) {
@@ -1601,7 +1601,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-1phUtum1.mjs"),
+		import("./router-CJg-EF3-.mjs"),
 		import("./start-5Z2QO8AU.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);

@@ -311,65 +311,137 @@ async function hasMediaColumns(sql: Sql): Promise<boolean> {
   return mediaColumnsReady;
 }
 
+/** Process-wide: library seed runs at most once per boot. */
+const librarySeedGlobal = globalThis as typeof globalThis & {
+  __exerciseLibrarySeed__?: Promise<void>;
+};
+
 /**
  * Core library only + GIF/media enrichment from exercises-dataset.
+ * Idempotent and **O(1) round-trips after first fill** (process memo + count check).
  * Full 1324 list is available via searchDataset / ensureDatasetExercise (on demand).
  */
 export async function ensureExerciseLibrary(sql: Sql): Promise<void> {
-  const media = await hasMediaColumns(sql);
-  const existing = await sql<{ id: number; name: string }>`
-    select id, name from exercises where owner_id is null
-  `;
-  const have = new Map(existing.map((e) => [e.name, e.id]));
+  if (librarySeedGlobal.__exerciseLibrarySeed__) {
+    return librarySeedGlobal.__exerciseLibrarySeed__;
+  }
+  librarySeedGlobal.__exerciseLibrarySeed__ = (async () => {
+    // Fast path: already have full core library → 1 query, done.
+    const cnt = await sql<{ n: number }>`
+      select count(*)::int as n from exercises where owner_id is null
+    `;
+    if ((cnt[0]?.n ?? 0) >= EXERCISE_LIBRARY.length) {
+      return;
+    }
 
-  for (const ex of EXERCISE_LIBRARY) {
-    const ds = findDataset(ex.name);
-    if (!have.has(ex.name)) {
-      if (media) {
-        // Only attach external_id if no other row owns it
-        let ext: string | null = null;
-        if (ds?.id) {
-          const taken = await sql<{ id: number }>`
-            select id from exercises where external_id = ${ds.id} limit 1
-          `;
-          if (taken.length === 0) ext = ds.id;
+    const media = await hasMediaColumns(sql);
+    const existing = await sql<{ id: number; name: string; external_id: string | null }>`
+      select id, name, external_id from exercises where owner_id is null
+    `;
+    const have = new Map(existing.map((e) => [e.name, e]));
+    const usedExt = new Set(
+      existing.map((e) => e.external_id).filter((x): x is string => !!x),
+    );
+
+    // Batch missing inserts (one statement per missing row is still bad —
+    // use a single multi-row insert via sql.query when possible).
+    const missing = EXERCISE_LIBRARY.filter((ex) => !have.has(ex.name));
+    if (missing.length > 0) {
+      // Chunk to keep params reasonable
+      const CHUNK = 25;
+      for (let i = 0; i < missing.length; i += CHUNK) {
+        const chunk = missing.slice(i, i + CHUNK);
+        if (media) {
+          const values: unknown[] = [];
+          const placeholders: string[] = [];
+          let p = 1;
+          for (const ex of chunk) {
+            const ds = findDataset(ex.name);
+            let ext: string | null = null;
+            if (ds?.id && !usedExt.has(ds.id)) {
+              ext = ds.id;
+              usedExt.add(ds.id);
+            }
+            placeholders.push(
+              `(null, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+            );
+            values.push(
+              ex.name,
+              ex.detail ?? null,
+              ex.unit ?? "kg",
+              ex.muscle_group,
+              ds?.note ?? null,
+              ext,
+              ds?.gif ?? null,
+              ds?.image ?? null,
+              ds?.note ?? null,
+            );
+          }
+          await sql.query(
+            `insert into exercises (
+              owner_id, name, detail, unit, muscle_group, default_note,
+              external_id, gif_url, image_url, form_cues
+            ) values ${placeholders.join(", ")}`,
+            values,
+          );
+        } else {
+          const values: unknown[] = [];
+          const placeholders: string[] = [];
+          let p = 1;
+          for (const ex of chunk) {
+            placeholders.push(`(null, $${p++}, $${p++}, $${p++}, $${p++})`);
+            values.push(
+              ex.name,
+              ex.detail ?? null,
+              ex.unit ?? "kg",
+              ex.muscle_group,
+            );
+          }
+          await sql.query(
+            `insert into exercises (owner_id, name, detail, unit, muscle_group)
+             values ${placeholders.join(", ")}`,
+            values,
+          );
         }
-        await sql`
-          insert into exercises (
-            owner_id, name, detail, unit, muscle_group, default_note,
-            external_id, gif_url, image_url, form_cues
-          ) values (
-            null, ${ex.name}, ${ex.detail ?? null}, ${ex.unit ?? "kg"}, ${ex.muscle_group},
-            ${ds?.note ?? null}, ${ext}, ${ds?.gif ?? null},
-            ${ds?.image ?? null}, ${ds?.note ?? null}
-          )
-        `;
-      } else {
-        await sql`
-          insert into exercises (owner_id, name, detail, unit, muscle_group)
-          values (null, ${ex.name}, ${ex.detail ?? null}, ${ex.unit ?? "kg"}, ${ex.muscle_group})
-        `;
-      }
-    } else if (media && ds) {
-      await sql`
-        update exercises set
-          gif_url = coalesce(gif_url, ${ds.gif ?? null}),
-          image_url = coalesce(image_url, ${ds.image ?? null}),
-          form_cues = coalesce(form_cues, ${ds.note ?? null}),
-          default_note = coalesce(default_note, ${ds.note ?? null})
-        where id = ${have.get(ex.name)!}
-      `;
-      const taken = await sql<{ id: number }>`
-        select id from exercises where external_id = ${ds.id} limit 1
-      `;
-      if (taken.length === 0) {
-        await sql`
-          update exercises set external_id = ${ds.id}
-          where id = ${have.get(ex.name)!} and external_id is null
-        `;
       }
     }
-  }
+
+    // One-shot media backfill for rows still missing gif (single UPDATE…FROM style)
+    if (media) {
+      // Only enrich names that exist but lack gif — still avoid per-row SELECT.
+      // Build name→dataset map in memory, then 1 UPDATE per row that needs it
+      // is still heavy; instead skip if most already have media.
+      const need = await sql<{ id: number; name: string }>`
+        select id, name from exercises
+        where owner_id is null and gif_url is null
+        limit 80
+      `;
+      if (need.length > 0 && need.length <= EXERCISE_LIBRARY.length) {
+        // Batch CASE update would be ideal; do a single transaction with fewer
+        // statements only for rows that map to dataset.
+        for (const row of need) {
+          const ds = findDataset(row.name);
+          if (!ds) continue;
+          await sql`
+            update exercises set
+              gif_url = coalesce(gif_url, ${ds.gif ?? null}),
+              image_url = coalesce(image_url, ${ds.image ?? null}),
+              form_cues = coalesce(form_cues, ${ds.note ?? null}),
+              default_note = coalesce(default_note, ${ds.note ?? null}),
+              external_id = coalesce(external_id, ${
+                ds.id && !usedExt.has(ds.id) ? ds.id : null
+              })
+            where id = ${row.id}
+          `;
+          if (ds.id) usedExt.add(ds.id);
+        }
+      }
+    }
+  })().catch((err) => {
+    librarySeedGlobal.__exerciseLibrarySeed__ = undefined;
+    throw err;
+  });
+  return librarySeedGlobal.__exerciseLibrarySeed__;
 }
 
 /** Insert a dataset exercise into DB on demand (for full catalog pick). */

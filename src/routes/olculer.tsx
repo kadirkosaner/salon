@@ -31,6 +31,7 @@ import {
 } from "@/lib/server/measurements";
 import { cn, formatDateTR, todayISO } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
+import { useT } from "@/lib/i18n/provider";
 
 export const Route = createFileRoute("/olculer")({ component: MeasurementsPage });
 
@@ -38,18 +39,20 @@ type Tab = "today" | "charts" | "history";
 
 type MetricKey = "body_weight" | "waist" | "chest" | "arm" | "thigh";
 
-const METRICS: {
+function metricsFor(t: (k: string) => string): {
   key: MetricKey;
   label: string;
   unit: string;
   form: "weight" | "circ";
-}[] = [
-  { key: "body_weight", label: "Ağırlık", unit: "kg", form: "weight" },
-  { key: "waist", label: "Bel", unit: "cm", form: "circ" },
-  { key: "chest", label: "Göğüs", unit: "cm", form: "circ" },
-  { key: "arm", label: "Kol", unit: "cm", form: "circ" },
-  { key: "thigh", label: "Uyluk", unit: "cm", form: "circ" },
-];
+}[] {
+  return [
+    { key: "body_weight", label: t("measure.weight"), unit: "kg", form: "weight" },
+    { key: "waist", label: t("measure.waist"), unit: "cm", form: "circ" },
+    { key: "chest", label: t("measure.chest"), unit: "cm", form: "circ" },
+    { key: "arm", label: t("measure.arm"), unit: "cm", form: "circ" },
+    { key: "thigh", label: t("measure.thigh"), unit: "cm", form: "circ" },
+  ];
+}
 
 function num(v: string | null | undefined): number | null {
   if (v == null || v === "") return null;
@@ -66,6 +69,8 @@ function deltaOf(
 }
 
 function MeasurementsPage() {
+  const t = useT();
+  const METRICS = metricsFor(t);
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
   const queryClient = useQueryClient();
@@ -179,7 +184,7 @@ function MeasurementsPage() {
   if (!user) return <RedirectToSignIn />;
 
   return (
-    <AppShell title="Ölçüler" subtitle="Vücut kompozisyonu">
+    <AppShell title={t("measure.title")} subtitle={t("measure.subtitle")}>
       {loading ? (
         <PageSkeleton rows={3} />
       ) : (
@@ -273,7 +278,7 @@ function MeasurementsPage() {
               [
                 ["charts", "Özet"],
                 ["today", "Giriş"],
-                ["history", "Geçmiş"],
+                ["history", t("measure.history")],
               ] as const
             ).map(([k, lab]) => (
               <button
@@ -292,7 +297,7 @@ function MeasurementsPage() {
 
           {tab === "today" && (
             <PageSection
-              title="Ölçüm gir"
+              title={t("measure.enter")}
               description="Aynı tarihte kayıt üzerine yazılır · son değerler önceden doldurulur"
             >
               <form onSubmit={onSave} className="space-y-3">
@@ -347,7 +352,7 @@ function MeasurementsPage() {
                   ) : (
                     <Plus className="size-4" />
                   )}
-                  Kaydet
+                  {t("common.save")}
                 </button>
               </form>
             </PageSection>
@@ -358,13 +363,13 @@ function MeasurementsPage() {
               {rows.length === 0 ? (
                 <EmptyState
                   icon={Scale}
-                  title="Henüz ölçüm yok"
+                  title={t("measure.empty")}
                   hint="Giriş sekmesinden ilk kaydı ekle — trend burada görünecek."
                 />
               ) : (
                 <>
                   <PageSection
-                    title="Ağırlık trendi"
+                    title={t("measure.weightTrend")}
                     description={
                       weightSeries.length > 1
                         ? `${weightSeries.length} nokta`
@@ -383,7 +388,7 @@ function MeasurementsPage() {
                   </PageSection>
 
                   <PageSection
-                    title="Çevre"
+                    title={t("measure.girth")}
                     description="Serileri aç/kapat"
                     action={
                       <div className="flex flex-wrap justify-end gap-1">
@@ -458,11 +463,11 @@ function MeasurementsPage() {
           )}
 
           {tab === "history" && (
-            <PageSection title="Kayıtlar" description="Yeniden eskiye">
+            <PageSection title={t("measure.history")} description={t("measure.historyDesc")}>
               {rows.length === 0 ? (
                 <EmptyState
                   icon={Scale}
-                  title="Henüz ölçüm yok"
+                  title={t("measure.empty")}
                   hint="İlk ölçü kaydını ekleyince geçmiş burada görünür."
                 />
               ) : (
@@ -508,25 +513,25 @@ function MeasurementsPage() {
                             </div>
                             <p className="mt-0.5 truncate text-xs text-muted">
                               {[
-                                r.waist != null && `Bel ${r.waist}`,
-                                r.chest != null && `Göğüs ${r.chest}`,
-                                r.arm != null && `Kol ${r.arm}`,
-                                r.thigh != null && `Uyluk ${r.thigh}`,
+                                r.waist != null && `${t("measure.waist")} ${r.waist}`,
+                                r.chest != null && `${t("measure.chest")} ${r.chest}`,
+                                r.arm != null && `${t("measure.arm")} ${r.arm}`,
+                                r.thigh != null && `${t("measure.thigh")} ${r.thigh}`,
                               ]
                                 .filter(Boolean)
-                                .join(" · ") || "Sadece ağırlık"}
+                                .join(" · ") || t("measure.weightOnly")}
                             </p>
                           </div>
                           <button
                             type="button"
                             className="grid size-10 place-items-center rounded-lg border border-line text-red"
                             onClick={() => {
-                              if (!confirm("Silinsin mi?")) return;
+                              if (!confirm(t("measure.deleteConfirm"))) return;
                               void deleteMeasurement({ data: r.id })
                                 .then(reload)
-                                .then(() => toast.success("Silindi"));
+                                .then(() => toast.success(t("common.deleted")));
                             }}
-                            aria-label="Sil"
+                            aria-label={t("common.delete")}
                           >
                             <Trash2 className="size-4" />
                           </button>

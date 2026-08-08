@@ -34,6 +34,7 @@ import { copyText } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 import { AppSelect } from "@/components/ui/select";
 import { AppSheet } from "@/components/ui/sheet";
+import { useT } from "@/lib/i18n/provider";
 
 const SAMPLE_PASTE = `Kişisel Program
 Pazartesi - PUSH A
@@ -60,6 +61,7 @@ export function ShareModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const t = useT();
   const [isPublic, setIsPublic] = useState(program.is_public);
   const [description, setDescription] = useState(program.description ?? "");
   const [tags, setTags] = useState(program.tags ?? "");
@@ -67,7 +69,7 @@ export function ShareModal({
   const [code, setCode] = useState(program.share_code);
 
   return (
-    <Modal title="Programı paylaş" onClose={onClose}>
+    <Modal title={t("program.shareTitle")} onClose={onClose}>
       <p className="mb-3 text-xs leading-relaxed text-muted">
         Herkese açık yapınca Keşfet’te görünür ve 6 haneli kod ile arkadaşların kopyalayabilir.
         Senin orijinalin değişmez.
@@ -108,7 +110,7 @@ export function ShareModal({
           <p className="text-xs text-muted">Paylaşım kodu</p>
           <div className="mt-1 flex items-center justify-between gap-2">
             <p className="num text-2xl tracking-[0.2em] text-yellow">
-              {code ?? "Kaydedince üretilecek"}
+              {code ?? t("program.codePending")}
             </p>
             {code ? (
               <button
@@ -145,11 +147,11 @@ export function ShareModal({
               toast.success(
                 r.is_public
                   ? `Paylaşım açık · kod ${r.share_code}`
-                  : "Program artık gizli",
+                  : t("program.nowPrivate"),
               );
               await onSaved();
             })
-            .catch((e) => toast.error(e instanceof Error ? e.message : "Kaydedilemedi"))
+            .catch((e) => toast.error(e instanceof Error ? e.message : t("common.error")))
             .finally(() => setSaving(false));
         }}
       >
@@ -169,12 +171,13 @@ export function MetaModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const t = useT();
   const [name, setName] = useState(program.name);
   const [description, setDescription] = useState(program.description ?? "");
   const [saving, setSaving] = useState(false);
 
   return (
-    <Modal title="Program bilgisi" onClose={onClose}>
+    <Modal title={t("program.metaTitle")} onClose={onClose}>
       <label className="block space-y-1">
         <span className="text-xs text-muted">Program adı</span>
         <input
@@ -207,10 +210,10 @@ export function MetaModal({
             },
           })
             .then(() => {
-              toast.success("Kaydedildi");
+              toast.success(t("common.saved"));
               return onSaved();
             })
-            .catch((e) => toast.error(e instanceof Error ? e.message : "Hata"))
+            .catch((e) => toast.error(e instanceof Error ? e.message : t("common.error")))
             .finally(() => setSaving(false));
         }}
       >
@@ -229,6 +232,7 @@ export function ScheduleModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const t = useT();
   const [slots, setSlots] = useState<Record<number, number | null>>(() => {
     const init: Record<number, number | null> = {
       1: null,
@@ -261,7 +265,7 @@ export function ScheduleModal({
   }
 
   return (
-    <Modal title="Haftalık takvim" onClose={onClose}>
+    <Modal title={t("program.scheduleTitle")} onClose={onClose}>
       <p className="mb-3 text-xs leading-relaxed text-muted">
         Her hafta gününe hangi programı atayacağını seç. Boş = dinlenme.
       </p>
@@ -306,7 +310,7 @@ export function ScheduleModal({
             },
           })
             .then(() => onSaved())
-            .catch((e) => toast.error(e instanceof Error ? e.message : "Kaydedilemedi"))
+            .catch((e) => toast.error(e instanceof Error ? e.message : t("common.error")))
             .finally(() => setSaving(false));
         }}
       >

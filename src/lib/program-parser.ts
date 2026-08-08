@@ -204,7 +204,7 @@ function parseDayHeader(line: string, fallbackDow: number): Omit<ParsedDay, "exe
 function parseExerciseLine(line: string): ParsedExercise | null {
   let raw = line.trim();
   if (!raw || raw.length < 3) return null;
-  raw = raw.replace(/^\d+[\).:\-]\s*/, "").replace(/^[\-•*]\s*/, "").trim();
+  raw = raw.replace(/^\d+[).:-]\s*/, "").replace(/^[-•*]\s*/, "").trim();
   if (!raw) return null;
   if (/^(set|tekrar|not|notes?|rest|dinlenme)\b/i.test(raw) && raw.length < 20) return null;
 
@@ -285,7 +285,7 @@ function parseExerciseLine(line: string): ParsedExercise | null {
 }
 
 function splitNameDetail(s: string): { name: string; detail: string | null } {
-  const m = s.match(/^(.+?)\s*[\(\[]([^)\]]+)[\)\]]\s*$/);
+  const m = s.match(/^(.+?)\s*[([]([^)\]]+)[)\]]\s*$/);
   if (m) return { name: m[1]!.trim(), detail: m[2]!.trim() };
   const m2 = s.match(/^(.+?)\s+[—–-]\s+(.+)$/);
   if (m2 && m2[2]!.length < 40) return { name: m2[1]!.trim(), detail: m2[2]!.trim() };

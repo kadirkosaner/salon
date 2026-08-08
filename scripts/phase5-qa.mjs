@@ -133,7 +133,7 @@ try {
   await desk.locator('input[type="password"]').fill(password);
   await desk.locator('button[type="submit"]').click();
   await desk.waitForTimeout(2500);
-} catch {}
+} catch { /* ignore */ }
 await desk.goto(base + "/", { waitUntil: "domcontentloaded" });
 await desk.waitForTimeout(1500);
 await desk.screenshot({ path: "/workspace/screenshots/phase5-desktop.png" });

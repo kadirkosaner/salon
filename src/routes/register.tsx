@@ -3,11 +3,13 @@ import { useState } from "react";
 import { Activity, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useT } from "@/lib/i18n/provider";
 
 export const Route = createFileRoute("/register")({ component: RegisterPage });
 
 function RegisterPage() {
   const { user, isPending } = useCurrentUserState();
+  const t = useT();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ function RegisterPage() {
   if (isPending) {
     return (
       <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-bg">
-        <Loader2 className="size-8 animate-spin text-yellow" />
+        <Loader2 className="size-8 animate-spin text-yellow" aria-label={t("common.loading")} />
       </div>
     );
   }
@@ -27,11 +29,11 @@ function RegisterPage() {
     e.preventDefault();
     setError(null);
     if (name.trim().length < 2) {
-      setError("Ad en az 2 karakter olmalı.");
+      setError(t("auth.nameMin"));
       return;
     }
     if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı. Daha güvenli bir şifre seç.");
+      setError(t("auth.passwordMin"));
       return;
     }
     setLoading(true);
@@ -42,17 +44,12 @@ function RegisterPage() {
         name: name.trim(),
       });
       if (err) {
-        const msg = err.message?.toLowerCase() ?? "";
-        if (msg.includes("already") || msg.includes("exists") || msg.includes("unique")) {
-          setError("Bu e-posta zaten kayıtlı. Giriş sayfasından giriş yap.");
-        } else {
-          setError(err.message || "Kayıt tamamlanamadı. Bilgileri kontrol edip tekrar dene.");
-        }
+        setError(err.message || t("auth.registerFailed"));
         return;
       }
       window.location.href = "/";
     } catch {
-      setError("Bağlantı hatası. İnternetini kontrol edip tekrar dene.");
+      setError(t("auth.networkError"));
     } finally {
       setLoading(false);
     }
@@ -64,38 +61,37 @@ function RegisterPage() {
         <div className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-yellow/15 text-yellow">
           <Activity className="size-7" strokeWidth={2.25} />
         </div>
-        <h1 className="font-display text-4xl tracking-wide text-text">KAYIT OL</h1>
-        <p className="mt-1 text-sm text-muted">Programını Keşfet’ten seç, sonra özelleştir</p>
-
+        <h1 className="font-display text-4xl tracking-wide text-text">SALON</h1>
+        <p className="mt-1 text-sm text-muted">{t("auth.tagline")}</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-line bg-surface p-5">
+        <h2 className="font-display text-xl tracking-wide">{t("auth.register")}</h2>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">Ad</span>
+          <span className="text-xs font-medium text-muted">{t("auth.name")}</span>
           <input
             type="text"
             autoComplete="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text"
-            placeholder="Adın"
+            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">E-posta</span>
+          <span className="text-xs font-medium text-muted">{t("auth.email")}</span>
           <input
             type="email"
             autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text"
+            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
             placeholder="ornek@mail.com"
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">Şifre</span>
+          <span className="text-xs font-medium text-muted">{t("auth.password")}</span>
           <input
             type="password"
             autoComplete="new-password"
@@ -103,8 +99,8 @@ function RegisterPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text"
-            placeholder="En az 8 karakter"
+            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+            placeholder={t("auth.passwordPlaceholder")}
           />
         </label>
         {error && (
@@ -118,12 +114,12 @@ function RegisterPage() {
           className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-          Hesap oluştur
+          {t("auth.register")}
         </button>
         <p className="text-center text-sm text-muted">
-          Zaten hesabın var mı?{" "}
+          {t("auth.hasAccount")}{" "}
           <Link to="/login" className="font-medium text-yellow underline-offset-2 hover:underline">
-            Giriş yap
+            {t("auth.login")}
           </Link>
         </p>
       </form>

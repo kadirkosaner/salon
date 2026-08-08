@@ -4,6 +4,22 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { addDaysISO, isoDow } from "@/lib/utils";
 import { ensureUserSeeded } from "./seed";
 import {
+  v,
+  isoDate,
+  positiveId,
+  workoutStatus,
+  weightKg,
+  reps,
+  rir,
+  sets,
+  restSec,
+  repRange,
+  loadTag,
+  optionalText,
+  parseOrThrow,
+} from "@/lib/validation";
+import { z } from "zod";
+import {
   emitPersonalRecordIfAny,
   emitWorkoutCompleted,
 } from "./activity";
@@ -51,7 +67,7 @@ export type WorkoutDetail = {
 
 export const listWorkoutsInRange = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((d: { from: string; to: string }) => d)
+  .validator(v(z.object({ from: isoDate, to: isoDate })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -83,7 +99,7 @@ export const listWorkoutsInRange = createServerFn({ method: "GET" })
 
 export const getWorkoutByDate = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((date: string) => date)
+  .validator(v(isoDate))
   .handler(async ({ context, data: date }): Promise<WorkoutDetail | null> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -101,7 +117,10 @@ export const getWorkoutByDate = createServerFn({ method: "GET" })
 
 export const createWorkout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { date: string; programDayId?: number | null }) => d)
+  .validator(v(z.object({
+    date: isoDate,
+    programDayId: positiveId.nullable().optional(),
+  })))
   .handler(async ({ context, data }): Promise<WorkoutDetail> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -150,7 +169,12 @@ export const createWorkout = createServerFn({ method: "POST" })
 
 export const updateWorkout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { id: number; status?: string; notes?: string | null; day_name?: string }) => d)
+  .validator(v(z.object({
+    id: positiveId,
+    status: workoutStatus.optional(),
+    notes: optionalText(2000),
+    day_name: z.string().trim().max(80).optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`
@@ -184,12 +208,10 @@ export const updateWorkout = createServerFn({ method: "POST" })
  */
 export const skipWorkout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (d: {
-      id: number;
-      mode: "skip_week" | "tomorrow" | "next_free" | "postpone_week";
-    }) => d,
-  )
+  .validator(v(z.object({
+    id: positiveId,
+    mode: z.enum(["skip_week", "tomorrow", "next_free", "postpone_week"]),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<{
@@ -323,7 +345,7 @@ async function postponeWeekByOneDay(
 
 export const deleteWorkout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await sql`delete from workouts where id = ${id} and user_id = ${context.userId}`;
@@ -352,15 +374,13 @@ export const clearFutureWorkouts = createServerFn({ method: "POST" })
 
 export const updateWorkoutSet = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (d: {
-      id: number;
-      weight?: number | null;
-      reps?: number | null;
-      rir?: number | null;
-      completed?: boolean;
-    }) => d,
-  )
+  .validator(v(z.object({
+    id: positiveId,
+    weight: weightKg.optional(),
+    reps: reps.optional(),
+    rir: rir.optional(),
+    completed: z.boolean().optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`
@@ -425,17 +445,15 @@ export const updateWorkoutSet = createServerFn({ method: "POST" })
 
 export const addWorkoutExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (d: {
-      workoutId: number;
-      exerciseId: number;
-      sets?: number;
-      rep_lo?: number;
-      rep_hi?: number;
-      rest_sec?: number;
-      load_tag?: string;
-    }) => d,
-  )
+  .validator(v(z.object({
+    workoutId: positiveId,
+    exerciseId: positiveId,
+    sets: sets.optional(),
+    rep_lo: repRange.optional(),
+    rep_hi: repRange.optional(),
+    rest_sec: restSec.optional(),
+    load_tag: loadTag.optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql`
@@ -473,7 +491,7 @@ export const addWorkoutExercise = createServerFn({ method: "POST" })
 
 export const deleteWorkoutExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((id: number) => id)
+  .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
     await sql`
@@ -487,7 +505,10 @@ export const deleteWorkoutExercise = createServerFn({ method: "POST" })
 /** Swap a workout exercise for a similar/library alternative; keeps set rows. */
 export const swapWorkoutExercise = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { workoutExerciseId: number; newExerciseId: number }) => d)
+  .validator(v(z.object({
+    workoutExerciseId: positiveId,
+    newExerciseId: positiveId,
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const owned = await sql<{ id: number; workout_id: number }>`
@@ -528,7 +549,7 @@ export const swapWorkoutExercise = createServerFn({ method: "POST" })
  */
 export const saveWorkoutToProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { workoutId: number }) => d)
+  .validator(v(z.object({ workoutId: positiveId })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const w = await sql<{
@@ -696,55 +717,78 @@ async function ensureRollingHorizon(
   let created = 0;
   let replaced = 0;
 
-  // Walk day by day
+  // Prefetch program days + existing workouts in range (2 queries, not 3×days)
+  const programDays = await sql<{
+    id: number;
+    name: string;
+    dow: number;
+    valid_from: string | null;
+    valid_to: string | null;
+  }>`
+    select pd.id, pd.name, pd.dow,
+           p.valid_from::text as valid_from, p.valid_to::text as valid_to
+    from program_days pd
+    join programs p on p.id = pd.program_id
+    where p.user_id = ${userId} and p.is_active = true
+    order by p.id desc, pd.dow
+  `;
+  const dayByDow = new Map<number, { id: number; name: string; valid_from: string | null; valid_to: string | null }>();
+  for (const d of programDays) {
+    if (!dayByDow.has(d.dow)) {
+      dayByDow.set(d.dow, {
+        id: d.id,
+        name: d.name,
+        valid_from: d.valid_from,
+        valid_to: d.valid_to,
+      });
+    }
+  }
+
+  const existingRows = await sql<{
+    id: number;
+    date: string;
+    status: string;
+    n: number;
+  }>`
+    select w.id, w.date::text as date, w.status,
+           (select count(*)::int from workout_exercises we where we.workout_id = w.id) as n
+    from workouts w
+    where w.user_id = ${userId}
+      and w.date >= ${start}::date
+      and w.date <= ${end}::date
+  `;
+  const existingByDate = new Map(
+    existingRows.map((r) => [r.date, r] as const),
+  );
+
+  // Walk day by day — only materialize when needed
   let cursor = start;
-  // safety cap: 120 days per call
   for (let i = 0; i < 120; i++) {
     if (cursor > end) break;
     const dateStr = cursor;
     const dow = isoDow(dateStr);
-
-    const day = await sql<{ id: number; name: string }>`
-      select pd.id, pd.name
-      from program_days pd
-      join programs p on p.id = pd.program_id
-      where p.user_id = ${userId}
-        and p.is_active = true
-        and (p.valid_from is null or p.valid_from <= ${dateStr}::date)
-        and (p.valid_to is null or p.valid_to >= ${dateStr}::date)
-        and pd.dow = ${dow}
-      order by p.id desc
-      limit 1
-    `;
-
-    if (day.length > 0) {
-      const existing = await sql<{ id: number }>`
-        select w.id from workouts w
-        where w.user_id = ${userId} and w.date = ${dateStr}::date
-      `;
-
-      if (existing.length === 0) {
-        await materializeWorkout(sql, userId, dateStr, day[0]!.id);
-        created += 1;
-      } else {
-        const meta = await sql<{ n: number; status: string }>`
-          select
-            (select count(*)::int from workout_exercises we where we.workout_id = w.id) as n,
-            w.status
-          from workouts w
-          where w.id = ${existing[0]!.id}
-        `;
-        const n = meta[0]?.n ?? 0;
-        const status = meta[0]?.status ?? "planned";
-        // Only replace hollow shells — never completed / skipped with content
-        if (n === 0 && status !== "completed" && status !== "skipped") {
-          await sql`delete from workouts where id = ${existing[0]!.id}`;
-          await materializeWorkout(sql, userId, dateStr, day[0]!.id);
+    const day = dayByDow.get(dow);
+    if (day) {
+      const vf = day.valid_from;
+      const vt = day.valid_to;
+      const inRange =
+        (vf == null || vf <= dateStr) && (vt == null || vt >= dateStr);
+      if (inRange) {
+        const existing = existingByDate.get(dateStr);
+        if (!existing) {
+          await materializeWorkout(sql, userId, dateStr, day.id);
+          created += 1;
+        } else if (
+          existing.n === 0 &&
+          existing.status !== "completed" &&
+          existing.status !== "skipped"
+        ) {
+          await sql`delete from workouts where id = ${existing.id}`;
+          await materializeWorkout(sql, userId, dateStr, day.id);
           replaced += 1;
         }
       }
     }
-
     cursor = addDaysISO(cursor, 1);
   }
 
@@ -757,7 +801,11 @@ async function ensureRollingHorizon(
  */
 export const generateWorkouts = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { fromDate?: string; weeks?: number; untilDate?: string }) => d)
+  .validator(v(z.object({
+    fromDate: isoDate.optional(),
+    weeks: z.number().int().min(1).max(52).optional(),
+    untilDate: isoDate.optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -774,7 +822,15 @@ export const generateWorkouts = createServerFn({ method: "POST" })
 /** Explicit ensure for clients that only open a far future date */
 export const ensureWorkoutHorizon = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: { untilDate?: string; daysAhead?: number } = {}) => d ?? {})
+  .validator((d: unknown) =>
+    parseOrThrow(
+      z.object({
+        untilDate: isoDate.optional(),
+        daysAhead: z.number().int().min(1).max(120).optional(),
+      }).default({}),
+      d ?? {},
+    ),
+  )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -866,23 +922,39 @@ async function materializeWorkout(
   `;
   const workoutId = w[0]!.id;
 
-  for (const pe of programExercises) {
-    const we = await sql<{ id: number }>`
-      insert into workout_exercises (
-        workout_id, exercise_id, exercise_name, detail, unit,
-        target_sets, target_rep_lo, target_rep_hi, rest_sec, load_tag, note, sort
-      ) values (
-        ${workoutId}, ${pe.exercise_id}, ${pe.exercise_name}, ${pe.detail}, ${pe.unit},
-        ${pe.sets}, ${pe.rep_lo}, ${pe.rep_hi}, ${pe.rest_sec}, ${pe.load_tag}, ${pe.note}, ${pe.sort}
-      ) returning id
-    `;
-    for (let s = 1; s <= pe.sets; s++) {
-      await sql`
-        insert into workout_sets (workout_exercise_id, set_index)
-        values (${we[0]!.id}, ${s})
-      `;
-    }
-  }
+  // Set-based copy of program exercises → workout_exercises
+  await sql`
+    insert into workout_exercises (
+      workout_id, exercise_id, exercise_name, detail, unit,
+      target_sets, target_rep_lo, target_rep_hi, rest_sec, load_tag, note, sort
+    )
+    select
+      ${workoutId},
+      pe.exercise_id,
+      e.name,
+      coalesce(pe.detail, e.detail),
+      coalesce(e.unit, 'kg'),
+      pe.sets,
+      pe.rep_lo,
+      pe.rep_hi,
+      pe.rest_sec,
+      pe.load_tag,
+      pe.note,
+      pe.sort
+    from program_exercises pe
+    join exercises e on e.id = pe.exercise_id
+    where pe.program_day_id = ${resolvedDayId}
+    order by pe.sort
+  `;
+
+  // Generate sets from target_sets in one insert
+  await sql`
+    insert into workout_sets (workout_exercise_id, set_index)
+    select we.id, gs
+    from workout_exercises we
+    cross join lateral generate_series(1, we.target_sets) as gs
+    where we.workout_id = ${workoutId}
+  `;
 
   return (await loadWorkout(sql, workoutId, userId))!;
 }
@@ -931,63 +1003,120 @@ async function loadWorkout(
     order by we.sort
   `;
 
-  const result: WorkoutExerciseRow[] = [];
-  for (const ex of exercises) {
-    const sets = await sql<WorkoutSetRow>`
-      select id, set_index, weight::text as weight, reps, rir, completed
-      from workout_sets where workout_exercise_id = ${ex.id}
-      order by set_index
-    `;
+  // Batch all sets for this workout (1 query instead of N)
+  const allSets = await sql<WorkoutSetRow & { workout_exercise_id: number }>`
+    select ws.id, ws.set_index, ws.weight::text as weight, ws.reps, ws.rir, ws.completed,
+           ws.workout_exercise_id
+    from workout_sets ws
+    join workout_exercises we on we.id = ws.workout_exercise_id
+    where we.workout_id = ${workoutId}
+    order by ws.workout_exercise_id, ws.set_index
+  `;
+  const setsByEx = new Map<number, WorkoutSetRow[]>();
+  for (const s of allSets) {
+    const row: WorkoutSetRow = {
+      id: s.id,
+      set_index: s.set_index,
+      weight: s.weight,
+      reps: s.reps,
+      rir: s.rir,
+      completed: s.completed,
+    };
+    const list = setsByEx.get(s.workout_exercise_id) ?? [];
+    list.push(row);
+    setsByEx.set(s.workout_exercise_id, list);
+  }
 
-    const lastDate = await sql<{ date: string }>`
-      select max(w2.date)::text as date from workouts w2
+  // Last completed session per exercise_id (2 queries total, not 2N)
+  const exerciseIds = exercises.map((e) => e.exercise_id);
+  const lastByEx = new Map<
+    number,
+    { date: string; sets: { weight: number | null; reps: number | null }[] }
+  >();
+  if (exerciseIds.length > 0) {
+    // Distinct last date per exercise_id via lateral-friendly subquery
+    const lastDates = await sql<{ exercise_id: number; date: string }>`
+      select we2.exercise_id, max(w2.date)::text as date
+      from workouts w2
       join workout_exercises we2 on we2.workout_id = w2.id
       where w2.user_id = ${userId}
-        and we2.exercise_id = ${ex.exercise_id}
         and w2.date < ${w.date}::date
         and w2.status = 'completed'
+        and we2.exercise_id in (
+          select we.exercise_id from workout_exercises we
+          where we.workout_id = ${workoutId}
+        )
+      group by we2.exercise_id
     `;
-    let lastTime: WorkoutExerciseRow["lastTime"] = null;
-    let suggestedWeight: number | null = null;
-    if (lastDate[0]?.date) {
-      const lastSets = await sql<{ weight: string | null; reps: number | null }>`
-        select ws.weight::text as weight, ws.reps
+    if (lastDates.length > 0) {
+      const lastSets = await sql<{
+        exercise_id: number;
+        date: string;
+        weight: string | null;
+        reps: number | null;
+        set_index: number;
+      }>`
+        select we.exercise_id, w2.date::text as date,
+               ws.weight::text as weight, ws.reps, ws.set_index
         from workout_sets ws
         join workout_exercises we on we.id = ws.workout_exercise_id
         join workouts w2 on w2.id = we.workout_id
         where w2.user_id = ${userId}
-          and we.exercise_id = ${ex.exercise_id}
-          and w2.date = ${lastDate[0].date}::date
-        order by ws.set_index
+          and w2.status = 'completed'
+          and we.exercise_id in (
+            select we0.exercise_id from workout_exercises we0
+            where we0.workout_id = ${workoutId}
+          )
+          and (we.exercise_id, w2.date) in (
+            select we2.exercise_id, max(w2b.date)
+            from workouts w2b
+            join workout_exercises we2 on we2.workout_id = w2b.id
+            where w2b.user_id = ${userId}
+              and w2b.date < ${w.date}::date
+              and w2b.status = 'completed'
+              and we2.exercise_id in (
+                select we0.exercise_id from workout_exercises we0
+                where we0.workout_id = ${workoutId}
+              )
+            group by we2.exercise_id
+          )
+        order by we.exercise_id, ws.set_index
       `;
-      lastTime = {
-        date: lastDate[0].date,
-        sets: lastSets.map((s) => ({
+      for (const s of lastSets) {
+        const cur = lastByEx.get(s.exercise_id) ?? { date: s.date, sets: [] };
+        cur.date = s.date;
+        cur.sets.push({
           weight: s.weight != null ? Number(s.weight) : null,
           reps: s.reps,
-        })),
-      };
+        });
+        lastByEx.set(s.exercise_id, cur);
+      }
+      void lastDates;
+    }
+  }
+
+  const result: WorkoutExerciseRow[] = exercises.map((ex) => {
+    const sets = setsByEx.get(ex.id) ?? [];
+    const last = lastByEx.get(ex.exercise_id) ?? null;
+    let suggestedWeight: number | null = null;
+    let lastTime: WorkoutExerciseRow["lastTime"] = null;
+    if (last) {
+      lastTime = { date: last.date, sets: last.sets };
       const maxW = Math.max(
-        ...lastSets.map((s) => (s.weight != null ? Number(s.weight) : 0)),
+        ...last.sets.map((s) => (s.weight != null ? s.weight : 0)),
         0,
       );
       if (maxW > 0) {
         const allTop =
-          lastSets.length > 0 &&
-          lastSets.every((s) => s.reps != null && s.reps >= ex.target_rep_hi);
+          last.sets.length > 0 &&
+          last.sets.every((s) => s.reps != null && s.reps >= ex.target_rep_hi);
         suggestedWeight = allTop
           ? Math.round((maxW * 1.025) / 2.5) * 2.5
           : maxW;
       }
     }
-
-    result.push({
-      ...ex,
-      sets,
-      lastTime,
-      suggestedWeight,
-    });
-  }
+    return { ...ex, sets, lastTime, suggestedWeight };
+  });
 
   return {
     id: w.id,

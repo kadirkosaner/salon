@@ -131,6 +131,20 @@ export default defineConfig(({ command }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/victory-vendor")) {
+            return "recharts";
+          }
+          if (id.includes("node_modules/@tanstack/react-router") || id.includes("node_modules/@tanstack/router-core")) {
+            return "router";
+          }
+        },
+      },
+    },
+  },
   plugins: [
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.

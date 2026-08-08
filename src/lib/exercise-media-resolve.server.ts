@@ -169,7 +169,7 @@ export function resolveExerciseMedia(rawName: string): ResolvedMedia {
   }
 
   // 3) Exact / includes
-  let hit = byNeedle(cleaned) ?? byNeedle(rawName);
+  const hit = byNeedle(cleaned) ?? byNeedle(rawName);
   if (hit && (hit.gif || hit.image)) return pack(hit);
 
   // 4) Token score
