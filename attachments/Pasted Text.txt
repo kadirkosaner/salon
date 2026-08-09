@@ -1,0 +1,152 @@
+# Salon — UX turu: ölü sekmeler, antrenman detayı, ayarlar mimarisi, tutarlılık
+
+Kullanıcı geri bildirimi + benim ölçümlerim. Her maddede kanıt ve dosya referansı var — tahmin yürütme, doğrudan oraya git.
+
+## Kırmızı çizgiler
+
+- `src/lib/auth/server.ts`, `preview.ts`, `pglite-dialect.ts`, `popup.server.ts` — dokunma.
+- `vite.config.ts`'te `0.0.0.0:8080` sözleşmesi ve plugin'ler.
+- `migrations/0001`–`0014` — düzenleme; `0015_*.sql`'den itibaren yeni dosya.
+- **Keşfet'in raf/tekilleştirme/filtre mantığına dokunma** — test ettim, çalışıyor. Bu turda Keşfet'te yalnızca sekme bağlama işi var (madde 1).
+- Yeni server function: `authMiddleware` + `context.userId` scope + zod (`v(schema)` / `noInput`) + çok adımlıda `withTransaction`. Gizlilik **sunucuda** uygulanır.
+- Bitince `npm run typecheck && npm run lint && npm run test && npm run build` yeşil.
+
+---
+
+## 0. KRİTİK: Yerli `confirm()` canlı önizlemede ölü — tüm onay diyalogları uygulama içine taşınmalı
+
+**Kullanıcının "programı terk edemiyorum" şikayetinin kök nedeni bu.** Terk etme akışını uçtan uca test ettim:
+
+- Sunucu tarafı **doğru çalışıyor**: onay verilince program siliniyor, takvimde ve akışta kalıntı kalmıyor (PUSH/PULL/BACAK taraması temiz).
+- Ama akış `window.confirm()` ile onay istiyor (`program.tsx:277`). Uygulama Grok canlı önizlemesinde **sandbox'lı iframe** içinde çalışıyor; `allow-modals` izni olmayan iframe'de `confirm()` **hiçbir diyalog göstermeden sessizce `false` döner**. Sonuç: kullanıcı "Programı terk et"e basıyor, hiçbir şey olmuyor, hata da yok.
+
+Aynı ölü kalıp **10 yerde** var — hepsi önizlemede sessizce iptal oluyor:
+
+| Dosya | Satır | Eylem |
+|---|---|---|
+| `src/routes/program.tsx` | 277 | Programı terk et |
+| `src/routes/program.tsx` | 255 | Gelecek seansları temizle |
+| `src/routes/program.tsx` | 134 | Gün sil |
+| `src/routes/antrenman.tsx` | 270 | Hareket kaldır |
+| `src/routes/antrenman.tsx` | 415 | Gelecek seansları temizle |
+| `src/routes/ayarlar.tsx` | 377 | Hesap sil |
+| `src/components/profile/profile-view.tsx` | 78 | Takibi bırak |
+| `src/components/profile/profile-view.tsx` | 96 | Program klonla (profilden) |
+| `src/components/feed/activity-card.tsx` | 66 | Gönderi sil |
+| `src/routes/kesfet.tsx` | 199 | Takibi bırak |
+
+**Yap:**
+- Ortak bir **uygulama içi onay bileşeni** yaz: `ConfirmSheet` (AppSheet tabanlı) — başlık, açıklama, yıkıcı eylemse `danger` renkli onay butonu + vazgeç. `confirm()` çağrılarının **hepsini** buna geçir.
+- Küçük onaylar (takibi bırak gibi) için sheet yerine iki aşamalı buton da kabul (ilk dokunuş "Emin misin?"e çevirir, ikinci dokunuş uygular, 3sn sonra geri döner) — hangisini nerede kullandığını tutarlı seç.
+- Hesap silme mevcut "DELETE yaz" akışını koruyabilir ama `confirm()` katmanı olmadan.
+- İş bitince `grep -rn "confirm(" src/` yalnızca `confirm_username` benzeri alan adlarını döndürmeli — tek bir yerli `confirm()`/`alert()`/`prompt()` kalmamalı.
+
+**Not:** Terk etme "⋯" menüsünün içinde — yerleşim tamam, sorun yalnızca diyalog. Menü konumu 8. maddedeki tutarlılık geçişinin parçası olarak değerlendirilebilir.
+
+## 1. Keşfet sekmeleri ölü — hepsi aynı içeriği gösteriyor (doğrulandı, kök neden bulundu)
+
+Test ettim: *For you / Programs / People / Exercises* sekmelerine tıkladım, üçünde de gövde metni **bayt bayt aynı** kaldı.
+
+**Kök neden:** `src/routes/kesfet.tsx:96`'da `tab` state'i var, `:295`'te butonlar set ediyor — ama `tab === id` ifadesi kod tabanında **yalnızca bir kez**, sekme butonunun className'inde geçiyor. Yani sekme durumu sadece butonu boyuyor, **içeriği hiç dallandırmıyor.**
+
+**Yap:**
+- **For you** — mevcut raflar (öne çıkanlar / yeni / kişiler / seviyene göre) aynen kalsın.
+- **Programs** — tüm herkese açık programlar tek yoğun liste, filtre pill'iyle birlikte.
+- **People** — kişi satırları (avatar + ad + @kullanıcıadı + takipçi + takip butonu), takipçi sayısına göre sıralı; arama boşken önerilenler.
+- **Exercises** — hareket kütüphanesi listesi (mevcut arama sonucu satır bileşenini kullan), kas grubu filtresiyle.
+- Sekme URL'e yansısın (`?tab=people` gibi) ki geri tuşu ve paylaşım doğru çalışsın.
+
+## 2. Akış kartından antrenman içeriği açılmıyor
+
+`src/components/feed/activity-card.tsx:102-121` — karttaki linkler yalnızca **yazarın profiline** gidiyor. Birinin "antrenman tamamladı" kartına dokunan kullanıcı o antrenmanın içeriğini göremiyor. Sosyal uygulamada içerik kartı içeriğe açılmalı.
+
+**Yap:**
+- Yeni server function `getPublicWorkout(workoutId)`: antrenmanı hareketleri ve setleriyle döndürür. **Gizlilik sunucuda:** sahibinin `visibility` ayarına uy (private → yalnız kendisi; followers → yalnız takipçiler). Yanıtta notlar gibi hassas alanları sahibi dışındakilere gönderme.
+- `workout_completed` ve `personal_record` kartlarının gövdesine dokununca **bottom sheet** ile antrenman detayı açılsın: gün adı, tarih, hareket listesi (set × tekrar × kg), toplam tonaj. `AppSheet` kullan (`nested` gerekmez, kart sheet içinde değil).
+- Sheet'te "Programı gör" (programı herkese açıksa) bağlantısı olabilir; düzenleme aksiyonları yalnızca sahibine.
+- `subject_id` zaten `activity_events`'te var; payload'dan değil canlı sorgudan çek ki silinen antrenman için düzgün boş durum göster ("Bu antrenman artık yok").
+
+## 3. Ayarlar mimarisi: "Profili düzenle" ayrı ekran olmalı
+
+Şu an profildeki **Edit** butonu `/ayarlar`'ın tepesine atıyor ve kimlik alanları (ad, kullanıcı adı, bio, avatar, doğum tarihi, cinsiyet, boy) uygulama tercihlerinin (tema, dil, birim, bildirim) arasına dağılmış durumda.
+
+**Yap:**
+- **`/profil/duzenle`** (route adı sende) ayrı ekran: avatar + görünen ad + kullanıcı adı + bio + doğum tarihi + cinsiyet + boy + görünürlük. Profildeki **Edit** buraya gelsin.
+- **Ayarlar** yalnızca uygulama tercihleri: Görünüm (tema/vurgu), dil, saat dilimi, birim, bildirim, haptik, güvenlik (şifre), veri (dışa aktar / hesap sil). Ayarların en üstüne profil özet satırı (avatar + ad + "Profili düzenle →") konabilir.
+- İkisi arasında alan **tekrarı kalmasın** — bir alan tek yerde düzenlenir.
+
+## 4. Profil düzenleme formu: zorunluluk ve hata vurgusu
+
+Kullanıcı raporu: form tüm alanların dolmasını istiyor gibi davranıyor ve hata olunca **hangi alanın hatalı olduğu görünmüyor**.
+
+**Yap:**
+- Doğum tarihi, cinsiyet, boy, bio **gerçekten isteğe bağlı**: boş bırakılıp kaydedilebilmeli, boş gönderim mevcut değeri silmemeli (`undefined` ≠ `null` ayrımına dikkat — zod şemasında `.optional()` ile `.nullable()` doğru kullan).
+- **Alan bazlı hata:** hata veren alanın kenarlığı `danger` olur, altına tek satır hata mesajı gelir, ilk hatalı alana kaydırılır ve odaklanır. Genel toast tek başına yeterli değil.
+- Sunucu zod hatalarını alan adıyla döndür ki istemci doğru alanı vurgulayabilsin.
+- Kaydet butonu işlem sırasında disabled + spinner; başarıda geri dönüş.
+
+## 5. Paylaşım girişi yanlış yerde, profilde hiç yok
+
+Ölçtüm: akışta "Share something…" kutusu **üçüncü sırada** — "UP NEXT" kartı ve haftalık hacim bloğunun altında gömülü. Profilde ise paylaşım girişi hiç yok.
+
+**Yap:**
+- Composer'ı akışın **en üstüne** al (arama/başlık altında ilk öğe). Twitter düzeni: avatar + "Ne yaptın?" placeholder'ı.
+- **Profil > Aktivite sekmesinin** üstüne de aynı composer'ı koy (yalnızca kendi profilinde).
+- Akıştaki sıralama şu olsun: composer → (varsa) bugünkü seans şeridi (kompakt) → akış kartları → önerilenler.
+- **Bulduğum ek bug:** program yokken haftalık hacim bloğu "0 kg / 10k · 0% of goal · **0 sessions left**" gösteriyor — 10k sabit hedef ve "0 seans kaldı" anlamsız. Program yoksa bu bloğu tamamen gizle.
+
+## 6. İkon denetimi
+
+Gerçek durum: ikonlar **zaten Heroicons** — `src/components/icons.tsx` cephesi 60+ Heroicon'u eski adlarla dışa veriyor + 6 yerel SVG (`Dumbbell, Weight, Vibrate, Eraser, Ruler, Save`). `lucide-react` paketten kalkmış. Ama kullanıcı "bazı ikonlar boş/bozuk" ve "premium durmuyor" diyor — yani sorun görsel katmanda.
+
+**Yap:**
+- **Ekran ekran görsel denetim:** her ikonun gerçekten render olduğunu Playwright ekran görüntüleriyle doğrula (login, akış, keşfet, antrenman, program, profil, ayarlar, bildirimler, sheet'ler). Boş kutu / kaybolan glif varsa hangi eşleme olduğunu bulup düzelt.
+- **6 yerel SVG'yi Heroicons diline getir:** 1.5 stroke, `currentColor`, 24×24 viewBox — kalınlık/köşe stili Heroicons'la bire bir uyuşsun. Uymuyorsa yeniden çiz.
+- **Aktif durumlar solid:** alt navigasyon aktif sekmesi, beğenilmiş kalp, aktif zil `24/solid` varyantı kullansın. Outline/solid geçişini denetle.
+- Boyut disiplini: 16/20/24; aynı satırda karışık boyut kalmasın.
+- Cephedeki kullanılmayan export'ları temizle.
+
+## 7. Antrenman gün şeridi: üstten kesilme
+
+Kullanıcı raporu: gün hücrelerinin üst kısmı kötü kesiliyor. Muhtemel neden: seçili günün altın halkası (`ring`/`shadow`) `overflow-x` kaydırıcısının kutusunda kırpılıyor.
+
+**Yap:** kaydırıcıya dikey padding ver (halka + gölge payı, üst ve alt), hücre halkasını `box-shadow: inset` yerine dışa taşan ring kullanıyorsa kaydırıcının `overflow-y`'sini görünür bırakmak yerine padding ile çöz. 390px'te seçili/seçisiz her durumda ekran görüntüsüyle doğrula; kenarlardaki yarım hücreler için sağ/sol kenara gradyan ipucu koru.
+
+## 8. Kapsamlı tutarlılık geçişi (başlıklar, butonlar, boşluklar)
+
+Kullanıcı "buton/başlık yerleşimleri çok yanlış, bütünsel bakılmalı" diyor. Tek tek piksel itmek yerine **kural setiyle** geç:
+
+- **Başlık deseni tek:** logo/geri + başlık + (en fazla iki) sağ aksiyon. Her ekranda aynı yükseklik ve tipografi.
+- **Ekran başına tek dolu birincil buton.** İkincil aksiyonlar `edge` kenarlıklı. (Akışta şu an "Discover" dolu + composer + "Follow" dolu yan yana — teke indir.)
+- **Bölüm etiketi tek stil:** küçük büyük-harf + `letter-spacing`, Keşfet'teki gibi; kart başlığı stiliyle karışmasın.
+- **Boşluk ölçeği:** 4/8/12/16/24 dışına çıkma; ekranlar arası dikey ritim aynı.
+- **Alt navigasyon payı:** her sayfanın altına nav yüksekliği + safe-area kadar boşluk — profil sayfasında içerik navın altında kalıyordu, tüm sayfalarda kontrol et.
+- Liste = kenardan kenara satır + `rule`; kart yalnızca sheet/yüzen öğe. "UP NEXT" kartı bu dile aykırı — kompakt bir satıra çevir.
+- Geçişin sonunda her ekranın 390px ekran görüntüsünü al, yan yana bak, aykırı kalanı düzelt.
+
+---
+
+## Doğrulama
+
+```bash
+npm run typecheck && npm run lint && npm run test && npm run build
+```
+
+Playwright 390px, **gerçekten bakarak**:
+
+- [ ] `grep -rn "confirm(" src/` → yalnızca `confirm_username` türü alan adları; yerli diyalog sıfır
+- [ ] Programı terk et: dokun → **uygulama içi onay sheet'i** → onayla → program gidiyor, takvim ve akış temiz
+- [ ] Takibi bırak, gönderi sil, hareket kaldır — hepsi uygulama içi onayla çalışıyor
+- [ ] Keşfet: dört sekme **dört farklı içerik** gösteriyor; URL `?tab=` yansıtıyor
+- [ ] Akışta antrenman kartına dokun → set/tekrar/kg detayı sheet'te açılıyor
+- [ ] `visibility='private'` bir kullanıcının antrenmanı başkasından **açılmıyor** (sunucu yanıtında da yok)
+- [ ] Profil → Edit → yeni "Profili düzenle" ekranı; Ayarlar'da kimlik alanı tekrarı yok
+- [ ] Profil düzenlemede boş isteğe bağlı alanlarla kayıt geçiyor; hatalı alan kenarlığı yanıyor ve odaklanıyor
+- [ ] Composer akışın en üstünde ve kendi profilinde; programsızken hacim bloğu görünmüyor
+- [ ] Tüm ekran görüntülerinde boş/bozuk ikon yok; aktif nav ikonu solid
+- [ ] Gün şeridinde seçili hücrenin halkası kırpılmıyor
+- [ ] Her ekranda tek dolu birincil buton; alt navigasyon hiçbir içeriği örtmüyor
+
+## Çalışma şekli
+
+Sıra: **0 → 1 → 2 → 3+4 → 5 → 6+7 → 8.** Önce `confirm()` değişimi (kullanıcının önizlemede hiçbir yıkıcı eylemi çalıştıramamasının nedeni), sonra ölü sekmeler, sonra antrenman detayı; ikon ve stil geçişi en sona — yapı oturmadan stil cilalanmaz. Her maddeden sonra commit + ekran görüntüsü. Bir değişiklik davranış değiştirecekse önce sor.
