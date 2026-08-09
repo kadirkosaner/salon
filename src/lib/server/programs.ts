@@ -278,17 +278,33 @@ export const createProgram = createServerFn({ method: "POST" })
               { dow: 3, name: "Gün 3", focus: undefined },
             ];
 
-      let sort = 0;
-      for (const d of days) {
-        if (d.dow < 1 || d.dow > 7) continue;
-        await sql`
-          insert into program_days (program_id, dow, name, focus, sort)
-          values (
-            ${programId}, ${d.dow}, ${d.name.trim() || `Gün ${d.dow}`},
-            ${d.focus ?? null}, ${sort}
-          )
-        `;
-        sort += 1;
+      // Bulk insert program days (1 query)
+      {
+        const values: unknown[] = [];
+        const placeholders: string[] = [];
+        let p = 1;
+        let sort = 0;
+        for (const d of days) {
+          if (d.dow < 1 || d.dow > 7) continue;
+          placeholders.push(
+            `($${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+          );
+          values.push(
+            programId,
+            d.dow,
+            d.name.trim() || `Gün ${d.dow}`,
+            d.focus ?? null,
+            sort,
+          );
+          sort += 1;
+        }
+        if (placeholders.length > 0) {
+          await sql.query(
+            `insert into program_days (program_id, dow, name, focus, sort)
+             values ${placeholders.join(", ")}`,
+            values,
+          );
+        }
       }
 
       return { id: programId, name: data.name.trim() || "Yeni Program" };

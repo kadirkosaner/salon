@@ -138,7 +138,7 @@ export default defineConfig(({ command }) => ({
           if (id.includes("node_modules/recharts") || id.includes("node_modules/victory-vendor") || id.includes("node_modules/d3-")) {
             return "recharts";
           }
-          if (id.includes("node_modules/@tanstack/react-router") || id.includes("node_modules/@tanstack/router-core")) {
+          if (id.includes("node_modules/@tanstack/react-router") || id.includes("node_modules/@tanstack/router-core") || id.includes("node_modules/@tanstack/history")) {
             return "router";
           }
           if (id.includes("node_modules/@tanstack/query-core") || id.includes("node_modules/@tanstack/react-query")) {
@@ -149,6 +149,15 @@ export default defineConfig(({ command }) => ({
           }
           if (id.includes("node_modules/vaul") || id.includes("node_modules/@radix-ui")) {
             return "ui-vendor";
+          }
+          if (id.includes("node_modules/sonner")) {
+            return "sonner";
+          }
+          if (id.includes("node_modules/zod")) {
+            return "zod";
+          }
+          if (id.includes("node_modules/date-fns")) {
+            return "date-fns";
           }
         },
       },

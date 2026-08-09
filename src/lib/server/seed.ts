@@ -406,34 +406,47 @@ export async function ensureExerciseLibrary(sql: Sql): Promise<void> {
       }
     }
 
-    // One-shot media backfill for rows still missing gif (single UPDATE…FROM style)
+    // One-shot media backfill for rows still missing gif (batched, not N SELECT+UPDATE)
     if (media) {
-      // Only enrich names that exist but lack gif — still avoid per-row SELECT.
-      // Build name→dataset map in memory, then 1 UPDATE per row that needs it
-      // is still heavy; instead skip if most already have media.
       const need = await sql<{ id: number; name: string }>`
         select id, name from exercises
         where owner_id is null and gif_url is null
         limit 80
       `;
       if (need.length > 0 && need.length <= EXERCISE_LIBRARY.length) {
-        // Batch CASE update would be ideal; do a single transaction with fewer
-        // statements only for rows that map to dataset.
+        // Single multi-row UPDATE via VALUES join (O(1) round-trip)
+        const values: unknown[] = [];
+        const placeholders: string[] = [];
+        let p = 1;
         for (const row of need) {
           const ds = findDataset(row.name);
           if (!ds) continue;
-          await sql`
-            update exercises set
-              gif_url = coalesce(gif_url, ${ds.gif ?? null}),
-              image_url = coalesce(image_url, ${ds.image ?? null}),
-              form_cues = coalesce(form_cues, ${ds.note ?? null}),
-              default_note = coalesce(default_note, ${ds.note ?? null}),
-              external_id = coalesce(external_id, ${
-                ds.id && !usedExt.has(ds.id) ? ds.id : null
-              })
-            where id = ${row.id}
-          `;
+          const ext =
+            ds.id && !usedExt.has(ds.id) ? ds.id : null;
           if (ds.id) usedExt.add(ds.id);
+          placeholders.push(
+            `($${p++}::int, $${p++}, $${p++}, $${p++}, $${p++})`,
+          );
+          values.push(
+            row.id,
+            ds.gif ?? null,
+            ds.image ?? null,
+            ds.note ?? null,
+            ext,
+          );
+        }
+        if (placeholders.length > 0) {
+          await sql.query(
+            `update exercises e set
+              gif_url = coalesce(e.gif_url, v.gif),
+              image_url = coalesce(e.image_url, v.image),
+              form_cues = coalesce(e.form_cues, v.note),
+              default_note = coalesce(e.default_note, v.note),
+              external_id = coalesce(e.external_id, v.ext)
+            from (values ${placeholders.join(", ")}) as v(id, gif, image, note, ext)
+            where e.id = v.id`,
+            values,
+          );
         }
       }
     }

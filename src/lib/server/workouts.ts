@@ -638,17 +638,35 @@ export const saveWorkoutToProgram = createServerFn({ method: "POST" })
 
     await sql`delete from program_exercises where program_day_id = ${programDayId}`;
 
-    for (const ex of exercises) {
-      await sql`
-        insert into program_exercises (
+    // Bulk insert all exercises (1 query, not N)
+    {
+      const values: unknown[] = [];
+      const placeholders: string[] = [];
+      let p = 1;
+      for (const ex of exercises) {
+        placeholders.push(
+          `($${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+        );
+        values.push(
+          programDayId,
+          ex.exercise_id,
+          ex.detail,
+          ex.target_sets,
+          ex.target_rep_lo,
+          ex.target_rep_hi,
+          ex.rest_sec,
+          ex.load_tag,
+          ex.note,
+          ex.sort,
+        );
+      }
+      await sql.query(
+        `insert into program_exercises (
           program_day_id, exercise_id, detail, sets, rep_lo, rep_hi,
           rest_sec, load_tag, note, sort
-        ) values (
-          ${programDayId}, ${ex.exercise_id}, ${ex.detail},
-          ${ex.target_sets}, ${ex.target_rep_lo}, ${ex.target_rep_hi},
-          ${ex.rest_sec}, ${ex.load_tag}, ${ex.note}, ${ex.sort}
-        )
-      `;
+        ) values ${placeholders.join(", ")}`,
+        values,
+      );
     }
 
     await sql`

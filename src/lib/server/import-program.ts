@@ -98,42 +98,120 @@ export const commitProgramImport = createServerFn({ method: "POST" })
         returning id
       `;
       const programId = prog[0]!.id;
-      let totalExercises = 0;
+
+      // Resolve exercise ids first (create custom ones if needed)
+      type ResolvedEx = {
+        dayIndex: number;
+        sort: number;
+        exerciseId: number;
+        detail: string | null;
+        sets: number;
+        rep_lo: number;
+        rep_hi: number;
+        rest_sec: number;
+        load_tag: string;
+        note: string | null;
+      };
+      const resolved: ResolvedEx[] = [];
+      const customNames = new Map<string, number>(); // lower name → id
 
       for (let di = 0; di < parsed.days.length; di++) {
         const day = parsed.days[di]!;
-        const dayRow = await sql<{ id: number }>`
-          insert into program_days (program_id, dow, name, focus, sort)
-          values (${programId}, ${day.dow}, ${day.name}, ${day.focus}, ${di})
-          returning id
-        `;
-        const dayId = dayRow[0]!.id;
-
         for (let ei = 0; ei < day.exercises.length; ei++) {
           const pe = day.exercises[ei]!;
           const matched = matchExerciseName(pe.name, lib);
           let exerciseId = matched?.id;
           if (!exerciseId) {
-            const created = await sql<{ id: number }>`
-              insert into exercises (owner_id, name, unit, muscle_group)
-              values (${context.userId}, ${pe.name}, 'kg', 'diger')
-              returning id
-            `;
-            exerciseId = created[0]!.id;
-            lib.push({ id: exerciseId, name: pe.name });
+            const key = pe.name.toLowerCase();
+            if (customNames.has(key)) {
+              exerciseId = customNames.get(key)!;
+            } else {
+              const created = await sql<{ id: number }>`
+                insert into exercises (owner_id, name, unit, muscle_group)
+                values (${context.userId}, ${pe.name}, 'kg', 'diger')
+                returning id
+              `;
+              exerciseId = created[0]!.id;
+              customNames.set(key, exerciseId);
+              lib.push({ id: exerciseId, name: pe.name });
+            }
           }
+          resolved.push({
+            dayIndex: di,
+            sort: ei,
+            exerciseId,
+            detail: pe.detail,
+            sets: pe.sets,
+            rep_lo: pe.rep_lo,
+            rep_hi: pe.rep_hi,
+            rest_sec: pe.rest_sec,
+            load_tag: pe.load_tag,
+            note: pe.note,
+          });
+        }
+      }
 
-          await sql`
-            insert into program_exercises (
+      // Bulk insert days
+      {
+        const values: unknown[] = [];
+        const placeholders: string[] = [];
+        let p = 1;
+        for (let di = 0; di < parsed.days.length; di++) {
+          const day = parsed.days[di]!;
+          placeholders.push(
+            `($${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+          );
+          values.push(programId, day.dow, day.name, day.focus, di);
+        }
+        if (placeholders.length > 0) {
+          await sql.query(
+            `insert into program_days (program_id, dow, name, focus, sort)
+             values ${placeholders.join(", ")}`,
+            values,
+          );
+        }
+      }
+
+      // Map day sort → program_day id
+      const dayRows = await sql<{ id: number; sort: number }>`
+        select id, sort from program_days
+        where program_id = ${programId}
+        order by sort
+      `;
+      const dayIdBySort = new Map(dayRows.map((r) => [r.sort, r.id]));
+
+      // Bulk insert all program_exercises
+      if (resolved.length > 0) {
+        const values: unknown[] = [];
+        const placeholders: string[] = [];
+        let p = 1;
+        for (const r of resolved) {
+          const dayId = dayIdBySort.get(r.dayIndex);
+          if (dayId == null) continue;
+          placeholders.push(
+            `($${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+          );
+          values.push(
+            dayId,
+            r.exerciseId,
+            r.detail,
+            r.sets,
+            r.rep_lo,
+            r.rep_hi,
+            r.rest_sec,
+            r.load_tag,
+            r.note,
+            r.sort,
+          );
+        }
+        if (placeholders.length > 0) {
+          await sql.query(
+            `insert into program_exercises (
               program_day_id, exercise_id, detail, sets, rep_lo, rep_hi,
               rest_sec, load_tag, note, sort
-            ) values (
-              ${dayId}, ${exerciseId}, ${pe.detail},
-              ${pe.sets}, ${pe.rep_lo}, ${pe.rep_hi}, ${pe.rest_sec},
-              ${pe.load_tag}, ${pe.note}, ${ei}
-            )
-          `;
-          totalExercises += 1;
+            ) values ${placeholders.join(", ")}`,
+            values,
+          );
         }
       }
 
@@ -141,7 +219,7 @@ export const commitProgramImport = createServerFn({ method: "POST" })
         id: programId,
         name,
         days: parsed.days.length,
-        exercises: totalExercises,
+        exercises: resolved.length,
       };
     });
   });

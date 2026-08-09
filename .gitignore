@@ -4,9 +4,13 @@ node_modules/
 .env
 .env.*
 .vercel/
+.vercel/output/
 dist/
 .output/
 .nitro/
+.tanstack/
 screenshots/
 *.log
 /tmp/
+coverage/
+*.tsbuildinfo

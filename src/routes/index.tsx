@@ -16,8 +16,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/section";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
-import { ActivityCard } from "@/components/feed/activity-card";
-import { ComposePost } from "@/components/feed/compose-post";
 import {
   followUser,
 } from "@/lib/server/social";
@@ -41,6 +39,16 @@ const CommentSheet = lazy(() =>
 const FeedEmptyDiscover = lazy(() =>
   import("@/components/feed/empty-discover").then((m) => ({
     default: m.FeedEmptyDiscover,
+  })),
+);
+const ActivityCard = lazy(() =>
+  import("@/components/feed/activity-card").then((m) => ({
+    default: m.ActivityCard,
+  })),
+);
+const ComposePost = lazy(() =>
+  import("@/components/feed/compose-post").then((m) => ({
+    default: m.ComposePost,
   })),
 );
 
@@ -207,11 +215,17 @@ function FeedPage() {
           <ChevronRight className="size-5 shrink-0 text-yellow" />
         </button>
 
-        <ComposePost
-          onPosted={() => {
-            void qc.invalidateQueries({ queryKey: qk.feed });
-          }}
-        />
+        <Suspense
+          fallback={
+            <div className="h-20 animate-pulse rounded-2xl bg-surface2" aria-busy="true" />
+          }
+        >
+          <ComposePost
+            onPosted={() => {
+              void qc.invalidateQueries({ queryKey: qk.feed });
+            }}
+          />
+        </Suspense>
 
         {feedQuery.isLoading ? (
           <DashboardSkeleton />
@@ -245,15 +259,24 @@ function FeedPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
-              <ActivityCard
-                key={item.id}
-                item={item}
-                t={t}
-                onComment={setCommentItem}
-                onRemoved={() => void qc.invalidateQueries({ queryKey: qk.feed })}
-              />
-            ))}
+            <Suspense
+              fallback={
+                <div className="space-y-3" aria-busy="true">
+                  <div className="h-28 animate-pulse rounded-2xl bg-surface2" />
+                  <div className="h-28 animate-pulse rounded-2xl bg-surface2" />
+                </div>
+              }
+            >
+              {items.map((item) => (
+                <ActivityCard
+                  key={item.id}
+                  item={item}
+                  t={t}
+                  onComment={setCommentItem}
+                  onRemoved={() => void qc.invalidateQueries({ queryKey: qk.feed })}
+                />
+              ))}
+            </Suspense>
             <div ref={sentinelRef} className="flex justify-center py-3">
               {feedQuery.isFetchingNextPage ? (
                 <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-surface2" aria-hidden />
