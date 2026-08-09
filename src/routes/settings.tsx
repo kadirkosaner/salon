@@ -408,12 +408,12 @@ function SettingsPage() {
             </SettingsGroup>
 
             <SettingsGroup label={t("settings.privacy")}>
-              <SettingsRow
+              <SettingsToggle
                 icon={Eye}
                 label={t("compare.optIn")}
-                value={compareOpt ? t("common.yes") : t("common.no")}
-                onClick={() => {
-                  const next = !compareOpt;
+                description={t("compare.optInHint")}
+                checked={compareOpt}
+                onChange={(next) => {
                   setCompareOpt(next);
                   void setComparisonOptIn({ data: { optIn: next } })
                     .then(() => toast.success(t("common.saved")))
@@ -423,9 +423,6 @@ function SettingsPage() {
                     });
                 }}
               />
-              <p className="-mt-1 px-4 pb-2 text-[11px] leading-relaxed text-text-3">
-                {t("compare.optInHint")}
-              </p>
               <SettingsRow
                 icon={Download}
                 label={t("settings.export")}
@@ -755,6 +752,55 @@ function SettingsRow({
         ) : null}
       </span>
       <ChevronRight className="size-4 shrink-0 text-text-3" />
+    </button>
+  );
+}
+
+/** Privacy-style toggle: short title + readable body + real switch (no Evet/Hayır). */
+function SettingsToggle({
+  icon: Icon,
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex w-full items-start gap-3 border-b border-rule/60 px-4 py-3.5 text-left active:bg-raised"
+    >
+      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-raised text-accent">
+        <Icon className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-text">{label}</span>
+        <span className="mt-1 block text-[13px] leading-snug text-text-2">
+          {description}
+        </span>
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          "relative mt-1 h-7 w-12 shrink-0 rounded-full transition-colors",
+          checked ? "bg-accent" : "bg-raised shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 size-6 rounded-full bg-white shadow-sm transition-transform",
+            checked ? "translate-x-5" : "translate-x-0.5",
+          )}
+        />
+      </span>
     </button>
   );
 }

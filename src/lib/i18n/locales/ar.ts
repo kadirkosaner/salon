@@ -40,8 +40,9 @@ export const ar = {
   "compare.relative": "نسبي",
   "compare.needWeight": "أضف وزن الجسم لتقييم أوضح",
   "compare.needPool": "يلزم تسجيلات أكثر لهذه الحركة.",
-  "compare.optIn": "استخدم بياناتي في المقارنات",
-  "compare.optInHint": "عند الإيقاف تخرج من كل المجموعات وتُخفى الشريط.",
+  "compare.optIn": "المقارنات",
+  "compare.optInHint": "أثناء التمرين تظهر أفضل أرقامك بجانب الآخرين. عند الإيقاف يتوقف المشاركة ويُخفى الشريط.",
+
   "compare.you": "أنت",
   "compare.median": "الوسيط",
   "compare.top": "أعلى {p}%",
