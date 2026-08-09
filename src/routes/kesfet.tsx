@@ -48,6 +48,7 @@ import { dowLong } from "@/lib/utils";
 import { copyText } from "@/lib/clipboard";
 import { qk } from "@/lib/query-keys";
 import { Spinner } from "@/components/ui/spinner";
+import { ExercisePreviewModal } from "@/components/exercise-preview";
 import { AppSheet } from "@/components/ui/sheet";
 import { z } from "zod";
 
@@ -105,6 +106,13 @@ function DiscoverPage() {
   const [cloning, setCloning] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
+  const [previewEx, setPreviewEx] = useState<{
+    name: string;
+    form_cues?: string | null;
+    gif_url?: string | null;
+    image_url?: string | null;
+    muscle_group?: string | null;
+  } | null>(null);
   const search = Route.useSearch();
   const tab = search.tab ?? "forYou";
   const raceRef = useRef(0);
@@ -362,6 +370,7 @@ function DiscoverPage() {
             t={t}
             onFollow={toggleFollow}
             onOpenProgram={(id) => setDetailId(id)}
+            onOpenExercise={(e) => setPreviewEx(e)}
             onCloneProgram={(p) =>
               setPending({ kind: "id", id: p.id, name: p.name })
             }
@@ -648,17 +657,28 @@ function DiscoverPage() {
                 ) : (
                   <ul className="divide-y divide-rule rounded-xl border border-rule bg-raised/40">
                     {(exercisesQuery.data ?? []).map((e, i) => (
-                      <li
-                        key={`${e.id}-${e.name}-${i}`}
-                        className="flex h-14 items-center gap-3 px-3"
-                      >
-                        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
-                          <Dumbbell className="size-4" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                          {e.name}
-                        </span>
-                        <MuscleBadge group={e.muscle_group} size="xs" />
+                      <li key={`${e.id}-${e.name}-${i}`}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewEx({
+                              name: e.name,
+                              form_cues: e.form_cues,
+                              gif_url: e.gif_url,
+                              image_url: e.image_url,
+                              muscle_group: e.muscle_group,
+                            })
+                          }
+                          className="flex h-14 w-full items-center gap-3 px-3 text-left active:bg-sunken"
+                        >
+                          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                            <Dumbbell className="size-4" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                            {e.name}
+                          </span>
+                          <MuscleBadge group={e.muscle_group} size="xs" />
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -689,6 +709,16 @@ function DiscoverPage() {
           onConfirm={(opts) => void runClone(pending, opts)}
         />
       )}
+      {previewEx ? (
+        <ExercisePreviewModal
+          name={previewEx.name}
+          formCues={previewEx.form_cues}
+          gifUrl={previewEx.gif_url}
+          imageUrl={previewEx.image_url}
+          muscleGroup={previewEx.muscle_group}
+          onClose={() => setPreviewEx(null)}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -953,6 +983,7 @@ function SearchResults({
   t,
   onFollow,
   onOpenProgram,
+  onOpenExercise,
   onCloneProgram,
   onCopyCode,
   cloning,
@@ -962,6 +993,13 @@ function SearchResults({
   t: (k: string, vars?: Record<string, string | number>) => string;
   onFollow: (id: string, following: boolean) => void;
   onOpenProgram: (id: number) => void;
+  onOpenExercise: (e: {
+    name: string;
+    form_cues?: string | null;
+    gif_url?: string | null;
+    image_url?: string | null;
+    muscle_group?: string | null;
+  }) => void;
   onCloneProgram: (p: PublicProgramCard) => void;
   onCopyCode: (c: string) => void;
   cloning: boolean;
@@ -1079,17 +1117,26 @@ function SearchResults({
           </h3>
           <ul className="divide-y divide-rule rounded-xl border border-rule bg-raised/40">
             {results.exercises.slice(0, 5).map((e, i) => (
-              <li
-                key={`${e.name}-${i}`}
-                className="flex h-14 items-center gap-3 px-3"
-              >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
-                  <Dumbbell className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {e.name}
-                </span>
-                <MuscleBadge group={e.muscle_group} size="xs" />
+              <li key={`${e.name}-${i}`}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOpenExercise({
+                      name: e.name,
+                      form_cues: e.detail,
+                      muscle_group: e.muscle_group,
+                    })
+                  }
+                  className="flex h-14 w-full items-center gap-3 px-3 text-left active:bg-sunken"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                    <Dumbbell className="size-4" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                    {e.name}
+                  </span>
+                  <MuscleBadge group={e.muscle_group} size="xs" />
+                </button>
               </li>
             ))}
           </ul>

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -9,7 +9,19 @@ import { ProfileView } from "@/components/profile/profile-view";
 import { useI18n } from "@/lib/i18n/provider";
 import { getMyProfileHub, type ProfileHub } from "@/lib/server/social";
 
-export const Route = createFileRoute("/profil")({ component: ProfilePage });
+export const Route = createFileRoute("/profil")({ component: ProfileRoute });
+
+/**
+ * `/profil/duzenle` is a child route (file: profil.duzenle.tsx). Without an
+ * Outlet the parent keeps rendering ProfileView and Edit appears broken.
+ */
+function ProfileRoute() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname.startsWith("/profil/") && pathname !== "/profil") {
+    return <Outlet />;
+  }
+  return <ProfilePage />;
+}
 
 function ProfilePage() {
   const { user, isPending } = useCurrentUserState();
