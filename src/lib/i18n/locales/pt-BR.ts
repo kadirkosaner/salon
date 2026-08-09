@@ -246,6 +246,7 @@ export const ptBR = {
   "panel.volume": "Volume",
   "post.attachWorkout": "Anexar treino",
   "post.compose": "O que está rolando?",
+  "post.composeTitle": "Nova publicação",
   "post.deleted": "Post excluído",
   "post.edited": "editado",
   "post.empty": "Escreva um post",

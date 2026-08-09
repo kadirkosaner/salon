@@ -246,6 +246,7 @@ export const zhTW = {
   "panel.volume": "容量",
   "post.attachWorkout": "附上訓練",
   "post.compose": "在忙什麼？",
+  "post.composeTitle": "新貼文",
   "post.deleted": "貼文已刪除",
   "post.edited": "已編輯",
   "post.empty": "寫貼文",

@@ -214,6 +214,7 @@ export const tr = {
   "panel.title": "Panel",
   "panel.volume": "Hacim",
   "post.compose": "Neler oluyor?",
+  "post.composeTitle": "Yeni gönderi",
   "post.deleted": "Gönderi silindi",
   "post.empty": "Bir gönderi yaz",
   "post.publish": "Gönder",

@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
-import { ImagePlus, Send, X } from "@/components/icons";
+import { useEffect, useRef, useState } from "react";
+import { Dumbbell, Send } from "@/components/icons";
 import { toast } from "sonner";
-import {
-  createPost,
-  listMyRecentWorkouts,
-} from "@/lib/server/posts";
+import { createPost, listMyRecentWorkouts } from "@/lib/server/posts";
 import { useT } from "@/lib/i18n/provider";
+import { useCurrentUser } from "@/lib/auth/use-current-user";
+import { AppSheet } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
+/**
+ * Twitter-style composer: compact feed trigger → full sheet with large
+ * textarea, optional workout attach chips, sticky Post button.
+ */
 export function ComposePost({ onPosted }: { onPosted: () => void }) {
   const t = useT();
+  const user = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,16 +22,32 @@ export function ComposePost({ onPosted }: { onPosted: () => void }) {
     { id: number; day_name: string; date: string }[]
   >([]);
   const [attachId, setAttachId] = useState<number | null>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  const initials = (user?.displayName || user?.primaryEmail || "S")
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const avatar = user?.profileImageUrl;
 
   useEffect(() => {
     if (!open) return;
     void listMyRecentWorkouts()
       .then(setWorkouts)
       .catch(() => setWorkouts([]));
+    // focus after sheet paint
+    const id = window.setTimeout(() => taRef.current?.focus(), 80);
+    return () => window.clearTimeout(id);
   }, [open]);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function close() {
+    if (busy) return;
+    setOpen(false);
+  }
+
+  async function submit() {
     const text = body.trim();
     if (!text) {
       toast.error(t("post.empty"));
@@ -53,80 +73,124 @@ export function ComposePost({ onPosted }: { onPosted: () => void }) {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-rule bg-sunken px-4 py-3.5 text-left transition active:scale-[0.99]"
-      >
-        <span className="grid size-9 place-items-center rounded-full bg-accent/15 text-accent">
-          <ImagePlus className="size-4" />
-        </span>
-        <span className="text-sm text-text-2">{t("post.compose")}</span>
-      </button>
-    );
+  function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      void submit();
+    }
   }
 
   return (
-    <form
-      onSubmit={(e) => void submit(e)}
-      className="rounded-2xl border border-accent/25 bg-sunken p-4 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-3">
+    <>
+      {/* Compact Twitter-like trigger — stays in feed flow */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center gap-3 rounded-2xl border border-rule bg-sunken/80 px-3.5 py-3 text-left transition hover:bg-raised active:scale-[0.99]"
+      >
+        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
+          {avatar ? (
+            <img src={avatar} alt="" className="size-full object-cover" />
+          ) : (
+            initials
+          )}
+        </span>
+        <span className="min-w-0 flex-1 text-[15px] text-text-2">
           {t("post.compose")}
-        </p>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="grid size-8 place-items-center rounded-lg text-text-2"
-          aria-label={t("common.close")}
+        </span>
+      </button>
+
+      {open ? (
+        <AppSheet
+          title={t("post.composeTitle")}
+          onClose={close}
+          className="max-h-[92dvh]"
+          contentClassName="!p-0"
+          footer={
+            <div className="flex items-center justify-between gap-3">
+              <p className="num text-[11px] text-text-3">{body.length}/500</p>
+              <button
+                type="button"
+                disabled={busy || !body.trim()}
+                onClick={() => void submit()}
+                className={cn(
+                  "inline-flex h-11 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-sm font-semibold text-on-primary shadow-[var(--shadow-primary)] active:scale-[0.98] disabled:opacity-45",
+                )}
+              >
+                {busy ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <Send className="size-4" />
+                )}
+                {t("post.publish")}
+              </button>
+            </div>
+          }
         >
-          <X className="size-4" />
-        </button>
-      </div>
-      <textarea
-        value={body}
-        onChange={(e) => setBody(e.target.value.slice(0, 500))}
-        rows={3}
-        maxLength={500}
-        placeholder={t("post.placeholder")}
-        className="w-full resize-none rounded-xl border border-rule bg-raised px-3 py-2.5 text-sm leading-relaxed outline-none focus:border-accent/40"
-        autoFocus
-      />
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="num text-[10px] text-text-3">{body.length}/500</p>
-        <div className="flex items-center gap-2">
+          <div className="flex gap-3 px-4 pt-1 pb-3">
+            <span className="mt-1 grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
+              {avatar ? (
+                <img src={avatar} alt="" className="size-full object-cover" />
+              ) : (
+                initials
+              )}
+            </span>
+            <textarea
+              ref={taRef}
+              value={body}
+              onChange={(e) => setBody(e.target.value.slice(0, 500))}
+              onKeyDown={onKeyDown}
+              rows={6}
+              maxLength={500}
+              placeholder={t("post.placeholder")}
+              className="min-h-[9rem] w-full flex-1 resize-none bg-transparent py-2 text-[16px] leading-relaxed text-text outline-none placeholder:text-text-3"
+            />
+          </div>
+
           {workouts.length > 0 ? (
-            <select
-              value={attachId ?? ""}
-              onChange={(e) =>
-                setAttachId(e.target.value ? Number(e.target.value) : null)
-              }
-              className="h-9 max-w-[10rem] truncate rounded-lg border border-rule bg-raised px-2 text-xs"
-              aria-label={t("post.attachWorkout")}
-            >
-              <option value="">{t("post.noAttach")}</option>
-              {workouts.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.day_name} · {w.date}
-                </option>
-              ))}
-            </select>
+            <div className="border-t border-rule px-4 py-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-3">
+                {t("post.attachWorkout")}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setAttachId(null)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    attachId == null
+                      ? "border-accent bg-accent/15 text-accent"
+                      : "border-rule bg-raised text-text-2",
+                  )}
+                >
+                  {t("post.noAttach")}
+                </button>
+                {workouts.map((w) => {
+                  const on = attachId === w.id;
+                  return (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setAttachId(on ? null : w.id)}
+                      className={cn(
+                        "inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        on
+                          ? "border-accent bg-accent/15 text-accent"
+                          : "border-rule bg-raised text-text-2",
+                      )}
+                    >
+                      <Dumbbell className="size-3.5 shrink-0" />
+                      <span className="truncate">
+                        {w.day_name} · {w.date.slice(5)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ) : null}
-          <button
-            type="submit"
-            disabled={busy || !body.trim()}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-semibold text-on-primary disabled:opacity-50",
-            )}
-          >
-            {busy ? <Spinner className="size-3.5" /> : <Send className="size-3.5" />}
-            {t("post.publish")}
-          </button>
-        </div>
-      </div>
-    </form>
+        </AppSheet>
+      ) : null}
+    </>
   );
 }

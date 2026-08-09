@@ -246,6 +246,7 @@ export const id = {
   "panel.volume": "Volume",
   "post.attachWorkout": "Lampirkan latihan",
   "post.compose": "Ada apa?",
+  "post.composeTitle": "Postingan baru",
   "post.deleted": "Post dihapus",
   "post.edited": "diedit",
   "post.empty": "Tulis post",

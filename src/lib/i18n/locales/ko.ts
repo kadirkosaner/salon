@@ -246,6 +246,7 @@ export const ko = {
   "panel.volume": "볼륨",
   "post.attachWorkout": "운동 첨부",
   "post.compose": "무슨 일이야?",
+  "post.composeTitle": "새 게시물",
   "post.deleted": "게시물 삭제됨",
   "post.edited": "수정됨",
   "post.empty": "게시물 작성",

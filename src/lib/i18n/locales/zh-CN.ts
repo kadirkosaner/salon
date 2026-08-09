@@ -246,6 +246,7 @@ export const zhCN = {
   "panel.volume": "容量",
   "post.attachWorkout": "附上训练",
   "post.compose": "在忙什么？",
+  "post.composeTitle": "新帖子",
   "post.deleted": "帖子已删除",
   "post.edited": "已编辑",
   "post.empty": "写帖子",

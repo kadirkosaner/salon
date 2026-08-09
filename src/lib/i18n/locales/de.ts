@@ -246,6 +246,7 @@ export const de = {
   "panel.volume": "Volumen",
   "post.attachWorkout": "Workout anhängen",
   "post.compose": "Was ist los?",
+  "post.composeTitle": "Neuer Beitrag",
   "post.deleted": "Beitrag gelöscht",
   "post.edited": "bearbeitet",
   "post.empty": "Beitrag schreiben",

@@ -246,6 +246,7 @@ export const ja = {
   "panel.volume": "ボリューム",
   "post.attachWorkout": "ワークアウトを添付",
   "post.compose": "いま何してる？",
+  "post.composeTitle": "新しい投稿",
   "post.deleted": "投稿を削除しました",
   "post.edited": "編集済み",
   "post.empty": "投稿を書く",

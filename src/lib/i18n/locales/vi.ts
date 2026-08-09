@@ -246,6 +246,7 @@ export const vi = {
   "panel.volume": "Khối lượng",
   "post.attachWorkout": "Đính kèm buổi tập",
   "post.compose": "Có gì mới?",
+  "post.composeTitle": "Bài viết mới",
   "post.deleted": "Đã xóa bài",
   "post.edited": "đã sửa",
   "post.empty": "Viết bài",

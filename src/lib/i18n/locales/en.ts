@@ -214,6 +214,7 @@ export const en = {
   "panel.title": "Home",
   "panel.volume": "Volume",
   "post.compose": "What's happening?",
+  "post.composeTitle": "New post",
   "post.deleted": "Post deleted",
   "post.empty": "Write a post",
   "post.publish": "Post",

@@ -246,6 +246,7 @@ export const ar = {
   "panel.volume": "الحجم",
   "post.attachWorkout": "إرفاق تمرين",
   "post.compose": "ماذا يحدث؟",
+  "post.composeTitle": "منشور جديد",
   "post.deleted": "تم حذف المنشور",
   "post.edited": "معدّل",
   "post.empty": "اكتب منشورًا",
