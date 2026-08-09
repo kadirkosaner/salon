@@ -4,14 +4,14 @@ import type { MessageKey } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 const TONE: Partial<Record<string, string>> = {
-  gogus: "border-red/30 bg-red/10 text-red",
-  sirt: "border-softblue/30 bg-softblue/10 text-softblue",
-  omuz: "border-yellow/30 bg-yellow/10 text-yellow",
-  kol: "border-blue/30 bg-blue/10 text-blue",
-  bacak: "border-green/30 bg-green/10 text-green",
-  trapez: "border-orange/30 bg-orange/10 text-orange",
-  core: "border-line bg-surface2 text-muted",
-  diger: "border-line bg-surface2 text-dim",
+  gogus: "border-danger/30 bg-danger/10 text-danger",
+  sirt: "border-info/30 bg-info/10 text-info",
+  omuz: "border-accent/30 bg-accent/10 text-accent",
+  kol: "border-info/30 bg-info/10 text-info",
+  bacak: "border-success/30 bg-success/10 text-success",
+  trapez: "border-warning/30 bg-warning/10 text-warning",
+  core: "border-rule bg-raised text-text-2",
+  diger: "border-rule bg-raised text-text-3",
 };
 
 export function muscleLabel(

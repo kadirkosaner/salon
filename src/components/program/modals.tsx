@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Share2 } from "lucide-react";
+import { Copy, Share2 } from "@/components/icons";
 import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { MuscleBadge } from "@/components/muscle-badge";
@@ -70,51 +70,51 @@ export function ShareModal({
 
   return (
     <Modal title={t("program.shareTitle")} onClose={onClose}>
-      <p className="mb-3 text-xs leading-relaxed text-muted">
+      <p className="mb-3 text-xs leading-relaxed text-text-2">
         {t("program.shareHint")}
       </p>
-      <label className="flex items-center gap-3 rounded-lg border border-line bg-surface2 px-3 py-3">
+      <label className="flex items-center gap-3 rounded-lg border border-rule bg-raised px-3 py-3">
         <input
           type="checkbox"
           checked={isPublic}
           onChange={(e) => setIsPublic(e.target.checked)}
-          className="size-5 accent-yellow"
+          className="size-5 accent-primary"
         />
         <span className="text-sm">
           <span className="font-medium">{t("program.public")}</span>
-          <span className="mt-0.5 block text-xs text-muted">{t("program.publicHint")}</span>
+          <span className="mt-0.5 block text-xs text-text-2">{t("program.publicHint")}</span>
         </span>
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">{t("program.shareDesc")}</span>
+        <span className="text-xs text-text-2">{t("program.shareDesc")}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder={t("program.shareDescPh")}
-          className="w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-rule bg-raised px-3 py-2 text-sm"
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">{t("program.tags")}</span>
+        <span className="text-xs text-text-2">{t("program.tags")}</span>
         <input
           value={tags}
           onChange={(e) => setTags(e.target.value)}
           placeholder={t("program.tagsPh")}
-          className="h-11 w-full rounded-md border border-line bg-surface2 px-3 text-sm"
+          className="h-11 w-full rounded-md border border-rule bg-raised px-3 text-sm"
         />
       </label>
       {(code || isPublic) && (
-        <div className="mt-3 rounded-lg border border-yellow/30 bg-yellow/10 px-3 py-2">
-          <p className="text-xs text-muted">{t("program.shareCode")}</p>
+        <div className="mt-3 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2">
+          <p className="text-xs text-text-2">{t("program.shareCode")}</p>
           <div className="mt-1 flex items-center justify-between gap-2">
-            <p className="num text-2xl tracking-[0.2em] text-yellow">
+            <p className="num text-2xl tracking-[0.2em] text-accent">
               {code ?? t("program.codePending")}
             </p>
             {code ? (
               <button
                 type="button"
-                className="flex h-10 shrink-0 items-center gap-1 rounded-lg border border-yellow/40 px-3 text-xs font-semibold text-yellow"
+                className="flex h-10 shrink-0 items-center gap-1 rounded-lg border border-accent/40 px-3 text-xs font-semibold text-accent"
                 onClick={async () => {
                   const ok = await copyText(code);
                   toast.success(ok ? t("program.copiedCode", { code }) : t("program.codeLabel", { code }));
@@ -130,7 +130,7 @@ export function ShareModal({
       <button
         type="button"
         disabled={saving}
-        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-on-primary disabled:opacity-60"
         onClick={() => {
           setSaving(true);
           void publishProgram({
@@ -178,27 +178,27 @@ export function MetaModal({
   return (
     <Modal title={t("program.metaTitle")} onClose={onClose}>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">{t("program.nameLabel")}</span>
+        <span className="text-xs text-text-2">{t("program.nameLabel")}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-12 w-full rounded-md border border-line bg-surface2 px-3"
+          className="h-12 w-full rounded-md border border-rule bg-raised px-3"
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">{t("program.descLabel")}</span>
+        <span className="text-xs text-text-2">{t("program.descLabel")}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
           placeholder="Hedef, seviye, notlar…"
-          className="w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+          className="w-full rounded-md border border-rule bg-raised px-3 py-2 text-sm"
         />
       </label>
       <button
         type="button"
         disabled={saving || !name.trim()}
-        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-yellow font-semibold text-bg disabled:opacity-50"
+        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-primary font-semibold text-on-primary disabled:opacity-50"
         onClick={() => {
           setSaving(true);
           void updateProgramMeta({
@@ -265,16 +265,16 @@ export function ScheduleModal({
 
   return (
     <Modal title={t("program.scheduleTitle")} onClose={onClose}>
-      <p className="mb-3 text-xs leading-relaxed text-muted">
+      <p className="mb-3 text-xs leading-relaxed text-text-2">
         {t("program.scheduleHint")}
       </p>
       <div className="space-y-2">
         {[1, 2, 3, 4, 5, 6, 7].map((dow) => (
           <label
             key={dow}
-            className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface2 px-2.5 py-2"
+            className="flex min-w-0 items-center gap-2 rounded-lg border border-rule bg-raised px-2.5 py-2"
           >
-            <span className="w-20 shrink-0 text-sm font-medium text-muted sm:w-24">
+            <span className="w-20 shrink-0 text-sm font-medium text-text-2 sm:w-24">
               {dowLong(dow, locale)}
             </span>
             <AppSelect
@@ -287,7 +287,7 @@ export function ScheduleModal({
                   label: d.name,
                 })),
               ]}
-              triggerClassName="h-11 min-w-0 flex-1 rounded-md border-line bg-surface"
+              triggerClassName="h-11 min-w-0 flex-1 rounded-md border-rule bg-sunken"
               aria-label={dowLong(dow, locale)}
             />
           </label>
@@ -296,7 +296,7 @@ export function ScheduleModal({
       <button
         type="button"
         disabled={saving}
-        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+        className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-on-primary disabled:opacity-60"
         onClick={() => {
           setSaving(true);
           void setWeekSchedule({
@@ -338,23 +338,23 @@ export function DaySettingsModal({
   return (
     <Modal title={t("program.daySettings")} onClose={onClose}>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">{t("program.nameLabel")}</span>
+        <span className="text-xs text-text-2">{t("program.nameLabel")}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="h-12 w-full rounded-md border border-line bg-surface2 px-3"
+          className="h-12 w-full rounded-md border border-rule bg-raised px-3"
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">Odak / not</span>
+        <span className="text-xs text-text-2">Odak / not</span>
         <input
           value={focus}
           onChange={(e) => setFocus(e.target.value)}
-          className="h-12 w-full rounded-md border border-line bg-surface2 px-3"
+          className="h-12 w-full rounded-md border border-rule bg-raised px-3"
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">{t("program.whichDow")}</span>
+        <span className="text-xs text-text-2">{t("program.whichDow")}</span>
         <AppSelect
           value={String(dow)}
           onValueChange={(v) => setDow(Number(v))}
@@ -368,7 +368,7 @@ export function DaySettingsModal({
       <button
         type="button"
         disabled={saving || name.trim().length < 1}
-        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-yellow font-semibold text-bg disabled:opacity-50"
+        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-primary font-semibold text-on-primary disabled:opacity-50"
         onClick={() => {
           setSaving(true);
           void onSave({
@@ -444,12 +444,12 @@ export function ImportModal({
         }}
         rows={8}
         placeholder={SAMPLE_PASTE}
-        className="w-full rounded-md border border-line bg-surface2 px-3 py-2 font-mono text-xs leading-relaxed"
+        className="w-full rounded-md border border-rule bg-raised px-3 py-2 font-mono text-xs leading-relaxed"
       />
       <div className="mt-2 flex gap-2">
         <button
           type="button"
-          className="h-10 flex-1 rounded-md border border-line text-xs text-muted"
+          className="h-10 flex-1 rounded-md border border-rule text-xs text-text-2"
           onClick={() => {
             setText(SAMPLE_PASTE);
             setPreview(null);
@@ -460,24 +460,24 @@ export function ImportModal({
         <button
           type="button"
           disabled={busy}
-          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-yellow/30 bg-surface2 text-sm font-medium text-yellow"
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-accent/30 bg-raised text-sm font-medium text-accent"
           onClick={() => void runPreview()}
         >
           {t("program.importPreview")}
         </button>
       </div>
       {preview && preview.days.length > 0 && (
-        <div className="mt-4 space-y-3 border-t border-line pt-4">
+        <div className="mt-4 space-y-3 border-t border-rule pt-4">
           <input
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
-            className="h-11 w-full rounded-md border border-line bg-surface2 px-3 text-sm"
+            className="h-11 w-full rounded-md border border-rule bg-raised px-3 text-sm"
           />
           <button
             type="button"
             disabled={busy}
             onClick={() => void commit()}
-            className="flex h-12 w-full items-center justify-center rounded-md bg-yellow font-semibold text-bg"
+            className="flex h-12 w-full items-center justify-center rounded-md bg-primary font-semibold text-on-primary"
           >
             {t("program.importCreate")}
           </button>
@@ -595,15 +595,15 @@ export function EditModal({
       </div>
 
       {/* Full library — always visible */}
-      <div className="mb-3 rounded-lg border border-line bg-surface2/40 p-2.5">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
+      <div className="mb-3 rounded-lg border border-rule bg-raised/40 p-2.5">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-3">
           {t("program.swapTitle")}
         </p>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t("program.searchPh")}
-          className="mb-2 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"
+          className="mb-2 h-10 w-full rounded-md border border-rule bg-sunken px-3 text-sm"
         />
         <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5">
           {muscleTabs.map((tab) => (
@@ -614,8 +614,8 @@ export function EditModal({
               className={cn(
                 "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium",
                 muscleFilter === tab.id
-                  ? "border-yellow bg-yellow/15 text-yellow"
-                  : "border-line text-muted",
+                  ? "border-accent bg-accent/15 text-accent"
+                  : "border-rule text-text-2",
               )}
             >
               {tab.label}
@@ -623,7 +623,7 @@ export function EditModal({
           ))}
         </div>
         {loadingCat ? (
-          <p className="py-4 text-center text-xs text-muted">{t("program.loading")}</p>
+          <p className="py-4 text-center text-xs text-text-2">{t("program.loading")}</p>
         ) : (
           <ul className="max-h-44 space-y-1 overflow-y-auto">
             {catalog
@@ -637,22 +637,22 @@ export function EditModal({
                       "flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-2 text-left text-sm",
                       (swapId === e.id && e.id > 0) ||
                         (swapExt && swapExt === e.external_id)
-                        ? "border-yellow bg-yellow/15 text-yellow"
-                        : "border-transparent bg-surface hover:border-line",
+                        ? "border-accent bg-accent/15 text-accent"
+                        : "border-transparent bg-sunken hover:border-rule",
                     )}
                   >
                     <span className="min-w-0 truncate">{e.name}</span>
                     <span className="flex shrink-0 items-center gap-1">
                       <MuscleBadge group={e.muscle_group} size="xs" />
                       {e.gif_url ? (
-                        <span className="text-[9px] text-dim">GIF</span>
+                        <span className="text-[9px] text-text-3">GIF</span>
                       ) : null}
                     </span>
                   </button>
                 </li>
               ))}
             {catalog.length === 0 && (
-              <li className="py-3 text-center text-xs text-muted">{t("program.noResults")}</li>
+              <li className="py-3 text-center text-xs text-text-2">{t("program.noResults")}</li>
             )}
           </ul>
         )}
@@ -660,8 +660,8 @@ export function EditModal({
 
       {/* Similar suggestions (optional strip) */}
       {similar.length > 0 && (
-        <div className="mb-3 rounded-lg border border-line/80 bg-surface2/20 p-2.5">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
+        <div className="mb-3 rounded-lg border border-rule/80 bg-raised/20 p-2.5">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-3">
             {t("program.sameRegion")}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -675,8 +675,8 @@ export function EditModal({
               className={cn(
                 "rounded-full border px-2.5 py-1 text-xs",
                 !swapId && !swapExt
-                  ? "border-yellow bg-yellow/15 text-yellow"
-                  : "border-line text-muted hover:text-text",
+                  ? "border-accent bg-accent/15 text-accent"
+                  : "border-rule text-text-2 hover:text-text",
               )}
             >
               {exercise.exercise_name}
@@ -690,8 +690,8 @@ export function EditModal({
                   "rounded-full border px-2.5 py-1 text-xs",
                   (swapId === s.id && s.id > 0) ||
                     (swapExt && swapExt === s.external_id)
-                    ? "border-yellow bg-yellow/15 text-yellow"
-                    : "border-line text-muted hover:text-text",
+                    ? "border-accent bg-accent/15 text-accent"
+                    : "border-rule text-text-2 hover:text-text",
                 )}
               >
                 {s.name}
@@ -702,7 +702,7 @@ export function EditModal({
       )}
 
       {swapName && (
-        <p className="mb-2 rounded-md border border-yellow/30 bg-yellow/10 px-2.5 py-1.5 text-xs text-yellow">
+        <p className="mb-2 rounded-md border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs text-accent">
           {t("program.swapPending", { name: swapName })}
         </p>
       )}
@@ -727,13 +727,13 @@ export function EditModal({
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={3}
-        className="mt-3 w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
+        className="mt-3 w-full rounded-md border border-rule bg-raised px-3 py-2 text-sm"
         placeholder={t("program.noteOptional")}
       />
       <button
         type="button"
         disabled={saving}
-        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-yellow font-semibold text-bg"
+        className="mt-4 flex h-12 w-full items-center justify-center rounded-md bg-primary font-semibold text-on-primary"
         onClick={() => {
           setSaving(true);
           void (async () => {
@@ -884,7 +884,7 @@ export function AddModal({
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Ara: bench, squat, curl, row…"
-        className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+        className="h-12 w-full rounded-2xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
         autoFocus
       />
       <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5">
@@ -896,8 +896,8 @@ export function AddModal({
             className={cn(
               "shrink-0 rounded-full px-3 py-2 text-[11px] font-semibold active:scale-95",
               muscleFilter === tab.id
-                ? "bg-yellow text-bg"
-                : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
+                ? "bg-primary text-on-primary"
+                : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
             )}
           >
             {tab.label}
@@ -905,18 +905,18 @@ export function AddModal({
         ))}
       </div>
 
-      <div className="mt-2 max-h-52 overflow-y-auto rounded-2xl bg-surface2/40 p-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+      <div className="mt-2 max-h-52 overflow-y-auto rounded-2xl bg-raised/40 p-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
         {loadingCat ? (
-          <p className="flex items-center justify-center gap-2 py-8 text-xs text-muted">
-            <span className="inline-flex items-center gap-2 text-sm text-muted"><span className="size-4 animate-pulse rounded-full bg-surface2" />{t("program.loading")}</span>
+          <p className="flex items-center justify-center gap-2 py-8 text-xs text-text-2">
+            <span className="inline-flex items-center gap-2 text-sm text-text-2"><span className="size-4 animate-pulse rounded-full bg-raised" />{t("program.loading")}</span>
           </p>
         ) : catalog.length === 0 ? (
           <div className="py-6 text-center">
-            <p className="text-xs text-muted">{t("discover.noResults")}</p>
+            <p className="text-xs text-text-2">{t("discover.noResults")}</p>
             {q.trim().length >= 2 && (
               <button
                 type="button"
-                className="mt-2 text-sm font-semibold text-yellow"
+                className="mt-2 text-sm font-semibold text-accent"
                 onClick={() => {
                   void onCreateExercise(q.trim()).then((id) =>
                     setSelected({
@@ -954,15 +954,15 @@ export function AddModal({
                     className={cn(
                       "flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2.5 text-left text-sm active:scale-[0.99]",
                       active
-                        ? "bg-yellow/15 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
-                        : "bg-surface hover:bg-surface2",
+                        ? "bg-accent/15 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                        : "bg-sunken hover:bg-raised",
                     )}
                   >
                     <span className="min-w-0 truncate font-medium">{e.name}</span>
                     <span className="flex shrink-0 items-center gap-1">
                       <MuscleBadge group={e.muscle_group} size="xs" />
                       {e.gif_url ? (
-                        <span className="text-[9px] text-dim">GIF</span>
+                        <span className="text-[9px] text-text-3">GIF</span>
                       ) : null}
                     </span>
                   </button>
@@ -972,7 +972,7 @@ export function AddModal({
           </ul>
         )}
       </div>
-      <p className="mt-1 text-[10px] text-dim">
+      <p className="mt-1 text-[10px] text-text-3">
         {t("program.resultCount", { n: catalog.length })}
       </p>
 
@@ -982,11 +982,11 @@ export function AddModal({
             name={selected.name}
             muscleGroup={selected.muscle_group}
           />
-          <span className="truncate text-xs text-yellow">{selected.name}</span>
+          <span className="truncate text-xs text-accent">{selected.name}</span>
         </div>
       )}
 
-      <p className="mt-3 text-xs text-muted">
+      <p className="mt-3 text-xs text-text-2">
         {t("program.setsEmptyHint")}
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1039,12 +1039,12 @@ export function AddModal({
         onChange={(e) => setNote(e.target.value)}
         rows={2}
         placeholder={t("program.noteOptional")}
-        className="mt-2 w-full rounded-2xl bg-surface2 px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+        className="mt-2 w-full rounded-2xl bg-raised px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
       />
       <button
         type="button"
         disabled={!selected || saving}
-        className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg shadow-[0_4px_14px_rgba(245,197,66,0.28)] disabled:opacity-50"
+        className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-on-primary shadow-[var(--shadow-primary)] disabled:opacity-50"
         onClick={() => void submit()}
       >
         {saving ? <Spinner className="size-4" /> : null}
@@ -1081,13 +1081,13 @@ export function NumField({
 }) {
   return (
     <label className="block min-w-0 space-y-1">
-      <span className="text-xs text-muted">{label}</span>
+      <span className="text-xs text-text-2">{label}</span>
       <input
         type="number"
         inputMode="numeric"
         value={Number.isFinite(value) ? value : ""}
         onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="num h-12 w-full min-w-0 rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+        className="num h-12 w-full min-w-0 rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
       />
     </label>
   );
@@ -1107,7 +1107,7 @@ export function EmptyNumField({
 }) {
   return (
     <label className="block min-w-0 space-y-1">
-      <span className="text-xs text-muted">{label}</span>
+      <span className="text-xs text-text-2">{label}</span>
       <input
         type="number"
         inputMode="numeric"
@@ -1122,7 +1122,7 @@ export function EmptyNumField({
           const n = Number(raw);
           onChange(Number.isFinite(n) ? n : "");
         }}
-        className="num h-12 w-full min-w-0 rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] placeholder:text-dim"
+        className="num h-12 w-full min-w-0 rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] placeholder:text-text-3"
       />
     </label>
   );
@@ -1388,7 +1388,7 @@ export function CreateProgramWizard({
             key={s}
             className={cn(
               "h-1 flex-1 rounded-full",
-              s <= step ? "bg-yellow" : "bg-line",
+              s <= step ? "bg-primary" : "bg-rule",
             )}
           />
         ))}
@@ -1397,30 +1397,30 @@ export function CreateProgramWizard({
       {step === 0 && (
         <div className="space-y-3">
           {hasActiveProgram && (
-            <p className="rounded-xl bg-yellow/10 px-3 py-2.5 text-xs leading-relaxed text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.25)]">
+            <p className="rounded-xl bg-accent/10 px-3 py-2.5 text-xs leading-relaxed text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]">
               {t("program.replaceActiveHint")}
             </p>
           )}
           <label className="block space-y-1">
-            <span className="text-xs text-muted">{t("program.nameLabel")}</span>
+            <span className="text-xs text-text-2">{t("program.nameLabel")}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("program.namePh")}
-              className="h-12 w-full rounded-2xl bg-surface2 px-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              className="h-12 w-full rounded-2xl bg-raised px-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               autoFocus
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-xs text-muted">{t("program.descLabel")}</span>
+            <span className="text-xs text-text-2">{t("program.descLabel")}</span>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full rounded-2xl bg-surface2 px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              className="w-full rounded-2xl bg-raised px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
             />
           </label>
-          <p className="text-xs text-dim">{t("program.quickTemplate")}</p>
+          <p className="text-xs text-text-3">{t("program.quickTemplate")}</p>
           <div className="grid grid-cols-2 gap-2">
             {(
               [
@@ -1434,7 +1434,7 @@ export function CreateProgramWizard({
                 key={k}
                 type="button"
                 onClick={() => applyTemplate(k)}
-                className="rounded-2xl bg-surface2 px-3 py-3 text-left text-xs font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
+                className="rounded-2xl bg-raised px-3 py-3 text-left text-xs font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
               >
                 {t(lab)}
               </button>
@@ -1442,7 +1442,7 @@ export function CreateProgramWizard({
           </div>
           <button
             type="button"
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-yellow font-semibold text-bg"
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary font-semibold text-on-primary"
             onClick={() => {
               if (name.trim().length < 2) {
                 toast.error(t("program.nameRequired"));
@@ -1458,7 +1458,7 @@ export function CreateProgramWizard({
 
       {step === 1 && (
         <div className="space-y-3">
-          <p className="text-xs text-muted">
+          <p className="text-xs text-text-2">
             {t("program.whichDays")}
           </p>
           <ul className="space-y-2">
@@ -1467,7 +1467,7 @@ export function CreateProgramWizard({
                 key={d.dow}
                 className={cn(
                   "rounded-2xl p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
-                  d.enabled ? "bg-surface2" : "bg-surface opacity-60",
+                  d.enabled ? "bg-raised" : "bg-sunken opacity-60",
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -1479,8 +1479,8 @@ export function CreateProgramWizard({
                     className={cn(
                       "grid size-11 place-items-center rounded-xl text-xs font-bold",
                       d.enabled
-                        ? "bg-yellow text-bg"
-                        : "bg-surface text-muted",
+                        ? "bg-primary text-on-primary"
+                        : "bg-sunken text-text-2",
                     )}
                   >
                     {dowShort(d.dow, locale)}
@@ -1491,7 +1491,7 @@ export function CreateProgramWizard({
                     onChange={(e) =>
                       updateEnabledDay(d.dow, { name: e.target.value })
                     }
-                    className="h-11 min-w-0 flex-1 rounded-xl bg-surface px-3 text-sm disabled:opacity-50"
+                    className="h-11 min-w-0 flex-1 rounded-xl bg-sunken px-3 text-sm disabled:opacity-50"
                     placeholder={t("program.dayNamePh")}
                   />
                 </div>
@@ -1501,14 +1501,14 @@ export function CreateProgramWizard({
           <div className="flex gap-2">
             <button
               type="button"
-              className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
+              className="h-12 flex-1 rounded-2xl bg-raised font-semibold text-text-2"
               onClick={() => setStep(0)}
             >
               {t("common.back")}
             </button>
             <button
               type="button"
-              className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
+              className="h-12 flex-1 rounded-2xl bg-primary font-semibold text-on-primary"
               onClick={() => {
                 if (enabledDays.length === 0) {
                   toast.error(t("program.pickOneDay"));
@@ -1535,8 +1535,8 @@ export function CreateProgramWizard({
                 className={cn(
                   "shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold",
                   i === buildDayIdx
-                    ? "bg-yellow text-bg"
-                    : "bg-surface2 text-muted",
+                    ? "bg-primary text-on-primary"
+                    : "bg-raised text-text-2",
                 )}
               >
                 {d.name}
@@ -1545,24 +1545,24 @@ export function CreateProgramWizard({
             ))}
           </div>
 
-          <div className="rounded-2xl bg-surface2/50 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+          <div className="rounded-2xl bg-raised/50 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
             <div className="mb-2 flex items-center justify-between">
               <p className="font-medium">
                 {currentDay.name}{" "}
-                <span className="text-xs text-muted">
+                <span className="text-xs text-text-2">
                   · {dowShort(currentDay.dow, locale)}
                 </span>
               </p>
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="h-10 rounded-xl bg-yellow px-3 text-xs font-semibold text-bg"
+                className="h-10 rounded-xl bg-primary px-3 text-xs font-semibold text-on-primary"
               >
                 + Hareket
               </button>
             </div>
             {currentDay.exercises.length === 0 ? (
-              <p className="py-4 text-center text-xs text-muted">
+              <p className="py-4 text-center text-xs text-text-2">
                 {t("program.noExercisesYet")}
               </p>
             ) : (
@@ -1572,7 +1572,7 @@ export function CreateProgramWizard({
                   return (
                     <li
                       key={ex.key}
-                      className="rounded-xl bg-surface px-2.5 py-2"
+                      className="rounded-xl bg-sunken px-2.5 py-2"
                     >
                       <div className="flex items-center gap-2">
                         <button
@@ -1585,7 +1585,7 @@ export function CreateProgramWizard({
                           <p className="truncate text-sm font-medium">
                             {ex.name}
                           </p>
-                          <p className="text-[11px] text-muted">
+                          <p className="text-[11px] text-text-2">
                             {ex.sets}×{ex.rep_lo}
                             {ex.rep_hi !== ex.rep_lo ? `-${ex.rep_hi}` : ""} ·{" "}
                             {ex.rest_sec}s · {ex.load_tag}
@@ -1593,7 +1593,7 @@ export function CreateProgramWizard({
                         </button>
                         <button
                           type="button"
-                          className="shrink-0 px-2 text-xs text-yellow"
+                          className="shrink-0 px-2 text-xs text-accent"
                           onClick={() =>
                             setEditingKey(isEdit ? null : ex.key)
                           }
@@ -1602,7 +1602,7 @@ export function CreateProgramWizard({
                         </button>
                         <button
                           type="button"
-                          className="shrink-0 px-2 text-xs text-red"
+                          className="shrink-0 px-2 text-xs text-danger"
                           onClick={() => removeEx(currentDay.dow, ex.key)}
                         >
                           {t("common.delete")}
@@ -1626,7 +1626,7 @@ export function CreateProgramWizard({
           <div className="flex gap-2">
             <button
               type="button"
-              className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
+              className="h-12 flex-1 rounded-2xl bg-raised font-semibold text-text-2"
               onClick={() => setStep(1)}
             >
               {t("common.back")}
@@ -1634,7 +1634,7 @@ export function CreateProgramWizard({
             {buildDayIdx < enabledDays.length - 1 ? (
               <button
                 type="button"
-                className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
+                className="h-12 flex-1 rounded-2xl bg-primary font-semibold text-on-primary"
                 onClick={() => setBuildDayIdx((i) => i + 1)}
               >
                 {t("program.nextDay")}
@@ -1643,7 +1643,7 @@ export function CreateProgramWizard({
               <button
                 type="button"
                 disabled={busy}
-                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg disabled:opacity-60"
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-on-primary disabled:opacity-60"
                 onClick={() => void finish()}
               >
                 {busy ? <Spinner className="size-4" /> : null}
@@ -1655,7 +1655,7 @@ export function CreateProgramWizard({
             <button
               type="button"
               disabled={busy}
-              className="w-full text-center text-xs text-muted underline"
+              className="w-full text-center text-xs text-text-2 underline"
               onClick={() => void finish()}
             >
               Hareket eklemeden bitir
@@ -1688,7 +1688,7 @@ function DraftExEditor({
 }) {
   const { t } = useI18n();
   return (
-    <div className="mt-2 space-y-2 border-t border-line/60 pt-2">
+    <div className="mt-2 space-y-2 border-t border-rule/60 pt-2">
       <div className="grid grid-cols-2 gap-2">
         <NumField
           label="Set"
@@ -1721,7 +1721,7 @@ function DraftExEditor({
         />
       </div>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">{t("program.load")}</span>
+        <span className="text-xs text-text-2">{t("program.load")}</span>
         <AppSelect
           value={ex.load_tag}
           onValueChange={(v) => onChange({ load_tag: v })}
@@ -1835,7 +1835,7 @@ function ExerciseQuickPicker({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Ara…"
-              className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm"
+              className="h-12 w-full rounded-2xl bg-raised px-3 text-sm"
               autoFocus
             />
             <div className="flex gap-1.5 overflow-x-auto">
@@ -1847,8 +1847,8 @@ function ExerciseQuickPicker({
                   className={cn(
                     "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold",
                     muscle === id
-                      ? "bg-yellow text-bg"
-                      : "bg-surface2 text-muted",
+                      ? "bg-primary text-on-primary"
+                      : "bg-raised text-text-2",
                   )}
                 >
                   {t(lab)}
@@ -1858,9 +1858,9 @@ function ExerciseQuickPicker({
           </div>
           <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
             {loading ? (
-              <li className="py-10 text-center text-xs text-muted">
+              <li className="py-10 text-center text-xs text-text-2">
                 <div
-                  className="mx-auto h-24 w-full animate-pulse rounded-2xl bg-surface2"
+                  className="mx-auto h-24 w-full animate-pulse rounded-2xl bg-raised"
                   aria-busy="true"
                 />
               </li>
@@ -1870,7 +1870,7 @@ function ExerciseQuickPicker({
                   <button
                     type="button"
                     onClick={() => setPicked(e)}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl bg-surface2/60 px-3 py-3 text-left text-sm active:bg-yellow/10"
+                    className="flex w-full items-center justify-between gap-2 rounded-xl bg-raised/60 px-3 py-3 text-left text-sm active:bg-accent/10"
                   >
                     <span className="min-w-0 truncate font-medium">
                       {e.name}
@@ -1884,15 +1884,15 @@ function ExerciseQuickPicker({
         </>
       ) : (
         <div className="space-y-3 overflow-y-auto p-4">
-          <div className="rounded-2xl bg-surface2 px-3 py-2.5">
+          <div className="rounded-2xl bg-raised px-3 py-2.5">
             <p className="text-sm font-semibold">{picked.name}</p>
-            <p className="text-[11px] text-muted">
+            <p className="text-[11px] text-text-2">
               Set, tekrar ve dinlenmeyi sen gir — otomatik doldurulmaz
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <label className="block min-w-0 space-y-1">
-              <span className="text-xs text-muted">Set *</span>
+              <span className="text-xs text-text-2">Set *</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -1902,12 +1902,12 @@ function ExerciseQuickPicker({
                   setSets(e.target.value === "" ? "" : Number(e.target.value))
                 }
                 placeholder={t("program.exSetsPh")}
-                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                className="num h-12 w-full rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
                 autoFocus
               />
             </label>
             <label className="block min-w-0 space-y-1">
-              <span className="text-xs text-muted">Dinlenme sn *</span>
+              <span className="text-xs text-text-2">Dinlenme sn *</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -1917,11 +1917,11 @@ function ExerciseQuickPicker({
                   setRest(e.target.value === "" ? "" : Number(e.target.value))
                 }
                 placeholder={t("program.exRestPh")}
-                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                className="num h-12 w-full rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
             <label className="block min-w-0 space-y-1">
-              <span className="text-xs text-muted">Tekrar min *</span>
+              <span className="text-xs text-text-2">Tekrar min *</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -1940,11 +1940,11 @@ function ExerciseQuickPicker({
                   }
                 }}
                 placeholder={t("program.exRepLoPh")}
-                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                className="num h-12 w-full rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
             <label className="block min-w-0 space-y-1">
-              <span className="text-xs text-muted">Tekrar max</span>
+              <span className="text-xs text-text-2">Tekrar max</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -1956,12 +1956,12 @@ function ExerciseQuickPicker({
                   )
                 }
                 placeholder={t("program.exRepHiPh")}
-                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                className="num h-12 w-full rounded-2xl bg-raised px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
           </div>
           <label className="block space-y-1">
-            <span className="text-xs text-muted">{t("program.load")}</span>
+            <span className="text-xs text-text-2">{t("program.load")}</span>
             <AppSelect
               value={tag}
               onValueChange={setTag}
@@ -1973,14 +1973,14 @@ function ExerciseQuickPicker({
           <div className="flex gap-2 pt-1">
             <button
               type="button"
-              className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
+              className="h-12 flex-1 rounded-2xl bg-raised font-semibold text-text-2"
               onClick={() => setPicked(null)}
             >
               {t("program.changeExercise")}
             </button>
             <button
               type="button"
-              className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
+              className="h-12 flex-1 rounded-2xl bg-primary font-semibold text-on-primary"
               onClick={submit}
             >
               {t("common.add")}

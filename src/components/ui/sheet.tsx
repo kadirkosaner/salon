@@ -1,5 +1,5 @@
 import { Drawer } from "vaul";
-import { X } from "lucide-react";
+import { X } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,7 +49,7 @@ export function AppSheet({
         <Drawer.Content
           className={cn(
             "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[94dvh] w-full max-w-[480px] flex-col outline-none",
-            "rounded-t-[1.25rem] bg-elevated",
+            "rounded-t-[1.25rem] bg-raised",
             "shadow-[var(--shadow-sheet)]",
             className,
           )}
@@ -63,13 +63,13 @@ export function AppSheet({
         >
           <div className="flex justify-center pt-2.5 pb-1">
             {dismissible ? (
-              <Drawer.Handle className="mx-auto !h-1 !w-10 !rounded-full !bg-line-strong" />
+              <Drawer.Handle className="mx-auto !h-1 !w-10 !rounded-full !bg-edge" />
             ) : (
-              <span className="h-1 w-10 rounded-full bg-line-strong" aria-hidden />
+              <span className="h-1 w-10 rounded-full bg-edge" aria-hidden />
             )}
           </div>
 
-          <div className="flex items-start justify-between gap-3 border-b border-line/80 px-4 pb-3 pt-1">
+          <div className="flex items-start justify-between gap-3 border-b border-rule/80 px-4 pb-3 pt-1">
             <Drawer.Title
               className={cn(
                 "font-display min-w-0 flex-1 text-xl tracking-wide text-text",
@@ -81,7 +81,7 @@ export function AppSheet({
             {showClose && dismissible ? (
               <Drawer.Close
                 type="button"
-                className="grid size-11 shrink-0 place-items-center rounded-full bg-surface2 text-muted shadow-[var(--shadow-highlight)] active:scale-95 active:bg-surface"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-raised text-text-2 shadow-[var(--shadow-highlight)] active:scale-95 active:bg-sunken"
                 aria-label="Kapat"
               >
                 <X className="size-5" />
@@ -100,7 +100,7 @@ export function AppSheet({
             {children}
           </div>
           {footer ? (
-            <div className="shrink-0 border-t border-line/80 bg-elevated px-4 py-3">
+            <div className="shrink-0 border-t border-rule/80 bg-raised px-4 py-3">
               {footer}
             </div>
           ) : null}

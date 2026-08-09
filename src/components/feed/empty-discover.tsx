@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { UserPlus } from "lucide-react";
+import { UserPlus } from "@/components/icons";
 import { ActivityCard } from "@/components/feed/activity-card";
 import type { FeedItem } from "@/lib/server/activity";
 
@@ -44,21 +44,21 @@ export function FeedEmptyDiscover({
     <div className="space-y-5">
       {suggested.length > 0 && (
         <section>
-          <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             {t("feed.suggested")}
           </h2>
           <ul className="space-y-2">
             {suggested.map((u) => (
               <li
                 key={u.id}
-                className="flex items-center gap-3 rounded-xl border border-line bg-surface2/40 px-3 py-2.5"
+                className="flex items-center gap-3 rounded-xl border border-rule bg-raised/40 px-3 py-2.5"
               >
                 <Link
                   to="/u/$username"
                   params={{ username: u.username || u.id }}
                   className="flex min-w-0 flex-1 items-center gap-3"
                 >
-                  <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-yellow/15 text-sm font-semibold text-yellow">
+                  <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
                     {u.image ? (
                       <img src={u.image} alt="" className="size-full object-cover" />
                     ) : (
@@ -72,7 +72,7 @@ export function FeedEmptyDiscover({
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{u.name}</span>
-                    <span className="text-[11px] text-muted">
+                    <span className="text-[11px] text-text-2">
                       {u.username ? `@${u.username}` : ""} · {u.followers}{" "}
                       {t("profile.followers").toLowerCase()}
                     </span>
@@ -82,7 +82,7 @@ export function FeedEmptyDiscover({
                   <button
                     type="button"
                     onClick={() => onFollow(u.id)}
-                    className="flex h-9 items-center gap-1 rounded-lg bg-yellow px-2.5 text-xs font-semibold text-bg"
+                    className="flex h-9 items-center gap-1 rounded-lg bg-primary px-2.5 text-xs font-semibold text-on-primary"
                   >
                     <UserPlus className="size-3.5" />
                     {t("profile.follow")}
@@ -96,7 +96,7 @@ export function FeedEmptyDiscover({
 
       {discoverItems.length > 0 && (
         <section className="space-y-3">
-          <h2 className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h2 className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             {t("feed.publicActivity")}
           </h2>
           {discoverItems.map((item) => (
@@ -112,7 +112,7 @@ export function FeedEmptyDiscover({
 
       {programs.length > 0 && (
         <section>
-          <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             {t("feed.featuredPrograms")}
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -121,10 +121,10 @@ export function FeedEmptyDiscover({
                 key={p.id}
                 type="button"
                 onClick={() => navigate({ to: "/kesfet" })}
-                className="w-40 shrink-0 rounded-xl border border-line bg-surface2/50 p-3 text-left"
+                className="w-40 shrink-0 rounded-xl border border-rule bg-raised/50 p-3 text-left"
               >
                 <p className="truncate text-sm font-semibold">{p.name}</p>
-                <p className="mt-1 text-[11px] text-muted">
+                <p className="mt-1 text-[11px] text-text-2">
                   {p.day_count} {t("feed.days")} · {t("feed.clones", { n: p.clone_count })}
                 </p>
               </button>

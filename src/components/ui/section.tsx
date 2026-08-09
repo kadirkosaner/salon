@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight, type LucideIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { CountUp } from "@/components/ui/count-up";
 
@@ -32,7 +32,7 @@ export function PageSection({
               </h2>
             ) : null}
             {description ? (
-              <p className="mt-0.5 text-xs leading-relaxed text-muted">{description}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-text-2">{description}</p>
             ) : null}
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
@@ -78,7 +78,7 @@ export function StatTile({
       )}
     >
       <div className="flex items-center justify-between gap-1">
-        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted">
+        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-text-2">
           {label}
         </p>
         {icon}
@@ -86,7 +86,7 @@ export function StatTile({
       <p
         className={cn(
           "font-display mt-1.5 truncate text-2xl leading-none tracking-wide sm:text-3xl",
-          accent ? "text-yellow" : "text-text",
+          accent ? "text-accent" : "text-text",
         )}
       >
         {countValue != null ? (
@@ -95,7 +95,7 @@ export function StatTile({
           value
         )}
       </p>
-      {hint ? <p className="mt-1 truncate text-xs text-muted">{hint}</p> : null}
+      {hint ? <p className="mt-1 truncate text-xs text-text-2">{hint}</p> : null}
     </Comp>
   );
 }
@@ -127,7 +127,7 @@ export function MenuRow({
       <span
         className={cn(
           "grid size-10 shrink-0 place-items-center rounded-lg",
-          danger ? "bg-red/10 text-red" : "bg-surface2 text-yellow",
+          danger ? "bg-danger/10 text-danger" : "bg-raised text-accent",
         )}
       >
         <Icon className="size-5" />
@@ -136,7 +136,7 @@ export function MenuRow({
         <span
           className={cn(
             "block truncate text-sm font-medium",
-            danger ? "text-red" : "text-text",
+            danger ? "text-danger" : "text-text",
           )}
         >
           {label}
@@ -144,7 +144,7 @@ export function MenuRow({
         {hint ? (
           <span
             className={cn(
-              "mt-0.5 block text-xs text-muted",
+              "mt-0.5 block text-xs text-text-2",
               hint.length > 28 ? "break-all whitespace-normal leading-snug" : "truncate",
             )}
           >
@@ -153,7 +153,7 @@ export function MenuRow({
         ) : null}
       </span>
       {trailing ?? (
-        <ChevronRight className={cn("size-4 shrink-0", danger ? "text-red/50" : "text-dim")} />
+        <ChevronRight className={cn("size-4 shrink-0", danger ? "text-danger/50" : "text-text-3")} />
       )}
     </>
   );

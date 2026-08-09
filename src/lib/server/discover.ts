@@ -7,6 +7,7 @@ import { ensureUserProfile, type PublicUserCard } from "./social";
 import type { PublicProgramCard } from "./share";
 import { v, noInput } from "@/lib/validation";
 import { z } from "zod";
+import { translatePrograms } from "./translations";
 
 export type DiscoverShelves = {
   featured: PublicProgramCard[];
@@ -49,6 +50,7 @@ function mapProgram(
 async function loadPublicPrograms(
   sql: Awaited<ReturnType<typeof getSql>>,
   userId: string,
+  locale = "en",
 ) {
   const rows = await sql<{
     id: number;
@@ -79,19 +81,26 @@ async function loadPublicPrograms(
     order by p.clone_count desc, p.id desc
     limit 80
   `;
-  return rows.map((r) => mapProgram(r, userId));
+  const tr = await translatePrograms(sql, rows, locale);
+  return rows.map((r) => {
+    const hit = tr.get(r.id);
+    const base = mapProgram(r, userId);
+    if (!hit) return base;
+    return { ...base, name: hit.name, description: hit.description };
+  });
 }
 
 export const getDiscoverHome = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(noInput)
-  .handler(async ({ context }): Promise<DiscoverShelves> => {
+  .validator(v(z.object({ locale: z.string().optional() }).optional()))
+  .handler(async ({ context, data }): Promise<DiscoverShelves> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
     await ensureCatalogSeeded(sql);
     await ensureUserProfile(sql, context.userId);
 
-    const all = await loadPublicPrograms(sql, context.userId);
+    const locale = data?.locale ?? "en";
+    const all = await loadPublicPrograms(sql, context.userId, locale);
 
     const stats = await sql<{ c: number }>`
       select count(*)::int as c from workouts

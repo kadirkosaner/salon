@@ -1,4 +1,4 @@
-import { Pause, Play, Plus, X } from "lucide-react";
+import { Pause, Play, Plus, X } from "@/components/icons";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/provider";
@@ -75,30 +75,30 @@ export function RestTimerBar({
 
   return (
     <div
-      className="fixed inset-x-0 z-50 border-t border-line bg-surface2 shadow-2xl"
+      className="fixed inset-x-0 z-50 border-t border-rule bg-raised shadow-2xl"
       style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
     >
-      <div className="h-1 bg-line">
+      <div className="h-1 bg-rule">
         <div
           className={cn(
             "h-full transition-[width] duration-1000 linear",
-            left === 0 ? "bg-green" : "bg-yellow",
+            left === 0 ? "bg-success" : "bg-primary",
           )}
           style={{ width: `${pct}%` }}
         />
       </div>
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-muted">
+          <p className="truncate text-xs text-text-2">
             {t("rest.label", { name: state.exerciseName })}
           </p>
-          <p className={cn("num text-3xl leading-none tracking-wide", left === 0 && "text-green")}>
+          <p className={cn("num text-3xl leading-none tracking-wide", left === 0 && "text-success")}>
             {left === 0 ? t("rest.ready") : `${mm}:${ss}`}
           </p>
         </div>
         <button
           type="button"
-          className="grid size-11 place-items-center rounded-md border border-line bg-surface text-text"
+          className="grid size-11 place-items-center rounded-md border border-rule bg-sunken text-text"
           onClick={() => setPaused((p) => !p)}
           aria-label={paused ? t("rest.resume") : t("rest.pause")}
         >
@@ -106,17 +106,17 @@ export function RestTimerBar({
         </button>
         <button
           type="button"
-          className="grid size-11 place-items-center rounded-md border border-line bg-surface text-text"
+          className="grid size-11 place-items-center rounded-md border border-rule bg-sunken text-text"
           onClick={() => setLeft((s) => s + 30)}
           aria-label={t("rest.add30")}
         >
           <Plus className="size-4" />
           <span className="sr-only">+30</span>
         </button>
-        <span className="num text-xs text-muted">+30</span>
+        <span className="num text-xs text-text-2">+30</span>
         <button
           type="button"
-          className="grid size-11 place-items-center rounded-md border border-line bg-surface text-muted"
+          className="grid size-11 place-items-center rounded-md border border-rule bg-sunken text-text-2"
           onClick={onClose}
           aria-label={t("common.close")}
         >

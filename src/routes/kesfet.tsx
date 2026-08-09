@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Dumbbell, Search, Sparkles, TrendingUp, UserPlus, Users, X } from "lucide-react";
+import { BookOpen, Dumbbell, Search, Sparkles, TrendingUp, UserPlus, Users, X } from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -45,6 +45,7 @@ import { dowLong } from "@/lib/utils";
 import { copyText } from "@/lib/clipboard";
 import { qk } from "@/lib/query-keys";
 import { Spinner } from "@/components/ui/spinner";
+import { AppSheet } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/kesfet")({ component: DiscoverPage });
 
@@ -91,6 +92,7 @@ function DiscoverPage() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [cloning, setCloning] = useState(false);
+  const [tab, setTab] = useState<"forYou" | "programs" | "people" | "exercises">("forYou");
   const raceRef = useRef(0);
 
   useEffect(() => {
@@ -128,8 +130,8 @@ function DiscoverPage() {
   }, [debounced, t]);
 
   const homeQuery = useQuery({
-    queryKey: qk.discoverHome,
-    queryFn: () => getDiscoverHome(),
+    queryKey: [...qk.discoverHome, locale] as const,
+    queryFn: () => getDiscoverHome({ data: { locale } }),
     enabled: !!user?.id && debounced.length < 1,
   });
 
@@ -242,12 +244,12 @@ function DiscoverPage() {
       <div className="w-full min-w-0 space-y-4">
         {/* Unified search */}
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-dim" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-3" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("discover.searchPlaceholder")}
-            className="h-12 w-full rounded-xl border border-line-strong bg-surface2 py-2 pl-10 pr-10 text-sm"
+            className="h-12 w-full rounded-xl border border-edge bg-raised py-2 pl-10 pr-10 text-sm"
             autoComplete="off"
             enterKeyHint="search"
           />
@@ -255,14 +257,14 @@ function DiscoverPage() {
             <button
               type="button"
               onClick={() => setQ("")}
-              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-muted"
+              className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-lg text-text-2"
               aria-label={t("common.close")}
             >
               <X className="size-4" />
             </button>
           ) : null}
           {searching ? (
-            <Spinner className="absolute right-10 top-1/2 size-4 -translate-y-1/2 text-yellow" />
+            <Spinner className="absolute right-10 top-1/2 size-4 -translate-y-1/2 text-accent" />
           ) : null}
         </div>
 
@@ -270,7 +272,33 @@ function DiscoverPage() {
 
         {/* Filters — wrap, not horizontal rail */}
         {!searchingMode ? (
-          <FilterChips filters={filters} setFilters={setFilters} t={t} />
+          <>
+            <FilterChips filters={filters} setFilters={setFilters} t={t} />
+            <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm">
+              {(
+                [
+                  ["forYou", t("discover.tabForYou")],
+                  ["programs", t("discover.tabPrograms")],
+                  ["people", t("discover.tabPeople")],
+                  ["exercises", t("discover.tabExercises")],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTab(id)}
+                  className={cn(
+                    "relative -mb-px shrink-0 pb-2 font-medium transition",
+                    tab === id
+                      ? "text-text after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-accent"
+                      : "text-text-2",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
         ) : null}
 
         {searchingMode ? (
@@ -293,7 +321,7 @@ function DiscoverPage() {
               <div className="space-y-2">
                 {recent.length > 0 ? (
                   <div>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
                       {t("discover.recent")}
                     </p>
                     <div className="scroll-rail-wrap">
@@ -303,7 +331,7 @@ function DiscoverPage() {
                             key={r}
                             type="button"
                             onClick={() => setQ(r)}
-                            className="shrink-0 rounded-full border border-line bg-surface2 px-3 py-1.5 text-xs font-medium"
+                            className="shrink-0 rounded-full border border-rule bg-raised px-3 py-1.5 text-xs font-medium"
                           >
                             {r}
                           </button>
@@ -313,7 +341,7 @@ function DiscoverPage() {
                   </div>
                 ) : null}
                 <div>
-                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
                     {t("discover.suggested")}
                   </p>
                   <div className="scroll-rail-wrap">
@@ -323,7 +351,7 @@ function DiscoverPage() {
                           key={r}
                           type="button"
                           onClick={() => setQ(r)}
-                          className="shrink-0 rounded-full border border-line-strong bg-yellow/10 px-3 py-1.5 text-xs font-medium text-yellow"
+                          className="shrink-0 rounded-full border border-edge bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent"
                         >
                           {r}
                         </button>
@@ -339,8 +367,8 @@ function DiscoverPage() {
             ) : (
               <div className="space-y-5">
                 <Shelf
-                  title={t("discover.featured")}
-                  icon={<Sparkles className="size-4 text-yellow" />}
+                  title={t("discover.featuredWeek")}
+                  icon={<Sparkles className="size-4 text-accent" />}
                   items={filterList(shelves.featured)}
                   cloning={cloning}
                   onOpen={setDetailId}
@@ -351,8 +379,8 @@ function DiscoverPage() {
                   empty={t("discover.shelfEmpty")}
                 />
                 <Shelf
-                  title={t("discover.topCloned")}
-                  icon={<TrendingUp className="size-4 text-softblue" />}
+                  title={t("discover.newest")}
+                  icon={<TrendingUp className="size-4 text-info" />}
                   items={filterList(shelves.topCloned)}
                   cloning={cloning}
                   onOpen={setDetailId}
@@ -364,8 +392,8 @@ function DiscoverPage() {
                   horizontal
                 />
                 <Shelf
-                  title={t("discover.fromFollowing")}
-                  icon={<Users className="size-4 text-green" />}
+                  title={t("discover.followSection")}
+                  icon={<Users className="size-4 text-success" />}
                   items={filterList(shelves.fromFollowing)}
                   cloning={cloning}
                   onOpen={setDetailId}
@@ -384,7 +412,7 @@ function DiscoverPage() {
                         ? t("discover.forMid")
                         : t("discover.forAdv")
                   }
-                  icon={<BookOpen className="size-4 text-orange" />}
+                  icon={<BookOpen className="size-4 text-warning" />}
                   items={filterList(shelves.forLevel)}
                   cloning={cloning}
                   onOpen={setDetailId}
@@ -431,8 +459,16 @@ function FilterChips({
 }: {
   filters: DiscoverFilters;
   setFilters: (f: DiscoverFilters) => void;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
+  const [open, setOpen] = useState(false);
+  const activeCount = [
+    filters.days,
+    filters.level,
+    filters.goal,
+    filters.equipment,
+  ].filter((x) => x != null).length;
+
   function toggleDays(d: number) {
     setFilters({ ...filters, days: filters.days === d ? null : d });
   }
@@ -450,105 +486,169 @@ function FilterChips({
     cn(
       "rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95",
       active
-        ? "bg-yellow text-bg"
-        : "border border-line bg-surface2 text-muted",
+        ? "bg-primary text-on-primary"
+        : "border border-rule bg-raised text-text-2",
     );
 
-  return (
-    <div className="space-y-2.5">
-      <FilterRow label={t("discover.filterDays")}>
-        {[3, 4, 6].map((d) => (
-          <button
-            key={d}
-            type="button"
-            className={chip(filters.days === d)}
-            onClick={() => toggleDays(d)}
-          >
-            {d} {t("feed.days")}
-          </button>
-        ))}
-      </FilterRow>
-      <FilterRow label={t("discover.filterLevel")}>
-        {(
-          [
-            ["baslangic", "discover.levelBeginner"],
-            ["orta", "discover.levelMid"],
-            ["ileri", "discover.levelAdv"],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            className={chip(filters.level === k)}
-            onClick={() => toggleLevel(k)}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </FilterRow>
-      <FilterRow label={t("discover.filterGoal")}>
-        {(
-          [
-            ["guc", "discover.goalStrength"],
-            ["hipertrofi", "discover.goalHyper"],
-            ["kilo", "discover.goalFat"],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            className={chip(filters.goal === k)}
-            onClick={() => toggleGoal(k)}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </FilterRow>
-      <FilterRow label={t("discover.filterEquipment")}>
-        {(
-          [
-            ["barbell", t("discover.eq.barbell")],
-            ["dumbbell", t("discover.eq.dumbbell")],
-            ["makine", t("discover.eq.machine")],
-            ["vucut", t("discover.eq.bodyweight")],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            className={chip(filters.equipment === k)}
-            onClick={() => toggleEq(k)}
-          >
-            {label}
-          </button>
-        ))}
-        {hasActiveFilters(filters) ? (
-          <button
-            type="button"
-            className="rounded-full border border-line px-3 py-1.5 text-xs text-muted"
-            onClick={() => setFilters(emptyFilters())}
-          >
-            {t("discover.clearFilters")}
-          </button>
-        ) : null}
-      </FilterRow>
-    </div>
-  );
-}
+  const tags: { key: string; label: string; clear: () => void }[] = [];
+  if (filters.days != null) {
+    tags.push({
+      key: "days",
+      label: `${filters.days} ${t("feed.days")}`,
+      clear: () => setFilters({ ...filters, days: null }),
+    });
+  }
+  if (filters.level) {
+    const map = {
+      baslangic: "discover.levelBeginner",
+      orta: "discover.levelMid",
+      ileri: "discover.levelAdv",
+    } as const;
+    tags.push({
+      key: "level",
+      label: t(map[filters.level]),
+      clear: () => setFilters({ ...filters, level: null }),
+    });
+  }
+  if (filters.goal) {
+    const map = {
+      guc: "discover.goalStrength",
+      hipertrofi: "discover.goalHyper",
+      kilo: "discover.goalFat",
+    } as const;
+    tags.push({
+      key: "goal",
+      label: t(map[filters.goal]),
+      clear: () => setFilters({ ...filters, goal: null }),
+    });
+  }
+  if (filters.equipment) {
+    const map: Record<string, string> = {
+      barbell: t("discover.eq.barbell"),
+      dumbbell: t("discover.eq.dumbbell"),
+      makine: t("discover.eq.machine"),
+      vucut: t("discover.eq.bodyweight"),
+    };
+    tags.push({
+      key: "eq",
+      label: map[filters.equipment] ?? filters.equipment,
+      clear: () => setFilters({ ...filters, equipment: null }),
+    });
+  }
 
-function FilterRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-      <span className="w-full text-[10px] font-semibold uppercase tracking-wider text-dim sm:w-auto sm:shrink-0">
-        {label}
-      </span>
-      {children}
+    <div className="flex min-h-[38px] flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold",
+          activeCount > 0
+            ? "bg-primary text-on-primary"
+            : "border border-rule bg-raised text-text-2",
+        )}
+      >
+        {activeCount > 0
+          ? t("discover.filtersCount", { n: activeCount })
+          : t("discover.filters")}
+      </button>
+      {tags.map((tag) => (
+        <button
+          key={tag.key}
+          type="button"
+          onClick={tag.clear}
+          className="inline-flex h-9 items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2.5 text-xs font-medium text-accent"
+        >
+          {tag.label}
+          <X className="size-3" />
+        </button>
+      ))}
+
+      {open ? (
+        <AppSheet title={t("discover.filters")} onClose={() => setOpen(false)}>
+          <div className="space-y-4 pb-2">
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-3">
+                {t("discover.filterDays")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[3, 4, 6].map((d) => (
+                  <button key={d} type="button" className={chip(filters.days === d)} onClick={() => toggleDays(d)}>
+                    {d} {t("feed.days")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-3">
+                {t("discover.filterLevel")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["baslangic", "discover.levelBeginner"],
+                    ["orta", "discover.levelMid"],
+                    ["ileri", "discover.levelAdv"],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button key={k} type="button" className={chip(filters.level === k)} onClick={() => toggleLevel(k)}>
+                    {t(label)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-3">
+                {t("discover.filterGoal")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["guc", "discover.goalStrength"],
+                    ["hipertrofi", "discover.goalHyper"],
+                    ["kilo", "discover.goalFat"],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button key={k} type="button" className={chip(filters.goal === k)} onClick={() => toggleGoal(k)}>
+                    {t(label)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-text-3">
+                {t("discover.filterEquipment")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["barbell", t("discover.eq.barbell")],
+                    ["dumbbell", t("discover.eq.dumbbell")],
+                    ["makine", t("discover.eq.machine")],
+                    ["vucut", t("discover.eq.bodyweight")],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button key={k} type="button" className={chip(filters.equipment === k)} onClick={() => toggleEq(k)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {hasActiveFilters(filters) ? (
+              <button type="button" className="w-full py-2 text-sm text-text-2" onClick={() => setFilters(emptyFilters())}>
+                {t("discover.clearFilters")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="flex h-12 w-full items-center justify-center rounded-[var(--radius-btn)] bg-primary font-semibold text-on-primary"
+              onClick={() => setOpen(false)}
+            >
+              {t("common.done")}
+            </button>
+          </div>
+        </AppSheet>
+      ) : null}
     </div>
   );
 }
@@ -562,7 +662,7 @@ function Shelf({
   onClone,
   onCopyCode,
   empty,
-  horizontal,
+  horizontal: _horizontal,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -576,43 +676,29 @@ function Shelf({
 }) {
   return (
     <section>
-      <h3 className="font-display mb-2 flex items-center gap-2 text-base tracking-wide">
+      <h3 className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
         {icon}
         {title}
       </h3>
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line px-3 py-4 text-center text-xs text-muted">
+        <p className="border-t border-rule px-1 py-4 text-center text-xs text-text-2">
           {empty}
         </p>
-      ) : horizontal ? (
-        <div className="scroll-rail-wrap">
-          <div className="scroll-rail">
-            {items.map((p) => (
-              <div key={p.id} className="w-[16.5rem] shrink-0">
-                <ProgramCard
-                  p={p}
-                  busy={cloning}
-                  onOpen={() => onOpen(p.id)}
-                  onClone={() => onClone(p)}
-                  onCopyCode={() => p.share_code && onCopyCode(p.share_code)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
       ) : (
-        <div className="space-y-2.5">
-          {items.map((p) => (
-            <ProgramCard
-              key={p.id}
-              p={p}
-              busy={cloning}
-              onOpen={() => onOpen(p.id)}
-              onClone={() => onClone(p)}
-              onCopyCode={() => p.share_code && onCopyCode(p.share_code)}
-            />
+        <ul className="divide-y divide-rule border-t border-rule">
+          {items.map((p, i) => (
+            <li key={p.id}>
+              <ProgramCard
+                rank={i + 1}
+                p={p}
+                busy={cloning}
+                onOpen={() => onOpen(p.id)}
+                onClone={() => onClone(p)}
+                onCopyCode={() => p.share_code && onCopyCode(p.share_code)}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
@@ -630,7 +716,7 @@ function SearchResults({
 }: {
   results: UnifiedSearchResult | null;
   searching: boolean;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onFollow: (id: string, following: boolean) => void;
   onOpenProgram: (id: number) => void;
   onCloneProgram: (p: PublicProgramCard) => void;
@@ -641,9 +727,9 @@ function SearchResults({
     return (
       <div className="flex justify-center py-10">
         <div className="mx-auto space-y-3 p-4 w-full max-w-md">
-          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
-          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
-          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
+          <div className="h-24 animate-pulse rounded-2xl bg-raised" />
+          <div className="h-24 animate-pulse rounded-2xl bg-raised" />
+          <div className="h-24 animate-pulse rounded-2xl bg-raised" />
         </div>
       </div>
     );
@@ -679,11 +765,11 @@ function SearchResults({
     <div className="space-y-5">
       {results.shareCodeHit ? (
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-yellow">
+          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-accent">
             <Sparkles className="size-3.5" />
             {t("discover.shareCodeGroup")}
             {results.shareCodeQuery ? (
-              <span className="num tracking-widest text-muted">
+              <span className="num tracking-widest text-text-2">
                 · {results.shareCodeQuery}
               </span>
             ) : null}
@@ -709,7 +795,7 @@ function SearchResults({
 
       {results.people.length > 0 ? (
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             <Users className="size-3.5" />
             {t("discover.people")} · {results.people.length}
           </h3>
@@ -723,7 +809,7 @@ function SearchResults({
 
       {results.programs.length > 0 ? (
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             <BookOpen className="size-3.5" />
             {t("discover.programs")} · {results.programs.length}
           </h3>
@@ -744,17 +830,17 @@ function SearchResults({
 
       {results.exercises.length > 0 ? (
         <section>
-          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             <Dumbbell className="size-3.5" />
             {t("discover.exercises")} · {results.exercises.length}
           </h3>
-          <ul className="divide-y divide-line rounded-xl border border-line bg-surface2/40">
+          <ul className="divide-y divide-rule rounded-xl border border-rule bg-raised/40">
             {results.exercises.slice(0, 5).map((e, i) => (
               <li
                 key={`${e.name}-${i}`}
                 className="flex h-14 items-center gap-3 px-3"
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-yellow/10 text-yellow">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
                   <Dumbbell className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
@@ -765,7 +851,7 @@ function SearchResults({
             ))}
           </ul>
           {results.exercises.length > 5 ? (
-            <p className="mt-1 text-center text-[11px] text-muted">
+            <p className="mt-1 text-center text-[11px] text-text-2">
               +{results.exercises.length - 5} · {t("discover.searchAll")}
             </p>
           ) : null}
@@ -781,17 +867,17 @@ function PersonRow({
   onFollow,
 }: {
   r: PublicUserCard;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onFollow: (id: string, following: boolean) => void;
 }) {
   return (
-    <li className="flex items-center gap-3 rounded-xl border border-line bg-surface2/40 px-3 py-2.5">
+    <li className="flex items-center gap-3 rounded-xl border border-rule bg-raised/40 px-3 py-2.5">
       <Link
         to="/u/$username"
         params={{ username: r.username || r.id }}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
-        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-yellow/15 font-display text-sm text-yellow">
+        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 font-display text-sm text-accent">
           {r.image ? (
             <img src={r.image} alt="" className="size-full object-cover" />
           ) : (
@@ -805,7 +891,7 @@ function PersonRow({
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium">{r.name}</span>
-          <span className="text-[11px] text-muted">
+          <span className="text-[11px] text-text-2">
             {r.username ? `@${r.username}` : ""}
             {r.username ? " · " : ""}
             {r.followers} {t("profile.followers").toLowerCase()}
@@ -817,7 +903,7 @@ function PersonRow({
         onClick={() => void onFollow(r.id, r.is_following)}
         className={cn(
           "flex h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-xs font-semibold",
-          r.is_following ? "border border-line text-muted" : "bg-yellow text-bg",
+          r.is_following ? "border border-rule text-text-2" : "bg-primary text-on-primary",
         )}
       >
         {r.is_following ? (

@@ -51,15 +51,15 @@ export function UsernameClaimSheet({
       showClose={false}
     >
       <div className="space-y-4">
-        <p className="text-sm leading-relaxed text-muted">
+        <p className="text-sm leading-relaxed text-text-2">
           {t("profile.claimHint")}
         </p>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">
+          <span className="text-xs font-medium text-text-2">
             {t("profile.username")}
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-muted">@</span>
+            <span className="text-text-2">@</span>
             <input
               value={value}
               onChange={(e) => setValue(e.target.value.toLowerCase())}
@@ -67,13 +67,13 @@ export function UsernameClaimSheet({
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              className="h-12 min-w-0 flex-1 rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+              className="h-12 min-w-0 flex-1 rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
             />
           </div>
           {err ? (
-            <p className="text-xs text-red">{err}</p>
+            <p className="text-xs text-danger">{err}</p>
           ) : (
-            <p className="text-xs text-dim">3–20 · a-z, 0-9, _</p>
+            <p className="text-xs text-text-3">3–20 · a-z, 0-9, _</p>
           )}
         </label>
         <button

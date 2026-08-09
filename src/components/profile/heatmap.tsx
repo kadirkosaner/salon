@@ -40,25 +40,25 @@ export function WorkoutHeatmap({
 
   function cellClass(count: number) {
     if (count < 0) return "bg-transparent";
-    if (count === 0) return "bg-surface2";
-    if (count === 1) return "bg-yellow/25";
-    if (count === 2) return "bg-yellow/45";
-    if (count >= 3) return "bg-yellow/75";
-    return "bg-surface2";
+    if (count === 0) return "bg-raised";
+    if (count === 1) return "bg-accent/25";
+    if (count === 2) return "bg-accent/45";
+    if (count >= 3) return "bg-accent/75";
+    return "bg-raised";
   }
 
   return (
     <div className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
           {title}
         </p>
-        <div className="flex items-center gap-1 text-[10px] text-dim">
+        <div className="flex items-center gap-1 text-[10px] text-text-3">
           <span>{t("heatmap.low")}</span>
-          <span className="size-2.5 rounded-sm bg-surface2" />
-          <span className="size-2.5 rounded-sm bg-yellow/25" />
-          <span className="size-2.5 rounded-sm bg-yellow/45" />
-          <span className="size-2.5 rounded-sm bg-yellow/75" />
+          <span className="size-2.5 rounded-sm bg-raised" />
+          <span className="size-2.5 rounded-sm bg-accent/25" />
+          <span className="size-2.5 rounded-sm bg-accent/45" />
+          <span className="size-2.5 rounded-sm bg-accent/75" />
           <span>{t("heatmap.high")}</span>
         </div>
       </div>

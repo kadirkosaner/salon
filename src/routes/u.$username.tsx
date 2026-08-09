@@ -70,8 +70,8 @@ function PublicProfilePage() {
   if (missing) {
     return (
       <AppShell title={t("profile.title")} subtitle={t("common.error")}>
-        <div className="rounded-2xl border border-line bg-surface p-6 text-center">
-          <p className="text-sm text-muted">{t("profile.notFound")}</p>
+        <div className="rounded-2xl border border-rule bg-sunken p-6 text-center">
+          <p className="text-sm text-text-2">{t("profile.notFound")}</p>
         </div>
       </AppShell>
     );

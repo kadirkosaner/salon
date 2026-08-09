@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Heart, Send } from "lucide-react";
+import { Heart, Send } from "@/components/icons";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { AppSheet } from "@/components/ui/sheet";
@@ -142,9 +142,9 @@ export function CommentSheet({
   function CommentRow({ c, depth }: { c: Comment; depth: number }) {
     const kids = tree.byParent.get(c.id) ?? [];
     return (
-      <div className={cn(depth > 0 && "ms-8 border-s border-line/60 ps-3")}>
+      <div className={cn(depth > 0 && "ms-8 border-s border-rule/60 ps-3")}>
         <div className="flex gap-2.5">
-          <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-yellow/15 text-[11px] font-semibold text-yellow">
+          <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-[11px] font-semibold text-accent">
             {c.image ? (
               <img src={c.image} alt="" className="size-full object-cover" />
             ) : (
@@ -161,11 +161,11 @@ export function CommentSheet({
                 {c.name}
               </Link>
               {c.verified ? (
-                <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-yellow text-[8px] font-bold text-bg">
+                <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-on-primary">
                   ✓
                 </span>
               ) : null}
-              <span className="text-[11px] text-dim">
+              <span className="text-[11px] text-text-3">
                 {relativeTime(c.created_at, locale)}
                 {c.edited_at ? ` · ${t("post.edited")}` : ""}
               </span>
@@ -177,7 +177,7 @@ export function CommentSheet({
                 onClick={() => void toggleLike(c)}
                 className={cn(
                   "inline-flex items-center gap-1 text-[11px] font-medium",
-                  c.liked_by_me ? "text-red" : "text-muted",
+                  c.liked_by_me ? "text-danger" : "text-text-2",
                 )}
               >
                 <Heart className={cn("size-3", c.liked_by_me && "fill-current")} />
@@ -187,7 +187,7 @@ export function CommentSheet({
                 <button
                   type="button"
                   onClick={() => setReplyTo(c)}
-                  className="text-[11px] font-medium text-muted"
+                  className="text-[11px] font-medium text-text-2"
                 >
                   {t("post.reply")}
                 </button>
@@ -215,13 +215,13 @@ export function CommentSheet({
             <div className="space-y-3 py-2" aria-busy="true">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="flex gap-2.5">
-                  <div className="size-8 shrink-0 animate-pulse rounded-full bg-surface2" />
-                  <div className="h-14 min-w-0 flex-1 animate-pulse rounded-xl bg-surface2" />
+                  <div className="size-8 shrink-0 animate-pulse rounded-full bg-raised" />
+                  <div className="h-14 min-w-0 flex-1 animate-pulse rounded-xl bg-raised" />
                 </div>
               ))}
             </div>
           ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted">
+            <p className="py-8 text-center text-sm text-text-2">
               {t("feed.noComments")}
             </p>
           ) : (
@@ -231,10 +231,10 @@ export function CommentSheet({
 
         <form
           onSubmit={(e) => void send(e)}
-          className="sticky bottom-0 border-t border-line bg-surface pt-2"
+          className="sticky bottom-0 border-t border-rule bg-sunken pt-2"
         >
           {replyTo ? (
-            <div className="mb-1.5 flex items-center justify-between rounded-lg bg-surface2 px-2 py-1 text-[11px] text-muted">
+            <div className="mb-1.5 flex items-center justify-between rounded-lg bg-raised px-2 py-1 text-[11px] text-text-2">
               <span>
                 {t("post.reply")} · {replyTo.name}
               </span>
@@ -250,12 +250,12 @@ export function CommentSheet({
               rows={2}
               maxLength={500}
               placeholder={t("feed.commentPlaceholder")}
-              className="min-h-11 flex-1 resize-none rounded-xl border border-line bg-surface2 px-3 py-2 text-sm outline-none focus:border-yellow/40"
+              className="min-h-11 flex-1 resize-none rounded-xl border border-rule bg-raised px-3 py-2 text-sm outline-none focus:border-accent/40"
             />
             <button
               type="submit"
               disabled={sending || !body.trim()}
-              className="grid size-11 place-items-center rounded-xl bg-yellow text-bg disabled:opacity-50"
+              className="grid size-11 place-items-center rounded-xl bg-primary text-on-primary disabled:opacity-50"
               aria-label={t("common.save")}
             >
               {sending ? <Spinner className="size-4" /> : <Send className="size-4" />}

@@ -34,8 +34,8 @@ function ChartTip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-line/80 bg-surface/95 px-3 py-2 shadow-2xl shadow-black/50 backdrop-blur-md">
-      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-dim">
+    <div className="rounded-xl border border-rule/80 bg-sunken/95 px-3 py-2 shadow-2xl shadow-black/50 backdrop-blur-md">
+      <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-text-3">
         {labelFmt ? labelFmt(String(label ?? "")) : String(label ?? "")}
       </p>
       <div className="space-y-1">
@@ -118,10 +118,10 @@ export function ProgressAreaChart({
 }) {
   if (!data.length) {
     return (
-      <div className="flex h-44 flex-col items-center justify-center gap-1 rounded-xl bg-surface2/40 px-4">
-        <p className="text-sm text-muted">Veri yok</p>
+      <div className="flex h-44 flex-col items-center justify-center gap-1 rounded-xl bg-raised/40 px-4">
+        <p className="text-sm text-text-2">Veri yok</p>
         {emptyHint ? (
-          <p className="max-w-[14rem] text-center text-xs text-dim">{emptyHint}</p>
+          <p className="max-w-[14rem] text-center text-xs text-text-3">{emptyHint}</p>
         ) : null}
       </div>
     );
@@ -148,17 +148,17 @@ export function ProgressAreaChart({
       {last != null && (
         <div className="mb-2 flex items-end justify-between gap-2 px-0.5">
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-dim">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-text-3">
               Son
             </p>
             <p className="num text-2xl leading-none text-text">
               {last.toLocaleString()}
-              <span className="ml-1 text-sm font-normal text-muted">{valueUnit}</span>
+              <span className="ml-1 text-sm font-normal text-text-2">{valueUnit}</span>
             </p>
           </div>
           {vals.length > 1 && (
             <p
-              className={`num text-sm ${delta > 0 ? "text-green" : delta < 0 ? "text-red" : "text-muted"}`}
+              className={`num text-sm ${delta > 0 ? "text-success" : delta < 0 ? "text-danger" : "text-text-2"}`}
             >
               {delta > 0 ? "+" : ""}
               {delta.toLocaleString()} {valueUnit}
@@ -187,7 +187,6 @@ export function ProgressAreaChart({
               stroke={GRID}
               vertical={false}
               strokeDasharray="0"
-              strokeWidth={1}
             />
             <AxisX dataKey={xKey} formatter={xFormatter} />
             <AxisY domain={domain} />
@@ -206,7 +205,6 @@ export function ProgressAreaChart({
               type="monotone"
               dataKey={yKey}
               stroke={color}
-              strokeWidth={2.75}
               fill={`url(#${gradId})`}
               connectNulls
               isAnimationActive
@@ -240,7 +238,7 @@ export function MultiLineChart({
   const active = series.filter((s) => s.visible);
   if (!data.length || active.length === 0) {
     return (
-      <div className="flex h-44 items-center justify-center rounded-xl bg-surface2/40 text-sm text-muted">
+      <div className="flex h-44 items-center justify-center rounded-xl bg-raised/40 text-sm text-text-2">
         Veri yok
       </div>
     );
@@ -250,7 +248,7 @@ export function MultiLineChart({
     <div className="chart-box h-48 sm:h-52">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 6, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke={GRID} vertical={false} strokeWidth={1} />
+          <CartesianGrid stroke={GRID} vertical={false} />
           <AxisX dataKey={xKey} formatter={xFormatter} />
           <AxisY />
           <Tooltip
@@ -271,7 +269,6 @@ export function MultiLineChart({
               dataKey={s.key}
               name={s.label}
               stroke={s.color}
-              strokeWidth={2.25}
               connectNulls
               dot={false}
               activeDot={{ r: 4, strokeWidth: 2, stroke: SURFACE, fill: s.color }}
@@ -305,7 +302,7 @@ export function VolumeBarChart({
       <div className="chart-box h-44 sm:h-48">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 2, left: 0, bottom: 0 }} barCategoryGap="22%">
-            <CartesianGrid stroke={GRID} vertical={false} strokeWidth={1} />
+            <CartesianGrid stroke={GRID} vertical={false} />
             <AxisX dataKey="week" />
             <AxisY width={34} />
             <Tooltip
@@ -332,7 +329,7 @@ export function VolumeBarChart({
         </ResponsiveContainer>
       </div>
       {allEmpty && emptyHint ? (
-        <p className="mt-2 text-center text-xs text-muted">{emptyHint}</p>
+        <p className="mt-2 text-center text-xs text-text-2">{emptyHint}</p>
       ) : null}
     </div>
   );
@@ -348,9 +345,9 @@ function MiniStat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-lg bg-surface2/50 px-2.5 py-2">
-      <p className="text-[10px] uppercase tracking-wide text-dim">{label}</p>
-      <p className={`num mt-0.5 text-lg leading-none ${accent ? "text-yellow" : "text-text"}`}>
+    <div className="rounded-lg bg-raised/50 px-2.5 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-text-3">{label}</p>
+      <p className={`num mt-0.5 text-lg leading-none ${accent ? "text-accent" : "text-text"}`}>
         {value}
       </p>
     </div>

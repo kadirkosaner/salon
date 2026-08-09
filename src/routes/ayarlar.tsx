@@ -1,13 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AtSign, Bell, Check, ChevronLeft, ChevronRight, Clock, Copy, Download, Eye, Globe, KeyRound, LogOut, Scale, Trash2, UserRound, Vibrate } from "lucide-react";
+import {
+  AtSign,
+  Bell,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Copy,
+  Download,
+  Eye,
+  Globe,
+  KeyRound,
+  LogOut,
+  Palette,
+  Scale,
+  Trash2,
+  UserRound,
+  Vibrate,
+} from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { authClient, signOut } from "@/lib/auth/client";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { useI18n } from "@/lib/i18n/provider";
-import type { Locale } from "@/lib/i18n/messages";
+import type { Locale, MessageKey } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 import {
   deleteMyAccount,
@@ -23,6 +41,13 @@ import {
 } from "@/lib/server/social";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { Spinner } from "@/components/ui/spinner";
+import { useTheme } from "@/lib/theme/provider";
+import {
+  accentsFor,
+  type AccentId,
+  DEFAULT_ACCENT,
+  type ThemeId,
+} from "@/lib/theme/tokens";
 
 export const Route = createFileRoute("/ayarlar")({ component: SettingsPage });
 
@@ -34,11 +59,13 @@ type Panel =
   | "timezone"
   | "profile"
   | "units"
+  | "appearance"
   | "delete";
 
 function SettingsPage() {
   const { user, isPending } = useCurrentUserState();
   const { t, locale, setLocale, locales } = useI18n();
+  const { theme, accent, setThemeAndAccent } = useTheme();
   const [panel, setPanel] = useState<Panel>("menu");
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -75,6 +102,12 @@ function SettingsPage() {
         setHapticEnabled(st.hapticEnabled !== false);
         setNotifOn(st.notificationsEnabled !== false);
         if (st.unitSystem) setUnitSystem(st.unitSystem);
+        if (st.theme) {
+          setThemeAndAccent(
+            st.theme as ThemeId,
+            (st.accent as AccentId) || DEFAULT_ACCENT[st.theme as ThemeId],
+          );
+        }
       })
       .catch(() => {
         try {
@@ -93,7 +126,7 @@ function SettingsPage() {
         setMeasuresPublic(h.measures_public);
       })
       .catch(() => {});
-  }, [user?.id]);
+  }, [user?.id, setThemeAndAccent]);
 
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;
@@ -109,6 +142,25 @@ function SettingsPage() {
     locales.find((l) => l.id === locale)?.native ?? locale.toUpperCase();
 
   const avatarSrc = hub?.image || user.profileImageUrl;
+
+  const themeLabel =
+    theme === "carbon" ? t("settings.themeCarbon") : t("settings.themeObsidian");
+  const accentList = accentsFor(theme);
+  const accentLabel = t(
+    (accentList.find((a) => a.id === accent)?.labelKey ??
+      "settings.accentPirinc") as MessageKey,
+  );
+
+  async function persistTheme(nextTheme: ThemeId, nextAccent: AccentId) {
+    setThemeAndAccent(nextTheme, nextAccent);
+    try {
+      await updateSettings({
+        data: { theme: nextTheme, accent: nextAccent },
+      });
+    } catch {
+      /* local still has it */
+    }
+  }
 
   async function saveName(e: React.FormEvent) {
     e.preventDefault();
@@ -275,7 +327,6 @@ function SettingsPage() {
     ),
   );
 
-
   async function doExport() {
     setExporting(true);
     try {
@@ -320,9 +371,9 @@ function SettingsPage() {
       <div className="w-full min-w-0 space-y-5">
         {panel === "menu" && (
           <>
-            <div className="overflow-hidden rounded-2xl bg-surface shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+            <div className="overflow-hidden rounded-2xl bg-sunken shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
               <div className="flex items-center gap-3.5 px-4 py-4">
-                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-yellow/15 font-display text-xl text-yellow">
+                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-accent/15 font-display text-xl text-accent">
                   {avatarSrc ? (
                     <img src={avatarSrc} alt="" className="size-full object-cover" />
                   ) : (
@@ -334,7 +385,7 @@ function SettingsPage() {
                     {user.displayName || "—"}
                   </p>
                   {hub?.username ? (
-                    <p className="text-sm text-yellow">@{hub.username}</p>
+                    <p className="text-sm text-accent">@{hub.username}</p>
                   ) : null}
                   {user.primaryEmail ? (
                     <button
@@ -342,10 +393,10 @@ function SettingsPage() {
                       onClick={() => void copyEmail()}
                       className="mt-0.5 flex max-w-full items-center gap-1.5 text-left"
                     >
-                      <span className="truncate text-sm text-muted">
+                      <span className="truncate text-sm text-text-2">
                         {user.primaryEmail}
                       </span>
-                      <Copy className="size-3.5 shrink-0 text-dim" />
+                      <Copy className="size-3.5 shrink-0 text-text-3" />
                     </button>
                   ) : null}
                 </div>
@@ -374,6 +425,12 @@ function SettingsPage() {
             </SettingsGroup>
 
             <SettingsGroup label={t("settings.preferences")}>
+              <SettingsRow
+                icon={Palette}
+                label={t("settings.appearance")}
+                value={`${themeLabel} · ${accentLabel}`}
+                onClick={() => setPanel("appearance")}
+              />
               <SettingsRow
                 icon={Globe}
                 label={t("settings.language")}
@@ -412,7 +469,11 @@ function SettingsPage() {
               <SettingsRow
                 icon={Bell}
                 label={t("settings.notifications")}
-                value={notifOn ? t("settings.notificationsOn") : t("settings.notificationsOff")}
+                value={
+                  notifOn
+                    ? t("settings.notificationsOn")
+                    : t("settings.notificationsOff")
+                }
                 onClick={() => {
                   const next = !notifOn;
                   setNotifOn(next);
@@ -423,6 +484,7 @@ function SettingsPage() {
                       toast.error(t("common.error"));
                     });
                 }}
+                last
               />
             </SettingsGroup>
 
@@ -443,7 +505,7 @@ function SettingsPage() {
             <button
               type="button"
               onClick={() => void signOut("/login")}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-red/10 text-sm font-semibold text-red shadow-[inset_0_0_0_1px_rgba(240,113,120,0.25)] active:scale-[0.99]"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-danger/10 text-sm font-semibold text-danger shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-danger)_25%,transparent)] active:scale-[0.99]"
             >
               <LogOut className="size-4" />
               {t("auth.logout")}
@@ -451,18 +513,87 @@ function SettingsPage() {
           </>
         )}
 
+        {panel === "appearance" && (
+          <SubPanel title={t("settings.appearance")} onBack={() => setPanel("menu")}>
+            <p className="mb-3 px-1 text-xs text-text-2">{t("settings.appearanceHint")}</p>
+
+            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-text-2">
+              {t("settings.theme")}
+            </p>
+            <div
+              role="group"
+              aria-label={t("settings.theme")}
+              className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-raised p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+            >
+              {(["obsidian", "carbon"] as const).map((id) => {
+                const active = theme === id;
+                const label =
+                  id === "obsidian"
+                    ? t("settings.themeObsidian")
+                    : t("settings.themeCarbon");
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => void persistTheme(id, DEFAULT_ACCENT[id])}
+                    className={cn(
+                      "rounded-xl px-3 py-2.5 text-sm font-semibold transition",
+                      active
+                        ? "bg-primary text-on-primary"
+                        : "text-text-2 active:bg-sunken",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-text-2">
+              {t("settings.accent")}
+            </p>
+            <div
+              className="flex flex-wrap gap-3 px-1"
+              role="group"
+              aria-label={t("settings.accent")}
+            >
+              {accentList.map((a) => {
+                const active = accent === a.id;
+                const label = t(a.labelKey as MessageKey);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={active}
+                    onClick={() => void persistTheme(theme, a.id)}
+                    className={cn(
+                      "size-10 rounded-full transition",
+                      active
+                        ? "ring-2 ring-accent ring-offset-2 ring-offset-canvas"
+                        : "ring-1 ring-edge",
+                    )}
+                    style={{ background: a.hex }}
+                  />
+                );
+              })}
+            </div>
+          </SubPanel>
+        )}
+
         {panel === "profile" && (
           <SubPanel title={t("profile.editProfile")} onBack={() => setPanel("menu")}>
             <form onSubmit={(e) => void saveProfile(e)} className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-yellow/15 font-display text-xl text-yellow">
+                <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-accent/15 font-display text-xl text-accent">
                   {avatarSrc ? (
                     <img src={avatarSrc} alt="" className="size-full object-cover" />
                   ) : (
                     initials
                   )}
                 </div>
-                <label className="cursor-pointer text-sm font-semibold text-yellow">
+                <label className="cursor-pointer text-sm font-semibold text-accent">
                   {t("profile.avatar")}
                   <input
                     type="file"
@@ -474,32 +605,32 @@ function SettingsPage() {
               </div>
 
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-muted">{t("profile.username")}</span>
+                <span className="text-xs font-medium text-text-2">{t("profile.username")}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted">@</span>
+                  <span className="text-text-2">@</span>
                   <input
                     value={username}
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
                     maxLength={20}
-                    className="h-12 min-w-0 flex-1 rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                    className="h-12 min-w-0 flex-1 rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
                   />
                 </div>
               </label>
 
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-muted">
+                <span className="text-xs font-medium text-text-2">
                   {t("profile.bio")} ({bio.length}/160)
                 </span>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value.slice(0, 160))}
                   rows={3}
-                  className="w-full resize-none rounded-xl bg-surface2 px-3 py-2.5 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                  className="w-full resize-none rounded-xl bg-raised px-3 py-2.5 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
                 />
               </label>
 
               <fieldset className="space-y-2">
-                <legend className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                <legend className="flex items-center gap-1.5 text-xs font-medium text-text-2">
                   <Eye className="size-3.5" /> {t("profile.visibility")}
                 </legend>
                 {(
@@ -514,8 +645,8 @@ function SettingsPage() {
                     className={cn(
                       "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3",
                       visibility === k
-                        ? "bg-yellow/10 shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
-                        : "bg-surface2/50",
+                        ? "bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                        : "bg-raised/50",
                     )}
                   >
                     <input
@@ -523,27 +654,27 @@ function SettingsPage() {
                       name="vis"
                       checked={visibility === k}
                       onChange={() => setVisibility(k)}
-                      className="accent-yellow"
+                      className="accent-primary"
                     />
                     <span className="text-sm">{lab}</span>
                   </label>
                 ))}
               </fieldset>
 
-              <label className="flex items-center justify-between gap-3 rounded-xl bg-surface2/50 px-3 py-3">
+              <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
                 <span className="text-sm">{t("profile.measuresPublic")}</span>
                 <input
                   type="checkbox"
                   checked={measuresPublic}
                   onChange={(e) => setMeasuresPublic(e.target.checked)}
-                  className="size-5 accent-yellow"
+                  className="size-5 accent-primary"
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={savingProfile}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
               >
                 {savingProfile ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
@@ -554,10 +685,8 @@ function SettingsPage() {
 
         {panel === "timezone" && (
           <SubPanel title={t("settings.timezone")} onBack={() => setPanel("menu")}>
-            <p className="mb-3 px-1 text-xs text-muted">
-              {t("settings.timezoneHint")}
-            </p>
-            <div className="overflow-hidden rounded-2xl bg-surface shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+            <p className="mb-3 px-1 text-xs text-text-2">{t("settings.timezoneHint")}</p>
+            <div className="overflow-hidden rounded-2xl bg-sunken shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
               {tzList.map((tz, i) => {
                 const active = timeZone === tz;
                 return (
@@ -567,14 +696,14 @@ function SettingsPage() {
                     disabled={savingTz}
                     onClick={() => void saveTz(tz)}
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm active:bg-surface2",
-                      i > 0 && "border-t border-line/60",
+                      "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm active:bg-raised",
+                      i > 0 && "border-t border-rule/60",
                     )}
                   >
-                    <span className={cn(active && "font-semibold text-yellow")}>
+                    <span className={cn(active && "font-semibold text-accent")}>
                       {tz}
                     </span>
-                    {active ? <Check className="size-4 text-yellow" /> : null}
+                    {active ? <Check className="size-4 text-accent" /> : null}
                   </button>
                 );
               })}
@@ -588,12 +717,12 @@ function SettingsPage() {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-12 w-full rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
               />
               <button
                 type="submit"
                 disabled={savingName}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
               >
                 {savingName ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
@@ -610,26 +739,26 @@ function SettingsPage() {
                 placeholder={t("settings.currentPassword")}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="h-12 w-full rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
               />
               <input
                 type="password"
                 placeholder={t("settings.newPassword")}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-12 w-full rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
               />
               <input
                 type="password"
                 placeholder={t("settings.newPasswordAgain")}
                 value={newPassword2}
                 onChange={(e) => setNewPassword2(e.target.value)}
-                className="h-12 w-full rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
               />
               <button
                 type="submit"
                 disabled={savingPw}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
               >
                 {savingPw ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
@@ -640,8 +769,8 @@ function SettingsPage() {
 
         {panel === "language" && (
           <SubPanel title={t("settings.language")} onBack={() => setPanel("menu")}>
-            <p className="mb-3 px-1 text-xs text-muted">{t("settings.languageHint")}</p>
-            <div className="overflow-hidden rounded-2xl bg-surface shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+            <p className="mb-3 px-1 text-xs text-text-2">{t("settings.languageHint")}</p>
+            <div className="overflow-hidden rounded-2xl bg-sunken shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
               {locales.map((l, i) => {
                 const active = locale === l.id;
                 return (
@@ -654,14 +783,14 @@ function SettingsPage() {
                       setPanel("menu");
                     }}
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm active:bg-surface2",
-                      i > 0 && "border-t border-line/60",
+                      "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm active:bg-raised",
+                      i > 0 && "border-t border-rule/60",
                     )}
                   >
-                    <span className={cn(active && "font-semibold text-yellow")}>
+                    <span className={cn(active && "font-semibold text-accent")}>
                       {l.native}
                     </span>
-                    {active ? <Check className="size-4 text-yellow" /> : null}
+                    {active ? <Check className="size-4 text-accent" /> : null}
                   </button>
                 );
               })}
@@ -691,13 +820,13 @@ function SettingsPage() {
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left",
                     unitSystem === k
-                      ? "bg-yellow/10 shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
-                      : "bg-surface2/50",
+                      ? "bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                      : "bg-raised/50",
                   )}
                 >
                   <span className="text-sm font-medium">{lab}</span>
                   {unitSystem === k ? (
-                    <Check className="ml-auto size-4 text-yellow" />
+                    <Check className="ml-auto size-4 text-accent" />
                   ) : null}
                 </button>
               ))}
@@ -706,22 +835,19 @@ function SettingsPage() {
         )}
 
         {panel === "delete" && (
-          <SubPanel
-            title={t("settings.deleteAccount")}
-            onBack={() => setPanel("menu")}
-          >
-            <div className="space-y-3 rounded-2xl border border-red/30 bg-red/5 p-4">
-              <p className="text-sm leading-relaxed text-muted">
+          <SubPanel title={t("settings.deleteAccount")} onBack={() => setPanel("menu")}>
+            <div className="space-y-3 rounded-2xl border border-danger/30 bg-danger/5 p-4">
+              <p className="text-sm leading-relaxed text-text-2">
                 {t("settings.deleteWarn")}
               </p>
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-muted">
+                <span className="text-xs font-medium text-text-2">
                   {t("settings.deleteConfirmWord")}
                 </span>
                 <input
                   value={deleteWord}
                   onChange={(e) => setDeleteWord(e.target.value)}
-                  className="h-12 w-full rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                  className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
                   placeholder="DELETE"
                   autoComplete="off"
                 />
@@ -730,19 +856,14 @@ function SettingsPage() {
                 type="button"
                 disabled={deleting || deleteWord !== "DELETE"}
                 onClick={() => void doDeleteAccount()}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-red font-semibold text-white disabled:opacity-50"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-danger font-semibold text-on-primary disabled:opacity-50"
               >
-                {deleting ? (
-                  <Spinner className="size-4" />
-                ) : (
-                  <Trash2 className="size-4" />
-                )}
+                {deleting ? <Spinner className="size-4" /> : <Trash2 className="size-4" />}
                 {t("settings.deleteAccount")}
               </button>
             </div>
           </SubPanel>
         )}
-
       </div>
     </AppShell>
   );
@@ -757,10 +878,10 @@ function SettingsGroup({
 }) {
   return (
     <div>
-      <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+      <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-text-2">
         {label}
       </p>
-      <div className="overflow-hidden rounded-2xl bg-surface shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+      <div className="overflow-hidden rounded-2xl bg-sunken shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
         {children}
       </div>
     </div>
@@ -785,20 +906,20 @@ function SettingsRow({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-surface2",
-        !last && "border-b border-line/60",
+        "flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-raised",
+        !last && "border-b border-rule/60",
       )}
     >
-      <span className="grid size-9 place-items-center rounded-lg bg-surface2 text-yellow">
+      <span className="grid size-9 place-items-center rounded-lg bg-raised text-accent">
         <Icon className="size-4" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
         {value ? (
-          <span className="mt-0.5 block truncate text-xs text-muted">{value}</span>
+          <span className="mt-0.5 block truncate text-xs text-text-2">{value}</span>
         ) : null}
       </span>
-      <ChevronRight className="size-4 shrink-0 text-dim" />
+      <ChevronRight className="size-4 shrink-0 text-text-3" />
     </button>
   );
 }
@@ -817,7 +938,7 @@ function SubPanel({
       <button
         type="button"
         onClick={onBack}
-        className="flex items-center gap-1 text-sm font-medium text-yellow"
+        className="flex items-center gap-1 text-sm font-medium text-accent"
       >
         <ChevronLeft className="size-4" />
         {title}

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDownRight, ArrowUpRight, Minus, Plus, Scale, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus, Plus, Scale, Trash2, TrendingDown, TrendingUp } from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -183,23 +183,23 @@ function MeasurementsPage() {
       ) : (
         <div className="w-full min-w-0 space-y-4">
           {/* Hero snapshot */}
-          <div className="relative overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="relative overflow-hidden rounded-2xl border border-rule bg-sunken">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(242,194,48,0.12),transparent_55%)]" />
             <div className="relative p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
                     {t("measure.lastWeight")}
                   </p>
                   <div className="mt-1 flex items-end gap-2">
-                    <span className="num font-display text-5xl leading-none tracking-wide text-yellow">
+                    <span className="num font-display text-5xl leading-none tracking-wide text-accent">
                       {weightNow != null ? weightNow : t("measure.noValue")}
                     </span>
                     {weightNow != null && (
-                      <span className="mb-1 text-sm text-muted">kg</span>
+                      <span className="mb-1 text-sm text-text-2">kg</span>
                     )}
                   </div>
-                  <p className="mt-2 text-xs text-muted">
+                  <p className="mt-2 text-xs text-text-2">
                     {latest
                       ? formatDate(latest.date, locale)
                       : t("measure.noRecordsHint")}
@@ -219,7 +219,7 @@ function MeasurementsPage() {
                   <button
                     type="button"
                     onClick={() => setTab("today")}
-                    className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-yellow px-3.5 text-xs font-semibold text-bg"
+                    className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-primary px-3.5 text-xs font-semibold text-on-primary"
                   >
                     <Plus className="size-3.5" />
                     {t("measure.new")}
@@ -232,15 +232,15 @@ function MeasurementsPage() {
                 {circCards.map((c) => (
                   <div
                     key={c.key}
-                    className="rounded-xl border border-line/80 bg-bg/40 px-3 py-2.5"
+                    className="rounded-xl border border-rule/80 bg-canvas/40 px-3 py-2.5"
                   >
-                    <p className="text-[10px] font-medium uppercase tracking-wide text-dim">
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-text-3">
                       {c.label}
                     </p>
                     <p className="num mt-0.5 text-lg font-semibold text-text">
                       {c.value != null ? c.value : "—"}
                       {c.value != null && (
-                        <span className="ml-0.5 text-[11px] font-normal text-muted">
+                        <span className="ml-0.5 text-[11px] font-normal text-text-2">
                           {c.unit}
                         </span>
                       )}
@@ -250,10 +250,10 @@ function MeasurementsPage() {
                         className={cn(
                           "num mt-0.5 text-[11px]",
                           c.delta < 0
-                            ? "text-green"
+                            ? "text-success"
                             : c.delta > 0
-                              ? "text-orange"
-                              : "text-muted",
+                              ? "text-warning"
+                              : "text-text-2",
                         )}
                       >
                         {c.delta > 0 ? "+" : ""}
@@ -266,7 +266,7 @@ function MeasurementsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-surface p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-xl border border-rule bg-sunken p-1">
             {(
               [
                 ["charts", t("measure.summary")],
@@ -280,7 +280,7 @@ function MeasurementsPage() {
                 onClick={() => setTab(k)}
                 className={cn(
                   "h-10 rounded-lg text-sm font-semibold transition",
-                  tab === k ? "bg-yellow text-bg" : "text-muted hover:text-text",
+                  tab === k ? "bg-primary text-on-primary" : "text-text-2 hover:text-text",
                 )}
               >
                 {lab}
@@ -295,18 +295,18 @@ function MeasurementsPage() {
             >
               <form onSubmit={onSave} className="space-y-3">
                 <label className="block space-y-1">
-                  <span className="text-xs text-muted">{t("measure.date")}</span>
+                  <span className="text-xs text-text-2">{t("measure.date")}</span>
                   <input
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-12 w-full rounded-lg border border-line bg-surface2 px-3"
+                    className="h-12 w-full rounded-lg border border-rule bg-raised px-3"
                     required
                   />
                 </label>
 
-                <div className="rounded-xl border border-yellow/25 bg-yellow/5 p-3">
-                  <div className="mb-2 flex items-center gap-2 text-yellow">
+                <div className="rounded-xl border border-accent/25 bg-accent/5 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-accent">
                     <Scale className="size-4" />
                     <span className="text-xs font-semibold uppercase tracking-wide">
                       {t("measure.bodyWeight")}
@@ -320,13 +320,13 @@ function MeasurementsPage() {
                       value={bw}
                       onChange={(e) => setBw(e.target.value)}
                       placeholder={t("measure.weightPlaceholder")}
-                      className="num h-14 min-w-0 flex-1 rounded-lg border border-yellow/30 bg-surface2 px-3 text-2xl text-yellow"
+                      className="num h-14 min-w-0 flex-1 rounded-lg border border-accent/30 bg-raised px-3 text-2xl text-accent"
                     />
-                    <span className="shrink-0 text-sm text-muted">kg</span>
+                    <span className="shrink-0 text-sm text-text-2">kg</span>
                   </div>
                 </div>
 
-                <p className="text-[11px] font-medium uppercase tracking-wide text-dim">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-text-3">
                   {t("measure.girthsOptional")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -338,7 +338,7 @@ function MeasurementsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
                 >
                   {saving ? (
                     <Spinner className="size-4" />
@@ -352,7 +352,7 @@ function MeasurementsPage() {
           )}
 
           {tab === "charts" && (
-            <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface2" />}>
+            <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-raised" />}>
             <>
               {rows.length === 0 ? (
                 <EmptyState
@@ -402,7 +402,7 @@ function MeasurementsPage() {
                             }
                             className={cn(
                               "rounded-full border px-2 py-1 text-[11px] font-medium",
-                              show[k] ? "text-bg" : "border-line text-muted",
+                              show[k] ? "text-on-primary" : "border-rule text-text-2",
                             )}
                             style={
                               show[k]
@@ -466,7 +466,7 @@ function MeasurementsPage() {
                   hint={t("measure.historyEmptyHint")}
                 />
               ) : (
-                <ul className="divide-y divide-line">
+                <ul className="divide-y divide-rule">
                   {[...rows]
                     .sort((a, b) => b.date.localeCompare(a.date))
                     .map((r, idx, arr) => {
@@ -480,13 +480,13 @@ function MeasurementsPage() {
                           key={r.id}
                           className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                         >
-                          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface2">
+                          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-raised">
                             {dW == null || dW === 0 ? (
-                              <Minus className="size-4 text-muted" />
+                              <Minus className="size-4 text-text-2" />
                             ) : dW < 0 ? (
-                              <TrendingDown className="size-4 text-green" />
+                              <TrendingDown className="size-4 text-success" />
                             ) : (
-                              <TrendingUp className="size-4 text-orange" />
+                              <TrendingUp className="size-4 text-warning" />
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -495,10 +495,10 @@ function MeasurementsPage() {
                                 {formatDate(r.date, locale)}
                               </p>
                               {r.body_weight != null && (
-                                <p className="num text-sm text-yellow">
+                                <p className="num text-sm text-accent">
                                   {r.body_weight} kg
                                   {dW != null && dW !== 0 && (
-                                    <span className="ml-1 text-[11px] text-muted">
+                                    <span className="ml-1 text-[11px] text-text-2">
                                       ({dW > 0 ? "+" : ""}
                                       {dW})
                                     </span>
@@ -506,7 +506,7 @@ function MeasurementsPage() {
                                 </p>
                               )}
                             </div>
-                            <p className="mt-0.5 truncate text-xs text-muted">
+                            <p className="mt-0.5 truncate text-xs text-text-2">
                               {[
                                 r.waist != null && `${t("measure.waist")} ${r.waist}`,
                                 r.chest != null && `${t("measure.chest")} ${r.chest}`,
@@ -519,7 +519,7 @@ function MeasurementsPage() {
                           </div>
                           <button
                             type="button"
-                            className="grid size-10 place-items-center rounded-lg border border-line text-red"
+                            className="grid size-10 place-items-center rounded-lg border border-rule text-danger"
                             onClick={() => {
                               if (!confirm(t("measure.deleteConfirm"))) return;
                               void deleteMeasurement({ data: r.id })
@@ -558,7 +558,7 @@ function DeltaPill({
     return (
       <span
         className={cn(
-          "rounded-full border border-line px-2.5 py-1 text-[11px] text-muted",
+          "rounded-full border border-rule px-2.5 py-1 text-[11px] text-text-2",
           subtle && "opacity-70",
         )}
       >
@@ -573,10 +573,10 @@ function DeltaPill({
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium",
         flat
-          ? "border-line text-muted"
+          ? "border-rule text-text-2"
           : up
-            ? "border-orange/30 bg-orange/10 text-orange"
-            : "border-green/30 bg-green/10 text-green",
+            ? "border-warning/30 bg-warning/10 text-warning"
+            : "border-success/30 bg-success/10 text-success",
         subtle && "opacity-80",
       )}
     >
@@ -591,7 +591,7 @@ function DeltaPill({
         {up ? "+" : ""}
         {value} {unit}
       </span>
-      <span className="text-dim">· {label}</span>
+      <span className="text-text-3">· {label}</span>
     </span>
   );
 }
@@ -609,7 +609,7 @@ function Num({
 }) {
   return (
     <label className="block min-w-0 space-y-1">
-      <span className="text-xs text-muted">
+      <span className="text-xs text-text-2">
         {label}
         {unit ? ` (${unit})` : ""}
       </span>
@@ -619,7 +619,7 @@ function Num({
         step="0.1"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="num h-12 w-full min-w-0 rounded-lg border border-line bg-surface2 px-3 text-lg"
+        className="num h-12 w-full min-w-0 rounded-lg border border-rule bg-raised px-3 text-lg"
       />
     </label>
   );

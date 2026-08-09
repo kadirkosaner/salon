@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { btnClass } from "@/components/ui/btn";
 
@@ -28,19 +28,19 @@ export function EmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center gap-3 rounded-2xl px-5 py-10 text-center",
-        "bg-surface2/40 shadow-[var(--shadow-highlight)]",
+        "bg-raised/40 shadow-[var(--shadow-highlight)]",
         className,
       )}
     >
       {Icon ? (
-        <span className="grid size-14 place-items-center rounded-2xl bg-yellow/10 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.22)]">
-          <Icon className="size-7" strokeWidth={1.75} />
+        <span className="grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]">
+          <Icon className="size-7" />
         </span>
       ) : null}
       {title ? (
         <p className="font-display text-xl tracking-wide text-text">{title}</p>
       ) : null}
-      <p className="max-w-xs text-sm leading-relaxed text-muted">{hint}</p>
+      <p className="max-w-xs text-sm leading-relaxed text-text-2">{hint}</p>
       {actionLabel && actionTo ? (
         <Link to={actionTo} className={btnClass("primary", "mt-1 min-w-[10rem]")}>
           {actionLabel}

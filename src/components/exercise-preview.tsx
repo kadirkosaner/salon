@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Play } from "lucide-react";
+import { Play } from "@/components/icons";
 import { AppSheet } from "@/components/ui/sheet";
 import { getExercisePreview } from "@/data/exercise-previews";
 import { getExerciseMedia } from "@/lib/server/exercises";
@@ -29,7 +29,7 @@ export function ExercisePreviewButton({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "inline-flex min-h-11 items-center gap-1.5 rounded-2xl bg-surface2 px-3.5 text-xs font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:bg-surface active:text-yellow",
+          "inline-flex min-h-11 items-center gap-1.5 rounded-2xl bg-raised px-3.5 text-xs font-semibold text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:bg-sunken active:text-accent",
           className,
         )}
         aria-label={`${name} önizleme`}
@@ -124,13 +124,13 @@ export function ExercisePreviewModal({
 
   return (
     <AppSheet title={name} onClose={onClose} nested>
-      <p className="-mt-1 mb-3 text-xs leading-snug text-muted">
+      <p className="-mt-1 mb-3 text-xs leading-snug text-text-2">
         {fallback.summary}
       </p>
       <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-line bg-[#0a0a0c]">
+          <div className="overflow-hidden rounded-2xl border border-rule bg-[#0a0a0c]">
             {loading ? (
-              <div className="grid h-40 place-items-center text-xs text-muted">
+              <div className="grid h-40 place-items-center text-xs text-text-2">
                 Yükleniyor…
               </div>
             ) : displaySrc ? (
@@ -143,14 +143,14 @@ export function ExercisePreviewModal({
                 onError={() => setStage((s) => Math.min(4, s + 1))}
               />
             ) : (
-              <div className="grid h-40 place-items-center px-4 text-center text-xs text-muted">
+              <div className="grid h-40 place-items-center px-4 text-center text-xs text-text-2">
                 Animasyon bulunamadı — kas haritası aşağıda
               </div>
             )}
           </div>
 
-          <div className="rounded-2xl border border-line bg-surface2/40 p-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
+          <div className="rounded-2xl border border-rule bg-raised/40 p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-3">
               Çalışan bölgeler
             </p>
             <BodyMuscleMap
@@ -162,17 +162,17 @@ export function ExercisePreviewModal({
           </div>
 
           {cueList.length > 0 && (
-            <div className="rounded-2xl border border-line bg-surface2/40 p-3">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
+            <div className="rounded-2xl border border-rule bg-raised/40 p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-3">
                 Form / yönerge
               </p>
               <ul className="space-y-2">
                 {cueList.map((c, i) => (
                   <li
                     key={i}
-                    className="flex gap-2 text-sm leading-snug text-muted"
+                    className="flex gap-2 text-sm leading-snug text-text-2"
                   >
-                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-yellow" />
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
                     <span>{c}</span>
                   </li>
                 ))}

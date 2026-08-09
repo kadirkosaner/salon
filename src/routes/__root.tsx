@@ -2,6 +2,8 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth/provider";
 import { I18nProvider } from "@/lib/i18n/provider";
+import { ThemeProvider } from "@/lib/theme/provider";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme/tokens";
 import { CreatedWithGrokBanner } from "@/components/created-with-grok-banner";
 import { Toaster } from "sonner";
 import { createAppQueryClient } from "@/lib/query-client";
@@ -39,28 +41,35 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: appCss },
     ],
+    scripts: [
+      {
+        children: THEME_BOOT_SCRIPT,
+      },
+    ],
   }),
   component: () => (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="obsidian" data-accent="pirinc" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body className="bg-bg text-text antialiased">
+      <body className="bg-canvas text-text antialiased">
         <CreatedWithGrokBanner />
         <QueryClientProvider client={queryClient}>
           <I18nProvider>
-            <AuthProvider>
-              <Outlet />
-              <Toaster
-                theme="dark"
-                position="bottom-center"
-                offset={{ bottom: "5.5rem" }}
-                mobileOffset={{ bottom: "5.5rem" }}
-                toastOptions={{
-                  className: "bg-surface border-line text-text",
-                }}
-              />
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <Outlet />
+                <Toaster
+                  theme="dark"
+                  position="bottom-center"
+                  offset={{ bottom: "5.5rem" }}
+                  mobileOffset={{ bottom: "5.5rem" }}
+                  toastOptions={{
+                    className: "bg-sunken border-rule text-text",
+                  }}
+                />
+              </AuthProvider>
+            </ThemeProvider>
           </I18nProvider>
         </QueryClientProvider>
         <Scripts />

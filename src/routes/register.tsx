@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Activity } from "lucide-react";
+import { Activity } from "@/components/icons";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/i18n/provider";
@@ -19,11 +19,11 @@ function RegisterPage() {
 
   if (isPending) {
     return (
-      <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-bg">
+      <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-canvas">
         <div className="w-full max-w-sm space-y-3 px-6">
-          <div className="mx-auto size-14 animate-pulse rounded-xl bg-yellow/20" />
-          <div className="mx-auto h-8 w-32 animate-pulse rounded-lg bg-surface2" />
-          <div className="h-48 animate-pulse rounded-xl bg-surface2" />
+          <div className="mx-auto size-14 animate-pulse rounded-xl bg-accent/20" />
+          <div className="mx-auto h-8 w-32 animate-pulse rounded-lg bg-raised" />
+          <div className="h-48 animate-pulse rounded-xl bg-raised" />
         </div>
       </div>
     );
@@ -63,40 +63,40 @@ function RegisterPage() {
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-var(--grok-banner-h,0px))] max-w-md flex-col justify-center px-5 py-10">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-yellow/15 text-yellow">
-          <Activity className="size-7" strokeWidth={2.25} />
+        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-xl bg-accent/15 text-accent">
+          <Activity className="size-7" />
         </div>
         <h1 className="font-display text-4xl tracking-wide text-text">SALON</h1>
-        <p className="mt-1 text-sm text-muted">{t("auth.tagline")}</p>
+        <p className="mt-1 text-sm text-text-2">{t("auth.tagline")}</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-line bg-surface p-5">
+      <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-rule bg-sunken p-5">
         <h2 className="font-display text-xl tracking-wide">{t("auth.register")}</h2>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">{t("auth.name")}</span>
+          <span className="text-xs font-medium text-text-2">{t("auth.name")}</span>
           <input
             type="text"
             autoComplete="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+            className="h-12 w-full rounded-md border border-rule bg-raised px-3 text-text placeholder:text-text-3"
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">{t("auth.email")}</span>
+          <span className="text-xs font-medium text-text-2">{t("auth.email")}</span>
           <input
             type="email"
             autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+            className="h-12 w-full rounded-md border border-rule bg-raised px-3 text-text placeholder:text-text-3"
             placeholder={t("auth.emailPlaceholder")}
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-muted">{t("auth.password")}</span>
+          <span className="text-xs font-medium text-text-2">{t("auth.password")}</span>
           <input
             type="password"
             autoComplete="new-password"
@@ -104,26 +104,26 @@ function RegisterPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
+            className="h-12 w-full rounded-md border border-rule bg-raised px-3 text-text placeholder:text-text-3"
             placeholder={t("auth.passwordPlaceholder")}
           />
         </label>
         {error && (
-          <p className="rounded-md border border-red/30 bg-red/10 px-3 py-2 text-sm text-red" role="alert">
+          <p className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
             {error}
           </p>
         )}
         <button
           type="submit"
           disabled={loading}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary font-semibold text-on-primary disabled:opacity-60"
         >
           {loading ? <Spinner className="size-4" /> : null}
           {t("auth.register")}
         </button>
-        <p className="text-center text-sm text-muted">
+        <p className="text-center text-sm text-text-2">
           {t("auth.hasAccount")}{" "}
-          <Link to="/login" className="font-medium text-yellow underline-offset-2 hover:underline">
+          <Link to="/login" className="font-medium text-accent underline-offset-2 hover:underline">
             {t("auth.login")}
           </Link>
         </p>

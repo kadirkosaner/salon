@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Plus, Save, Search, SkipForward, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Plus, Save, Search, SkipForward, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import { z } from "zod";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -351,7 +351,7 @@ function WorkoutPage() {
       }
       restTimerActive={!!rest}
       actions={
-        <span className="text-[11px] text-muted">
+        <span className="text-[11px] text-text-2">
           {saveState === "saving"
             ? t("common.saving")
             : saveState === "saved"
@@ -372,11 +372,11 @@ function WorkoutPage() {
         />
 
         {needsProgram ? (
-          <div className="rounded-xl border border-yellow/30 bg-yellow/10 p-4">
-            <p className="font-display text-lg tracking-wide text-yellow">
+          <div className="rounded-xl border border-accent/30 bg-accent/10 p-4">
+            <p className="font-display text-lg tracking-wide text-accent">
               {t("workout.noProgram")}
             </p>
-            <p className="mt-1 text-sm text-muted">{t("workout.noProgramHint")}</p>
+            <p className="mt-1 text-sm text-text-2">{t("workout.noProgramHint")}</p>
             <Link
               to="/kesfet"
               className={btnClass("primary", "mt-3 w-full")}
@@ -521,13 +521,13 @@ function ContinuousCalendar({
   }
 
   return (
-    <div className="rounded-2xl border border-line bg-surface p-3">
+    <div className="rounded-2xl border border-rule bg-sunken p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <p className="font-display text-lg tracking-wide">
             {formatDate(selected, locale)}
           </p>
-          <p className="text-[10px] text-dim">
+          <p className="text-[10px] text-text-3">
             {t("workout.dayByDay")}
           </p>
         </div>
@@ -583,12 +583,12 @@ function ContinuousCalendar({
               title={info?.day_name ?? d}
               className={cn(
                 "flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-2xl border px-1 py-2.5 transition active:scale-95",
-                isSel && "ring-2 ring-yellow ring-offset-2 ring-offset-surface",
-                tn === "done" && "border-green/40 bg-green/20 text-green",
-                tn === "missed" && "border-red/40 bg-red/15 text-red",
-                tn === "planned" && "border-yellow/30 bg-yellow/10 text-yellow",
-                tn === "empty" && "border-line bg-surface2/40 text-muted",
-                isToday && tn === "empty" && "border-yellow/50",
+                isSel && "ring-2 ring-accent ring-offset-2 ring-offset-sunken",
+                tn === "done" && "border-success/40 bg-success/20 text-success",
+                tn === "missed" && "border-danger/40 bg-danger/15 text-danger",
+                tn === "planned" && "border-accent/30 bg-accent/10 text-accent",
+                tn === "empty" && "border-rule bg-raised/40 text-text-2",
+                isToday && tn === "empty" && "border-accent/50",
               )}
             >
               <span className="text-[10px] font-medium uppercase opacity-80">
@@ -600,21 +600,21 @@ function ContinuousCalendar({
         })}
       </div>
 
-      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] text-dim">
+      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] text-text-3">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-green/40 bg-green/20" />
+          <span className="size-3 rounded-md border border-success/40 bg-success/20" />
           {t("workout.legendDone")}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-red/40 bg-red/15" />
+          <span className="size-3 rounded-md border border-danger/40 bg-danger/15" />
           {t("workout.legendMissed")}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-yellow/40 bg-yellow/15" />
+          <span className="size-3 rounded-md border border-accent/40 bg-accent/15" />
           {t("workout.legendPlanned")}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-line bg-transparent" />
+          <span className="size-3 rounded-md border border-rule bg-transparent" />
           {t("workout.legendEmpty")}
         </span>
       </div>
@@ -634,7 +634,7 @@ function EmptyDay({
   t: (k: string) => string;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
+    <div className="rounded-xl border border-rule bg-sunken p-4">
       <p className="font-medium">{t("workout.emptyDay")}</p>
       <button
         type="button"
@@ -645,7 +645,7 @@ function EmptyDay({
       </button>
       {programDays.length > 0 && (
         <>
-          <p className="mt-4 text-xs text-muted">{t("workout.orPickDay")}</p>
+          <p className="mt-4 text-xs text-text-2">{t("workout.orPickDay")}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {programDays.map((d) => (
               <button
@@ -713,14 +713,14 @@ function WorkoutBody({
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="font-display text-2xl tracking-wide text-yellow">
+          <h2 className="font-display text-2xl tracking-wide text-accent">
             {workout.day_name}
           </h2>
-          <p className="mt-0.5 text-xs text-muted">
+          <p className="mt-0.5 text-xs text-text-2">
             {workout.exercises.length} · {statusLabel}
           </p>
           {workout.status === "skipped" ? (
-            <p className="mt-1 text-[11px] text-dim">{t("workout.skippedHint")}</p>
+            <p className="mt-1 text-[11px] text-text-3">{t("workout.skippedHint")}</p>
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -743,7 +743,7 @@ function WorkoutBody({
           ) : null}
           <Btn
             variant="icon"
-            className="!size-11 text-muted hover:text-red"
+            className="!size-11 text-text-2 hover:text-danger"
             onClick={onClearFuture}
             title={t("workout.clearFutureTitle")}
             aria-label="clear future"
@@ -754,7 +754,7 @@ function WorkoutBody({
       </div>
 
       {workout.exercises.length === 0 ? (
-        <p className="rounded-lg border border-line bg-surface2/40 p-4 text-sm text-muted">
+        <p className="rounded-lg border border-rule bg-raised/40 p-4 text-sm text-text-2">
           {t("workout.emptyShell")}
         </p>
       ) : (
@@ -788,7 +788,7 @@ function WorkoutBody({
           {t("workout.saveToProgram")}
         </Btn>
       </div>
-      <p className="text-[11px] text-dim">{t("workout.saveToProgramHint")}</p>
+      <p className="text-[11px] text-text-3">{t("workout.saveToProgramHint")}</p>
     </div>
   );
 }
@@ -908,26 +908,26 @@ function ExerciseCard({
   return (
     <li
       className={cn(
-        "min-w-0 overflow-hidden rounded-xl border bg-surface transition",
-        open ? "border-yellow/40" : "border-line",
-        allDone && !open && "border-green/30 bg-green/5",
+        "min-w-0 overflow-hidden rounded-xl border bg-sunken transition",
+        open ? "border-accent/40" : "border-rule",
+        allDone && !open && "border-success/30 bg-success/5",
       )}
     >
       {/* Header — always visible, toggles open */}
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-start gap-2.5 p-3 text-left active:bg-surface2/40"
+        className="flex w-full items-start gap-2.5 p-3 text-left active:bg-raised/40"
         aria-expanded={open}
       >
         <span
           className={cn(
             "num mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg text-sm",
             allDone
-              ? "bg-green/20 text-green"
+              ? "bg-success/20 text-success"
               : open
-                ? "bg-yellow/20 text-yellow"
-                : "bg-surface2 text-muted",
+                ? "bg-accent/20 text-accent"
+                : "bg-raised text-text-2",
           )}
         >
           {allDone ? <Check className="size-3.5" /> : index}
@@ -936,15 +936,15 @@ function ExerciseCard({
           <p className="break-words font-medium leading-snug">
             {exercise.exercise_name}
             {exercise.detail ? (
-              <span className="text-muted"> · {exercise.detail}</span>
+              <span className="text-text-2"> · {exercise.detail}</span>
             ) : null}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <MuscleBadge group={exercise.muscle_group} size="xs" />
-            <span className="num text-sm text-yellow">
+            <span className="num text-sm text-accent">
               {exercise.target_sets}×{exercise.target_rep_lo}-{exercise.target_rep_hi}
             </span>
-            <span className="text-[11px] text-muted">
+            <span className="text-[11px] text-text-2">
               {doneCount}/{exercise.sets.length} set
             </span>
             {!open && exercise.load_tag && (
@@ -954,17 +954,17 @@ function ExerciseCard({
         </div>
         <ChevronDown
           className={cn(
-            "mt-1 size-5 shrink-0 text-muted transition-transform duration-200",
-            open && "rotate-180 text-yellow",
+            "mt-1 size-5 shrink-0 text-text-2 transition-transform duration-200",
+            open && "rotate-180 text-accent",
           )}
         />
       </button>
 
       {/* Body — collapsible */}
       {open && (
-        <div className="border-t border-line px-3 pb-3 pt-2">
+        <div className="border-t border-rule px-3 pb-3 pt-2">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted">
+            <span className="text-xs text-text-2">
               {exercise.unit === "m" ? "m" : "kg"} · {exercise.rest_sec}s
             </span>
             <LoadTagBadge tag={exercise.load_tag} />
@@ -990,7 +990,7 @@ function ExerciseCard({
                   e.stopPropagation();
                   onRemove();
                 }}
-                className={btnClass("icon", "!size-11 hover:text-red")}
+                className={btnClass("icon", "!size-11 hover:text-danger")}
                 aria-label={t("workout.removeExercise")}
               >
                 <Trash2 className="size-4" />
@@ -999,30 +999,30 @@ function ExerciseCard({
           </div>
 
           {lastLine && (
-            <p className="mb-2 break-words text-xs text-muted">{lastLine}</p>
+            <p className="mb-2 break-words text-xs text-text-2">{lastLine}</p>
           )}
           {allFilled && (
-            <p className="mb-2 rounded-md border border-green/30 bg-green/10 px-2.5 py-1.5 text-xs text-green">
+            <p className="mb-2 rounded-md border border-success/30 bg-success/10 px-2.5 py-1.5 text-xs text-success">
               {t("workout.progressHint")}
             </p>
           )}
           {exercise.suggestedWeight != null && (
-            <p className="mb-2 text-xs text-yellow/90">
+            <p className="mb-2 text-xs text-accent/90">
               {t("workout.suggestWeight")}: {exercise.suggestedWeight}{" "}
               {exercise.unit}
             </p>
           )}
           {exercise.note && (
-            <p className="mb-2 text-xs leading-relaxed text-dim">{exercise.note}</p>
+            <p className="mb-2 text-xs leading-relaxed text-text-3">{exercise.note}</p>
           )}
 
           <div className="space-y-2">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="rounded-md bg-surface2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-dim">
+              <span className="rounded-md bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
                 {t("workout.targetReps")}: {exercise.target_rep_lo}–{exercise.target_rep_hi}
               </span>
             </div>
-            <div className="set-grid text-[10px] font-semibold uppercase tracking-wide text-dim">
+            <div className="set-grid text-[10px] font-semibold uppercase tracking-wide text-text-3">
               <span>#</span>
               <span>{exercise.unit || "kg"}</span>
               <span>{t("workout.reps")}</span>
@@ -1030,7 +1030,7 @@ function ExerciseCard({
             </div>
             {exercise.sets.map((s) => (
               <div key={s.id} className="set-grid">
-                <span className="num text-sm text-muted">{s.set_index}</span>
+                <span className="num text-sm text-text-2">{s.set_index}</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1042,7 +1042,7 @@ function ExerciseCard({
                       weight: v === "" ? null : Number(v),
                     });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-line-strong bg-bg px-2 text-center text-sm placeholder:text-dim"
+                  className="h-11 min-w-0 rounded-lg border border-edge bg-canvas px-2 text-center text-sm placeholder:text-text-3"
                 />
                 <input
                   type="number"
@@ -1055,7 +1055,7 @@ function ExerciseCard({
                       reps: v === "" ? null : Number(v),
                     });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-line-strong bg-bg px-2 text-center text-sm placeholder:text-dim"
+                  className="h-11 min-w-0 rounded-lg border border-edge bg-canvas px-2 text-center text-sm placeholder:text-text-3"
                 />
                 <button
                   type="button"
@@ -1067,8 +1067,8 @@ function ExerciseCard({
                   className={cn(
                     "grid size-12 place-items-center rounded-2xl transition active:scale-95",
                     s.completed
-                      ? "set-done-pop bg-green/20 text-green shadow-[inset_0_0_0_1px_rgba(61,214,140,0.35)]"
-                      : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
+                      ? "set-done-pop bg-success/20 text-success shadow-[inset_0_0_0_1px_rgba(61,214,140,0.35)]"
+                      : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
                   )}
                   aria-label={t("workout.completeSet")}
                 >
@@ -1111,7 +1111,7 @@ function SkipModal({
   ];
   return (
     <Sheet title={t("workout.skipTitle")} onClose={onClose}>
-      <p className="mb-3 text-sm text-muted">{t("workout.skipBody")}</p>
+      <p className="mb-3 text-sm text-text-2">{t("workout.skipBody")}</p>
       <div className="space-y-2">
         {options.map((o) => (
           <button
@@ -1119,10 +1119,10 @@ function SkipModal({
             type="button"
             disabled={busy}
             onClick={() => onPick(o.m)}
-            className="w-full rounded-2xl bg-surface2/80 px-3.5 py-3.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:bg-surface disabled:opacity-50"
+            className="w-full rounded-2xl bg-raised/80 px-3.5 py-3.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:bg-sunken disabled:opacity-50"
           >
             <p className="font-medium">{o.title}</p>
-            <p className="mt-0.5 text-xs text-muted">{o.hint}</p>
+            <p className="mt-0.5 text-xs text-text-2">{o.hint}</p>
           </button>
         ))}
       </div>
@@ -1150,7 +1150,7 @@ function SwapModal({
 
   return (
     <Sheet title={t("workout.swapTitle")} onClose={onClose}>
-      <p className="mb-2 text-xs text-muted">{t("workout.swapHint")}</p>
+      <p className="mb-2 text-xs text-text-2">{t("workout.swapHint")}</p>
       <ul className="max-h-72 space-y-1 overflow-y-auto">
         {rows.map((r) => (
           <li key={`${r.id}-${r.external_id ?? r.name}`}>
@@ -1159,7 +1159,7 @@ function SwapModal({
               onClick={() =>
                 onPick(r.id > 0 ? r.id : -1, r.id > 0 ? null : r.external_id)
               }
-              className="flex w-full items-center justify-between rounded-lg border border-transparent bg-surface px-3 py-2.5 text-left text-sm hover:border-line"
+              className="flex w-full items-center justify-between rounded-lg border border-transparent bg-sunken px-3 py-2.5 text-left text-sm hover:border-rule"
             >
               <span className="truncate">{r.name}</span>
               <MuscleBadge group={r.muscle_group} size="xs" />
@@ -1243,7 +1243,7 @@ function AddExModal({
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder={t("workout.searchExercises")}
-        className="mb-2 h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+        className="mb-2 h-12 w-full rounded-2xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
         autoFocus
       />
       <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5">
@@ -1254,7 +1254,7 @@ function AddExModal({
             onClick={() => setMuscle(id)}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold",
-              muscle === id ? "bg-yellow text-bg" : "bg-surface2 text-muted",
+              muscle === id ? "bg-primary text-on-primary" : "bg-raised text-text-2",
             )}
           >
             {t(lab)}
@@ -1262,8 +1262,8 @@ function AddExModal({
         ))}
       </div>
       {loading ? (
-        <p className="py-8 text-center text-xs text-muted">
-          <div className="mx-auto h-10 w-full max-w-xs animate-pulse rounded-xl bg-surface2" />
+        <p className="py-8 text-center text-xs text-text-2">
+          <div className="mx-auto h-10 w-full max-w-xs animate-pulse rounded-xl bg-raised" />
         </p>
       ) : (
         <ul className="max-h-72 space-y-1 overflow-y-auto">
@@ -1272,7 +1272,7 @@ function AddExModal({
               <button
                 type="button"
                 onClick={() => void pick(r)}
-                className="flex w-full items-center justify-between rounded-xl bg-surface px-3 py-2.5 text-left text-sm active:bg-yellow/10"
+                className="flex w-full items-center justify-between rounded-xl bg-sunken px-3 py-2.5 text-left text-sm active:bg-accent/10"
               >
                 <span className="truncate">{r.name}</span>
                 <MuscleBadge group={r.muscle_group} size="xs" />

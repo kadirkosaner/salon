@@ -28,7 +28,7 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
 
   // Accent glow
   const glow = ctx.createRadialGradient(W * 0.5, H * 0.28, 40, W * 0.5, H * 0.28, 520);
-  glow.addColorStop(0, "rgba(245,197,66,0.28)");
+  glow.addColorStop(0, "color-mix(in oklab, var(--color-accent) 35%, transparent)");
   glow.addColorStop(1, "rgba(245,197,66,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
@@ -48,7 +48,7 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
 
   // Kind badge
   ctx.fillStyle =
-    input.kind === "pr" ? "rgba(245,197,66,0.2)" : "rgba(255,255,255,0.08)";
+    input.kind === "pr" ? "color-mix(in oklab, var(--color-accent) 35%, transparent)" : "rgba(255,255,255,0.08)";
   roundRect(ctx, 80, 260, input.kind === "pr" ? 280 : 320, 56, 28);
   ctx.fill();
   ctx.fillStyle = input.kind === "pr" ? "#f5c542" : "#e8e8ea";

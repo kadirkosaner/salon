@@ -1,63 +1,194 @@
-@import "@fontsource/bebas-neue/400.css";
+@import "@fontsource-variable/archivo/wght.css";
 @import "@fontsource/dm-sans/400.css";
 @import "@fontsource/dm-sans/500.css";
 @import "@fontsource/dm-sans/600.css";
 @import "@fontsource/dm-sans/700.css";
 @import "tailwindcss";
 
+/*
+  Role-based tokens. Components read ONLY these names.
+  Values live on html[data-theme][data-accent] — never hardcode hex in JSX.
+*/
 @theme {
-  --color-bg: #0c0c10;
-  --color-surface: #14141a;
-  --color-surface2: #1c1c24;
-  --color-elevated: #22222c;
-  --color-line: #33333f;
-  --color-line-strong: #62626d;
-  --color-text: #f0f0f4;
-  --color-muted: #9b9ba8;
-  --color-dim: #8a8a99;
-  --color-yellow: #f5c542;
-  --color-green: #3dd68c;
-  --color-red: #f07178;
-  --color-softblue: #7eb8ff;
-  --color-orange: #f0a060;
-  --color-blue: #7eb8ff;
+  --color-canvas: #0c0c0b;
+  --color-sunken: #131210;
+  --color-raised: #1a1917;
+  --color-text: #f2eee6;
+  --color-text-2: #8a8478;
+  --color-text-3: #6e6a61;
+  --color-rule: #232220;
+  --color-rule-soft: #1d1c1a;
+  --color-edge: #3a3733;
+  --color-primary: #e8e2d6;
+  --color-on-primary: #0c0c0b;
+  --color-accent: #b9a177;
+  --color-selected: #b9a177;
+  --color-on-selected: #0c0c0b;
+  --color-success: #3dd68c;
+  --color-danger: #f07178;
+  --color-warning: #f0a060;
+  --color-info: #7eb8ff;
+
+  /* Legacy aliases — codemod removes class usage; keep vars until fully clean */
+  --color-bg: var(--color-canvas);
+  --color-surface: var(--color-sunken);
+  --color-surface2: var(--color-raised);
+  --color-elevated: var(--color-raised);
+  --color-line: var(--color-rule);
+  --color-line-strong: var(--color-edge);
+  --color-muted: var(--color-text-2);
+  --color-dim: var(--color-text-3);
+  --color-yellow: var(--color-accent);
+  --color-green: var(--color-success);
+  --color-red: var(--color-danger);
+  --color-orange: var(--color-warning);
+  --color-softblue: var(--color-info);
+  --color-blue: var(--color-info);
 
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bebas Neue", "Impact", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-display-weight: 300;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+  --radius-btn: 0.75rem;
+
+  --progress-h: 1px;
 
   --shadow-card:
-    0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px color-mix(in oklab, var(--color-edge) 40%, transparent),
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
     0 8px 24px -8px rgba(0, 0, 0, 0.55);
   --shadow-sheet:
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px color-mix(in oklab, var(--color-edge) 50%, transparent),
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
     0 -12px 40px rgba(0, 0, 0, 0.5);
   --shadow-fab:
     0 8px 24px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(245, 197, 66, 0.2);
+    0 0 0 1px color-mix(in oklab, var(--color-accent) 25%, transparent);
   --shadow-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-primary: 0 4px 14px color-mix(in oklab, var(--color-primary) 28%, transparent);
+  --shadow-accent: 0 4px 14px color-mix(in oklab, var(--color-accent) 28%, transparent);
 }
 
+/* ── Obsidian (default) ── */
+html,
+html[data-theme="obsidian"] {
+  color-scheme: dark;
+  --color-canvas: #0c0c0b;
+  --color-sunken: #131210;
+  --color-raised: #1a1917;
+  --color-text: #f2eee6;
+  --color-text-2: #8a8478;
+  --color-text-3: #6e6a61;
+  --color-rule: #232220;
+  --color-rule-soft: #1d1c1a;
+  --color-edge: #3a3733;
+  --color-primary: #e8e2d6;
+  --color-on-primary: #0c0c0b;
+  --color-success: #3dd68c;
+  --color-danger: #f07178;
+  --color-warning: #c08552;
+  --color-info: #8a8478;
+  --font-display-weight: 300;
+  --progress-h: 1px;
+  --radius-btn: 0.75rem;
+  --canvas-bg:
+    radial-gradient(120% 70% at 50% -10%, #1a1917 0%, #0c0c0b 55%), #0c0c0b;
+}
+
+/* Obsidian metals */
+html[data-theme="obsidian"],
+html[data-theme="obsidian"][data-accent="pirinc"],
+html:not([data-theme]) {
+  --color-accent: #b9a177;
+  --color-selected: #b9a177;
+  --color-on-selected: #0c0c0b;
+}
+html[data-theme="obsidian"][data-accent="bakir"] {
+  --color-accent: #c08552;
+  --color-selected: #c08552;
+  --color-on-selected: #0c0c0b;
+}
+html[data-theme="obsidian"][data-accent="kemik"] {
+  --color-accent: #e8e2d6;
+  --color-selected: #e8e2d6;
+  --color-on-selected: #0c0c0b;
+}
+
+/* ── Carbon ── */
+html[data-theme="carbon"] {
+  color-scheme: dark;
+  --color-canvas: #000000;
+  --color-sunken: #0e0e0e;
+  --color-raised: #141414;
+  --color-text: #ffffff;
+  --color-text-2: #7a7a7a;
+  --color-text-3: #5a5a5a;
+  --color-rule: #161616;
+  --color-rule-soft: #1c1c1c;
+  --color-edge: #2a2a2a;
+  --color-on-primary: #000000;
+  --color-success: #3dd68c;
+  --color-danger: #ff5c66;
+  --color-warning: #ffc23f;
+  --color-info: #42e3ff;
+  --font-display-weight: 800;
+  --progress-h: 9px;
+  --radius-btn: 0;
+  --canvas-bg: #000000;
+  /* primary = signal accent (set below) */
+  --color-primary: var(--color-accent);
+  --color-selected: var(--color-accent);
+  --color-on-selected: #000000;
+}
+
+html[data-theme="carbon"][data-accent="volt"],
+html[data-theme="carbon"]:not([data-accent]) {
+  --color-accent: #d6ff3f;
+}
+html[data-theme="carbon"][data-accent="ates"] {
+  --color-accent: #ff6a2b;
+}
+html[data-theme="carbon"][data-accent="buz"] {
+  --color-accent: #42e3ff;
+}
+html[data-theme="carbon"][data-accent="neon"] {
+  --color-accent: #ff3f86;
+}
+html[data-theme="carbon"][data-accent="kehribar"] {
+  --color-accent: #ffc23f;
+}
+html[data-theme="carbon"][data-accent="beyaz"] {
+  --color-accent: #ffffff;
+}
+html[data-theme="carbon"][data-accent="ufuk"] {
+  --color-accent: #7c5cff;
+}
 
 @layer base {
   html {
-    color-scheme: dark;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
     min-height: 100dvh;
-    background: var(--color-bg);
+    background: var(--canvas-bg, var(--color-canvas));
     color: var(--color-text);
     font-family: var(--font-sans);
     overflow-x: clip;
+    transition:
+      background-color 220ms ease,
+      color 220ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body {
+      transition: none;
+    }
   }
 
   button:not(:disabled),
@@ -70,54 +201,84 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Prevent iOS input zoom */
   input,
   select,
   textarea {
     font-size: 16px;
   }
 
-  /* Keyboard focus — only when using keyboard, not mouse */
   :focus {
     outline: none;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-yellow);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
-  /* Interactive controls use the stronger border token */
   input:not([type="checkbox"]):not([type="radio"]),
   textarea,
   select {
-    border-color: var(--color-line-strong);
+    border-color: var(--color-edge);
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--color-yellow) 35%, transparent);
+    background: color-mix(in oklab, var(--color-accent) 35%, transparent);
   }
-}
-
-/* Google fonts — loaded via link in root if available; fallback system */
-@font-face {
-  font-family: "Bebas Neue";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: local("Bebas Neue"), local("BebasNeue-Regular");
 }
 
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
+    font-weight: var(--font-display-weight);
+    font-variation-settings: "wght" var(--font-display-weight);
     letter-spacing: 0.02em;
   }
 
   .num {
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: var(--font-display-weight);
+    font-variation-settings: "wght" var(--font-display-weight);
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Theme-aware primary action (Obsidian: underline text / Carbon: solid block) */
+  .btn-primary-theme {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-radius: var(--radius-btn);
+    font-weight: 600;
+  }
+
+  html[data-theme="obsidian"] .btn-primary-theme.btn-linkish {
+    background: transparent;
+    color: var(--color-accent);
+    border-radius: 0;
+    box-shadow: none;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    font-weight: 500;
+  }
+
+  .progress-track {
+    height: var(--progress-h);
+    background: var(--color-rule);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: inherit;
+  }
+
+  html[data-theme="carbon"] .progress-track {
+    border-radius: 0;
+  }
+
+  html[data-theme="carbon"] .progress-fill {
+    border-radius: 0;
   }
 }
 
@@ -174,16 +335,15 @@
   border-top-right-radius: 1.25rem;
 }
 
-
 /* ── Depth surfaces ── */
 .card-surface {
-  background: var(--color-surface);
+  background: var(--color-sunken);
   box-shadow: var(--shadow-card);
   border-radius: var(--radius-lg);
 }
 
 .card-elevated {
-  background: var(--color-elevated);
+  background: var(--color-raised);
   box-shadow: var(--shadow-sheet);
   border-radius: var(--radius-xl);
 }
@@ -191,11 +351,11 @@
 .card-accent {
   background: linear-gradient(
     145deg,
-    color-mix(in oklab, var(--color-yellow) 12%, var(--color-surface)) 0%,
-    var(--color-surface) 55%
+    color-mix(in oklab, var(--color-accent) 12%, var(--color-sunken)) 0%,
+    var(--color-sunken) 55%
   );
   box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--color-yellow) 28%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-accent) 28%, transparent),
     0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
     0 10px 28px -10px rgba(0, 0, 0, 0.55);
   border-radius: var(--radius-xl);
@@ -246,9 +406,9 @@
 .skeleton-block {
   background: linear-gradient(
     90deg,
-    var(--color-surface2) 0%,
-    color-mix(in oklab, var(--color-surface2) 60%, var(--color-line)) 50%,
-    var(--color-surface2) 100%
+    var(--color-raised) 0%,
+    color-mix(in oklab, var(--color-raised) 60%, var(--color-rule)) 50%,
+    var(--color-raised) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
@@ -268,13 +428,11 @@
   }
 }
 
-/* View Transitions (supported browsers) */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 180ms;
 }
 
-/* body-muscles chart — force dark, readable sizing */
 .muscle-chart-host .body-chart-container,
 .muscle-chart-host .body-muscles-chart {
   width: 100% !important;
@@ -294,14 +452,11 @@
   transition: fill 120ms ease;
 }
 
-
-/* Horizontal shelf with edge fade hint */
 .scroll-rail {
   display: flex;
   gap: 0.625rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
-  /* Touch: hide chrome; fine pointer (mouse): thin bar so drag/wheel works */
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
@@ -314,7 +469,7 @@
 @media (hover: hover) and (pointer: fine) {
   .scroll-rail {
     scrollbar-width: thin;
-    scrollbar-color: rgba(107, 117, 128, 0.55) transparent;
+    scrollbar-color: color-mix(in oklab, var(--color-text-2) 55%, transparent) transparent;
     padding-bottom: 0.4rem;
   }
   .scroll-rail::-webkit-scrollbar {
@@ -322,7 +477,7 @@
     height: 6px;
   }
   .scroll-rail::-webkit-scrollbar-thumb {
-    background: rgba(107, 117, 128, 0.55);
+    background: color-mix(in oklab, var(--color-text-2) 55%, transparent);
     border-radius: 999px;
   }
   .scroll-rail::-webkit-scrollbar-track {
@@ -340,10 +495,9 @@
   right: 0;
   bottom: 0.25rem;
   width: 2.5rem;
-  background: linear-gradient(to left, var(--color-bg, #0c0c0e) 10%, transparent);
+  background: linear-gradient(to left, var(--color-canvas) 10%, transparent);
 }
 @media (hover: hover) and (pointer: fine) {
-  /* Fade less critical when scrollbar is visible */
   .scroll-rail-wrap::after {
     width: 1.25rem;
     opacity: 0.6;

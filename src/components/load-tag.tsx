@@ -3,11 +3,11 @@ import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 const COLORS: Record<string, string> = {
-  agir: "bg-red/15 text-red border-red/30",
-  orta_agir: "bg-orange/15 text-orange border-orange/30",
-  orta: "bg-yellow/15 text-yellow border-yellow/30",
-  orta_hafif: "bg-softblue/15 text-softblue border-softblue/30",
-  hafif: "bg-blue/15 text-blue border-blue/30",
+  agir: "bg-danger/15 text-danger border-danger/30",
+  orta_agir: "bg-warning/15 text-warning border-warning/30",
+  orta: "bg-accent/15 text-accent border-accent/30",
+  orta_hafif: "bg-info/15 text-info border-info/30",
+  hafif: "bg-info/15 text-info border-info/30",
 };
 
 export function LoadTagBadge({ tag, className }: { tag: string; className?: string }) {
@@ -18,7 +18,7 @@ export function LoadTagBadge({ tag, className }: { tag: string; className?: stri
     <span
       className={cn(
         "inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-        COLORS[tag] ?? "bg-surface2 text-muted border-line",
+        COLORS[tag] ?? "bg-raised text-text-2 border-rule",
         className,
       )}
     >

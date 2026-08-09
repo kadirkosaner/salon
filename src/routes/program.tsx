@@ -15,7 +15,7 @@ import {
   Share2,
   Sparkles,
   Trash2,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -143,9 +143,9 @@ function ProgramPage() {
         <ProgramCardSkeleton />
       ) : !program ? (
         <div className="space-y-3">
-          <div className="rounded-2xl bg-surface px-4 py-8 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+          <div className="rounded-2xl bg-sunken px-4 py-8 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
             <p className="font-display text-xl tracking-wide">{t("program.none")}</p>
-            <p className="mt-2 text-sm text-muted">{t("program.noneHint")}</p>
+            <p className="mt-2 text-sm text-text-2">{t("program.noneHint")}</p>
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
@@ -177,7 +177,7 @@ function ProgramPage() {
             <button
               type="button"
               onClick={() => setScheduleOpen(true)}
-              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-surface2 text-xs font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:text-yellow"
+              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-raised text-xs font-semibold text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:text-accent"
 
             >
               <CalendarRange className="size-3.5" />
@@ -186,20 +186,20 @@ function ProgramPage() {
             <button
               type="button"
               onClick={() => setShareOpen(true)}
-              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-surface2 text-xs font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:text-yellow"
+              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-raised text-xs font-semibold text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:text-accent"
 
             >
               <Share2 className="size-3.5" />
               {t("program.share")}
               {program.is_public && program.share_code ? (
-                <span className="num text-[10px] text-yellow">{program.share_code}</span>
+                <span className="num text-[10px] text-accent">{program.share_code}</span>
               ) : null}
             </button>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setMoreOpen((o) => !o)}
-                className="grid size-12 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95 active:text-yellow"
+                className="grid size-12 place-items-center rounded-2xl bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95 active:text-accent"
 
                 aria-label={t("program.more")}
               >
@@ -213,43 +213,43 @@ function ProgramPage() {
                     aria-label={t("common.close")}
                     onClick={() => setMoreOpen(false)}
                   />
-                  <div className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-52 overflow-hidden rounded-xl border border-line bg-surface shadow-xl">
+                  <div className="absolute right-0 top-[calc(100%+0.35rem)] z-50 w-52 overflow-hidden rounded-xl border border-rule bg-sunken shadow-xl">
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface2"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
                       onClick={() => {
                         setMoreOpen(false);
                         setCreateOpen(true);
                       }}
                     >
-                      <Sparkles className="size-4 text-muted" />
+                      <Sparkles className="size-4 text-text-2" />
                       {t("program.create")}
                     </button>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface2"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
                       onClick={() => {
                         setMoreOpen(false);
                         setMetaOpen(true);
                       }}
                     >
-                      <FileText className="size-4 text-muted" />
+                      <FileText className="size-4 text-text-2" />
                       {t("program.meta")}
                     </button>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface2"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
                       onClick={() => {
                         setMoreOpen(false);
                         setImportOpen(true);
                       }}
                     >
-                      <ClipboardPaste className="size-4 text-muted" />
+                      <ClipboardPaste className="size-4 text-text-2" />
                       {t("program.fromPaste")}
                     </button>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface2"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
                       onClick={() => {
                         setMoreOpen(false);
                         if (!confirm(t("workout.clearFutureConfirm"))) return;
@@ -266,12 +266,12 @@ function ProgramPage() {
                           );
                       }}
                     >
-                      <Eraser className="size-4 text-muted" />
+                      <Eraser className="size-4 text-text-2" />
                       {t("program.clearFuture")}
                     </button>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red hover:bg-red/10"
+                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
                       onClick={() => {
                         setMoreOpen(false);
                         if (!confirm(t("program.abandonConfirm"))) return;
@@ -317,17 +317,17 @@ function ProgramPage() {
                   className={cn(
                     "flex min-h-14 min-w-0 flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 transition active:scale-95",
                     assigned
-                      ? "bg-yellow/12 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.3)]"
-                      : "bg-surface2 text-dim shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]",
+                      ? "bg-accent/12 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                      : "bg-raised text-text-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]",
                   )}
                 >
-                  <span className="text-[9px] text-muted">
+                  <span className="text-[9px] text-text-2">
                     {dowShort(dow, locale)}
                   </span>
                   <span
                     className={cn(
                       "mt-0.5 max-w-full truncate text-[9px] font-semibold leading-tight",
-                      assigned ? "text-yellow" : "text-dim",
+                      assigned ? "text-accent" : "text-text-3",
                     )}
                   >
                     {assigned ? assigned.name : "—"}
@@ -349,8 +349,8 @@ function ProgramPage() {
                   className={cn(
                     "shrink-0 rounded-2xl px-4 py-2.5 text-sm font-semibold transition active:scale-95",
                     d.id === day?.id
-                      ? "bg-yellow text-bg shadow-[0_4px_14px_rgba(245,197,66,0.25)]"
-                      : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
+                      ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
+                      : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
                   )}
                 >
                   {d.name}
@@ -376,7 +376,7 @@ function ProgramPage() {
                 await reload();
                 setActiveDayId(r.id);
               }}
-              className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-line px-3 py-2 text-sm text-muted"
+              className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-rule px-3 py-2 text-sm text-text-2"
             >
               <Plus className="size-3.5" /> {t("program.day")}
             </button>
@@ -387,7 +387,7 @@ function ProgramPage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-display text-xl tracking-wide">{day.name}</p>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-text-2">
                     {dowLong(day.dow, locale)}
                     {day.focus ? ` · ${day.focus}` : ""}
                   </p>
@@ -395,7 +395,7 @@ function ProgramPage() {
                 <button
                   type="button"
                   onClick={() => setDaySettingsOpen(true)}
-                  className="grid size-10 place-items-center rounded-lg border border-line text-muted"
+                  className="grid size-10 place-items-center rounded-lg border border-rule text-text-2"
                   aria-label={t("program.daySettings")}
                 >
                   <Settings2 className="size-4" />
@@ -406,25 +406,25 @@ function ProgramPage() {
                 {day.exercises.map((ex, i) => (
                   <li
                     key={ex.id}
-                    className="min-w-0 rounded-xl border border-line bg-surface p-3"
+                    className="min-w-0 rounded-xl border border-rule bg-sunken p-3"
                   >
                     <div className="flex items-start gap-2">
-                      <span className="num mt-0.5 w-5 shrink-0 text-sm text-dim">
+                      <span className="num mt-0.5 w-5 shrink-0 text-sm text-text-3">
                         {i + 1}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="break-words font-medium leading-snug">
                           {ex.exercise_name}
                           {ex.detail ? (
-                            <span className="text-muted"> · {ex.detail}</span>
+                            <span className="text-text-2"> · {ex.detail}</span>
                           ) : null}
                         </p>
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           <MuscleBadge group={ex.muscle_group} />
-                          <span className="num text-lg text-yellow">
+                          <span className="num text-lg text-accent">
                             {ex.sets}×{ex.rep_lo}-{ex.rep_hi}
                           </span>
-                          <span className="text-xs text-muted">{ex.rest_sec}s</span>
+                          <span className="text-xs text-text-2">{ex.rest_sec}s</span>
                           <LoadTagBadge tag={ex.load_tag} />
                           <ExercisePreviewButton
                             name={ex.exercise_name}
@@ -433,7 +433,7 @@ function ProgramPage() {
                           />
                         </div>
                         {ex.note && (
-                          <p className="mt-2 text-xs leading-relaxed text-muted">
+                          <p className="mt-2 text-xs leading-relaxed text-text-2">
                             {ex.note}
                           </p>
                         )}
@@ -441,7 +441,7 @@ function ProgramPage() {
                       <div className="flex shrink-0 flex-col gap-1">
                         <button
                           type="button"
-                          className="grid size-11 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
+                          className="grid size-11 place-items-center rounded-2xl bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
 
                           onClick={() => void move(ex.id, -1)}
                           aria-label={t("program.moveUp")}
@@ -450,7 +450,7 @@ function ProgramPage() {
                         </button>
                         <button
                           type="button"
-                          className="grid size-11 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
+                          className="grid size-11 place-items-center rounded-2xl bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
 
                           onClick={() => void move(ex.id, 1)}
                           aria-label={t("program.moveDown")}
@@ -462,7 +462,7 @@ function ProgramPage() {
                     <div className="mt-2 flex gap-2">
                       <button
                         type="button"
-                        className="h-12 flex-1 rounded-2xl bg-surface2 text-sm font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
+                        className="h-12 flex-1 rounded-2xl bg-raised text-sm font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
 
                         onClick={() => setEditing(ex)}
                       >
@@ -470,7 +470,7 @@ function ProgramPage() {
                       </button>
                       <button
                         type="button"
-                        className="grid size-10 place-items-center rounded-lg border border-line text-red"
+                        className="grid size-10 place-items-center rounded-lg border border-rule text-danger"
                         onClick={() => void removeEx(ex.id)}
                         aria-label={t("common.delete")}
                       >
@@ -484,7 +484,7 @@ function ProgramPage() {
               <button
                 type="button"
                 onClick={() => setAdding(true)}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-line text-sm font-medium text-muted hover:border-yellow/40 hover:text-yellow"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-rule text-sm font-medium text-text-2 hover:border-accent/40 hover:text-accent"
               >
                 <Plus className="size-4" /> {t("program.addExercise")}
               </button>

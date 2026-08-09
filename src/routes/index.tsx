@@ -9,7 +9,7 @@ import {
   ChevronRight,
   RefreshCw,
   Users,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -30,6 +30,7 @@ import { listDiscoverPrograms } from "@/lib/server/share";
 import { useI18n } from "@/lib/i18n/provider";
 import { qk } from "@/lib/query-keys";
 import { cn, formatDate } from "@/lib/utils";
+import { WeeklyVolume } from "@/components/ui/weekly-volume";
 
 const CommentSheet = lazy(() =>
   import("@/components/feed/comment-sheet").then((m) => ({
@@ -178,11 +179,11 @@ function FeedPage() {
       >
         {/* pull indicator */}
         <div
-          className="flex items-center justify-center overflow-hidden text-xs text-muted transition-all"
+          className="flex items-center justify-center overflow-hidden text-xs text-text-2 transition-all"
           style={{ height: pullY || (refreshing ? 28 : 0) }}
         >
           <RefreshCw
-            className={cn("size-4", (refreshing || pullY > 48) && "animate-spin text-yellow")}
+            className={cn("size-4", (refreshing || pullY > 48) && "animate-spin text-accent")}
           />
         </div>
 
@@ -196,7 +197,7 @@ function FeedPage() {
           className="card-accent flex w-full items-center gap-3 p-3.5 text-left transition active:scale-[0.99]"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-yellow">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
               {t("panel.next")}
             </p>
             {next ? (
@@ -204,7 +205,7 @@ function FeedPage() {
                 <p className="font-display mt-0.5 truncate text-2xl leading-none tracking-wide">
                   {next.day_name}
                 </p>
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1 text-xs text-text-2">
                   {formatDate(next.date, locale)} · {next.exercise_count} {t("feed.exercises")}
                 </p>
               </>
@@ -212,12 +213,27 @@ function FeedPage() {
               <p className="font-display mt-0.5 text-xl">{t("feed.planWorkout")}</p>
             )}
           </div>
-          <ChevronRight className="size-5 shrink-0 text-yellow" />
+          <ChevronRight className="size-5 shrink-0 text-accent" />
         </button>
+
+        {dashQuery.data?.week ? (
+          <div className="border-t border-rule pt-3">
+            <WeeklyVolume
+              current={dashQuery.data.week.volume}
+              target={Math.max(dashQuery.data.week.volume * 1.2, 10000)}
+              sessionsLeft={Math.max(
+                0,
+                (dashQuery.data.week.planned ?? 0) -
+                  (dashQuery.data.week.completed ?? 0),
+              )}
+              unitLabel="kg"
+            />
+          </div>
+        ) : null}
 
         <Suspense
           fallback={
-            <div className="h-20 animate-pulse rounded-2xl bg-surface2" aria-busy="true" />
+            <div className="h-20 animate-pulse rounded-2xl bg-raised" aria-busy="true" />
           }
         >
           <ComposePost
@@ -242,8 +258,8 @@ function FeedPage() {
             <Suspense
               fallback={
                 <div className="space-y-3" aria-busy="true">
-                  <div className="h-16 animate-pulse rounded-xl bg-surface2" />
-                  <div className="h-16 animate-pulse rounded-xl bg-surface2" />
+                  <div className="h-16 animate-pulse rounded-xl bg-raised" />
+                  <div className="h-16 animate-pulse rounded-xl bg-raised" />
                 </div>
               }
             >
@@ -262,8 +278,8 @@ function FeedPage() {
             <Suspense
               fallback={
                 <div className="space-y-3" aria-busy="true">
-                  <div className="h-28 animate-pulse rounded-2xl bg-surface2" />
-                  <div className="h-28 animate-pulse rounded-2xl bg-surface2" />
+                  <div className="h-28 animate-pulse rounded-2xl bg-raised" />
+                  <div className="h-28 animate-pulse rounded-2xl bg-raised" />
                 </div>
               }
             >
@@ -279,11 +295,11 @@ function FeedPage() {
             </Suspense>
             <div ref={sentinelRef} className="flex justify-center py-3">
               {feedQuery.isFetchingNextPage ? (
-                <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-surface2" aria-hidden />
+                <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-raised" aria-hidden />
               ) : feedQuery.hasNextPage ? (
-                <span className="text-xs text-dim">{t("feed.loadMore")}</span>
+                <span className="text-xs text-text-3">{t("feed.loadMore")}</span>
               ) : (
-                <span className="text-xs text-dim">{t("feed.end")}</span>
+                <span className="text-xs text-text-3">{t("feed.end")}</span>
               )}
             </div>
           </div>

@@ -504,8 +504,8 @@ function ChartPane({
   }, [view, stateKey, label, bodyState]);
 
   return (
-    <div className="muscle-pane rounded-xl border border-line bg-[#121218] p-1.5">
-      <p className="mb-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-dim">
+    <div className="muscle-pane rounded-xl border border-rule bg-[#121218] p-1.5">
+      <p className="mb-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-text-3">
         {label}
       </p>
       <div
@@ -574,8 +574,8 @@ export function BodyMuscleMap({
             className={cn(
               "min-h-9 rounded-full border px-3 text-[11px] font-semibold",
               tab === t.id
-                ? "border-yellow bg-yellow/15 text-yellow"
-                : "border-line text-muted",
+                ? "border-accent bg-accent/15 text-accent"
+                : "border-rule text-text-2",
             )}
           >
             {t.label}
@@ -584,7 +584,7 @@ export function BodyMuscleMap({
       </div>
 
       {plan.primary.length === 0 ? (
-        <p className="rounded-lg border border-line bg-surface2/40 px-3 py-4 text-center text-xs text-muted">
+        <p className="rounded-lg border border-rule bg-raised/40 px-3 py-4 text-center text-xs text-text-2">
           Bu hareket için net kas eşlemesi yok.
         </p>
       ) : (
@@ -621,8 +621,8 @@ export function BodyMuscleMap({
               className={cn(
                 "rounded-full border px-2.5 py-1 text-[11px] font-medium",
                 level === "primary"
-                  ? "border-red/50 bg-red/15 text-red"
-                  : "border-yellow/40 bg-yellow/10 text-yellow",
+                  ? "border-danger/50 bg-danger/15 text-danger"
+                  : "border-accent/40 bg-accent/10 text-accent",
               )}
             >
               {level === "primary" ? "● " : "○ "}
@@ -633,7 +633,7 @@ export function BodyMuscleMap({
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-dim">
+      <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-text-3">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2.5 rounded-sm bg-[#f04444]" /> Ana
         </span>
@@ -644,13 +644,13 @@ export function BodyMuscleMap({
           <span className="size-2.5 rounded-sm bg-[#343444]" /> Pasif
         </span>
       </div>
-      <p className="mt-1 text-center text-[9px] text-dim">
+      <p className="mt-1 text-center text-[9px] text-text-3">
         Harita:{" "}
         <a
           href="https://github.com/vulovix/body-muscles"
           target="_blank"
           rel="noreferrer"
-          className="underline decoration-line hover:text-muted"
+          className="underline decoration-line hover:text-text-2"
         >
           body-muscles
         </a>

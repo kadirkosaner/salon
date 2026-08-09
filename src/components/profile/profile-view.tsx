@@ -11,7 +11,7 @@ import {
   UserMinus,
   UserPlus,
   Weight,
-} from "lucide-react";
+} from "@/components/icons";
 import { toast } from "sonner";
 import { EmptyState, PageSection, StatTile } from "@/components/ui/section";
 import { btnClass } from "@/components/ui/btn";
@@ -127,7 +127,7 @@ export function ProfileView({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-surface p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-sunken p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
         {(
           [
             ["activity", t("profile.activity")],
@@ -142,8 +142,8 @@ export function ProfileView({
             className={cn(
               "h-11 rounded-xl text-sm font-semibold transition active:scale-[0.98]",
               tab === k
-                ? "bg-yellow text-bg shadow-[0_2px_10px_rgba(245,197,66,0.25)]"
-                : "text-muted",
+                ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
+                : "text-text-2",
             )}
           >
             {lab}
@@ -170,20 +170,20 @@ export function ProfileView({
               {hub.recent.map((r) => (
                 <li
                   key={r.id}
-                  className="flex items-center gap-3 rounded-xl bg-surface2/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                  className="flex items-center gap-3 rounded-xl bg-raised/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                 >
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-yellow/10">
-                    <Flame className="size-4 text-yellow" />
+                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10">
+                    <Flame className="size-4 text-accent" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{r.day_name}</p>
-                    <p className="text-xs text-muted">{formatDate(r.date)}</p>
+                    <p className="text-xs text-text-2">{formatDate(r.date)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="num text-sm text-yellow">
+                    <p className="num text-sm text-accent">
                       {r.tonnage > 0 ? r.tonnage : "—"}
                     </p>
-                    <p className="text-[10px] text-dim">kg</p>
+                    <p className="text-[10px] text-text-3">kg</p>
                   </div>
                 </li>
               ))}
@@ -211,11 +211,11 @@ export function ProfileView({
               {hub.programs.map((p) => (
                 <li
                   key={p.id}
-                  className="flex min-w-0 items-center gap-3 rounded-xl bg-surface2/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+                  className="flex min-w-0 items-center gap-3 rounded-xl bg-raised/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{p.name}</p>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-text-2">
                       {p.day_count} gün · {p.clone_count} kopya
                     </p>
                   </div>
@@ -244,7 +244,7 @@ export function ProfileView({
               countValue={hub.streak}
               hint={t("profile.weekUnit")}
               accent
-              icon={<Flame className="size-3.5 text-orange" />}
+              icon={<Flame className="size-3.5 text-warning" />}
             />
             <StatTile
               label={t("profile.volume")}
@@ -254,7 +254,7 @@ export function ProfileView({
                   : String(hub.total_volume)
               }
               hint="kg"
-              icon={<Weight className="size-3.5 text-muted" />}
+              icon={<Weight className="size-3.5 text-text-2" />}
             />
           </div>
 
@@ -266,21 +266,21 @@ export function ProfileView({
                 hint="Set tamamladıkça rekorlar burada."
               />
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="divide-y divide-rule">
                 {hub.records.map((r) => (
                   <li
                     key={r.name}
                     className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
                   >
-                    <Trophy className="size-4 shrink-0 text-yellow" />
+                    <Trophy className="size-4 shrink-0 text-accent" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.name}</p>
-                      <p className="text-[11px] text-muted">
+                      <p className="text-[11px] text-text-2">
                         {formatDate(r.date)}
                       </p>
                     </div>
-                    <span className="num text-xl text-yellow">{r.weight}</span>
-                    <span className="text-xs text-muted">kg</span>
+                    <span className="num text-xl text-accent">{r.weight}</span>
+                    <span className="text-xs text-text-2">kg</span>
                   </li>
                 ))}
               </ul>
@@ -293,7 +293,7 @@ export function ProfileView({
               hub.is_self ? (
                 <Link
                   to="/olculer"
-                  className="flex items-center gap-1 text-xs font-medium text-yellow"
+                  className="flex items-center gap-1 text-xs font-medium text-accent"
                 >
                   <Ruler className="size-3.5" /> {t("common.edit")}
                 </Link>
@@ -314,32 +314,32 @@ export function ProfileView({
               />
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-muted">
+                <p className="text-xs text-text-2">
                   {formatDate(hub.measurement.date)}
                 </p>
                 <div className="flex flex-wrap gap-2 text-sm">
                   {hub.measurement.body_weight != null && (
-                    <span className="num rounded-full border border-yellow/30 bg-yellow/10 px-2.5 py-1 text-yellow">
+                    <span className="num rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-accent">
                       {hub.measurement.body_weight} kg
                     </span>
                   )}
                   {hub.measurement.waist != null && (
-                    <span className="rounded-full border border-line px-2.5 py-1 text-muted">
+                    <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
                       Bel {hub.measurement.waist}
                     </span>
                   )}
                   {hub.measurement.chest != null && (
-                    <span className="rounded-full border border-line px-2.5 py-1 text-muted">
+                    <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
                       Göğüs {hub.measurement.chest}
                     </span>
                   )}
                   {hub.measurement.arm != null && (
-                    <span className="rounded-full border border-line px-2.5 py-1 text-muted">
+                    <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
                       Kol {hub.measurement.arm}
                     </span>
                   )}
                   {hub.measurement.thigh != null && (
-                    <span className="rounded-full border border-line px-2.5 py-1 text-muted">
+                    <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
                       Uyluk {hub.measurement.thigh}
                     </span>
                   )}
@@ -372,10 +372,10 @@ function Header({
 }) {
   return (
     <div className="card-surface relative overflow-hidden">
-      <div className="h-20 bg-gradient-to-br from-yellow/25 via-yellow/5 to-transparent sm:h-24" />
+      <div className="h-20 bg-gradient-to-br from-accent/25 via-accent/5 to-transparent sm:h-24" />
       <div className="relative px-4 pb-4">
         <div className="-mt-10 flex items-end justify-between gap-3">
-          <div className="grid size-[4.5rem] place-items-center overflow-hidden rounded-2xl border-4 border-surface bg-yellow/15 font-display text-2xl text-yellow shadow-lg">
+          <div className="grid size-[4.5rem] place-items-center overflow-hidden rounded-2xl border-4 border-sunken bg-accent/15 font-display text-2xl text-accent shadow-lg">
             {hub.image ? (
               <img src={hub.image} alt="" className="size-full object-cover" />
             ) : (
@@ -394,8 +394,8 @@ function Header({
               className={cn(
                 "mb-1 inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-semibold disabled:opacity-60",
                 following
-                  ? "border border-line text-muted"
-                  : "bg-yellow text-bg",
+                  ? "border border-rule text-text-2"
+                  : "bg-primary text-on-primary",
               )}
             >
               {following ? (
@@ -414,20 +414,20 @@ function Header({
         <h1 className="font-display mt-3 flex items-center justify-center gap-1.5 text-2xl tracking-wide">
           {hub.name}
           {hub.verified ? (
-            <span className="inline-flex size-5 items-center justify-center rounded-full bg-yellow text-[11px] font-bold text-bg" title="Verified">✓</span>
+            <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-primary" title="Verified">✓</span>
           ) : null}
         </h1>
-        <p className="mt-0.5 text-sm text-yellow">@{hub.username}</p>
+        <p className="mt-0.5 text-sm text-accent">@{hub.username}</p>
         {hub.bio ? (
-          <p className="mt-2 text-sm leading-relaxed text-muted">{hub.bio}</p>
+          <p className="mt-2 text-sm leading-relaxed text-text-2">{hub.bio}</p>
         ) : null}
         {hub.follows_you ? (
-          <span className="mt-2 inline-block rounded-full bg-surface2 px-2 py-0.5 text-[11px] font-medium text-muted">
+          <span className="mt-2 inline-block rounded-full bg-raised px-2 py-0.5 text-[11px] font-medium text-text-2">
             {t("profile.followsYou")}
           </span>
         ) : null}
         {hub.active_program && !hub.restricted ? (
-          <p className="mt-2 text-xs text-yellow">{hub.active_program}</p>
+          <p className="mt-2 text-xs text-accent">{hub.active_program}</p>
         ) : null}
 
         {!hub.restricted && (
@@ -436,11 +436,11 @@ function Header({
               <span className="num font-semibold text-text">
                 {followers ?? hub.followers}
               </span>{" "}
-              <span className="text-muted">{t("profile.followers").toLowerCase()}</span>
+              <span className="text-text-2">{t("profile.followers").toLowerCase()}</span>
             </span>
             <span>
               <span className="num font-semibold text-text">{hub.following}</span>{" "}
-              <span className="text-muted">{t("profile.following").toLowerCase()}</span>
+              <span className="text-text-2">{t("profile.following").toLowerCase()}</span>
             </span>
           </div>
         )}

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck } from "@/components/icons";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -93,7 +93,7 @@ function NotificationsPage() {
           <button
             type="button"
             onClick={() => void markAll()}
-            className="inline-flex items-center gap-1 rounded-xl bg-surface2 px-2.5 py-1.5 text-xs font-medium text-muted"
+            className="inline-flex items-center gap-1 rounded-xl bg-raised px-2.5 py-1.5 text-xs font-medium text-text-2"
           >
             <CheckCheck className="size-3.5" />
             {t("notifications.markAll")}
@@ -104,26 +104,26 @@ function NotificationsPage() {
       <div className="space-y-2 px-1 pb-24 pt-2">
         {loading ? (
           <div className="flex justify-center py-16">
-            <Spinner className="size-6 text-yellow" />
+            <Spinner className="size-6 text-accent" />
           </div>
         ) : items.length === 0 ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center gap-2 text-center">
-            <Bell className="size-8 text-dim" />
-            <p className="text-sm text-muted">{t("notifications.empty")}</p>
+            <Bell className="size-8 text-text-3" />
+            <p className="text-sm text-text-2">{t("notifications.empty")}</p>
           </div>
         ) : (
           items.map((n) => (
             <div
               key={n.id}
               className={cn(
-                "flex gap-3 rounded-2xl border border-line px-3 py-3",
-                n.read_at ? "bg-surface" : "bg-yellow/8 border-yellow/25",
+                "flex gap-3 rounded-2xl border border-rule px-3 py-3",
+                n.read_at ? "bg-sunken" : "bg-accent/8 border-accent/25",
               )}
             >
               <Link
                 to="/u/$username"
                 params={{ username: n.actor.username || n.actor.id }}
-                className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-yellow/15 text-xs font-semibold text-yellow"
+                className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-xs font-semibold text-accent"
               >
                 {n.actor.image ? (
                   <img src={n.actor.image} alt="" className="size-full object-cover" />
@@ -133,7 +133,7 @@ function NotificationsPage() {
               </Link>
               <div className="min-w-0 flex-1">
                 <p className="text-sm leading-snug">{labelFor(n, t)}</p>
-                <p className="mt-0.5 text-[11px] text-dim">
+                <p className="mt-0.5 text-[11px] text-text-3">
                   {relativeTime(n.created_at, locale)}
                 </p>
               </div>

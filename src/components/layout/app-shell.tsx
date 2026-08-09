@@ -1,14 +1,19 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Activity,
+  ActivitySolid,
+  Bell,
+  BellSolid,
   CalendarDays,
+  CalendarDaysSolid,
   Dumbbell,
   LayoutDashboard,
+  LayoutDashboardSolid,
   Search,
-  Bell,
+  SearchSolid,
   Settings,
-} from "lucide-react";
+  SettingsSolid,
+} from "@/components/icons";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/i18n/provider";
 import { getUnreadNotificationCount } from "@/lib/server/notifications";
@@ -42,14 +47,28 @@ export function AppShell({
   });
   const unread = notifData?.count ?? 0;
 
-
   const LEFT_NAV = [
-    { to: "/", label: t("nav.panel"), icon: LayoutDashboard },
-    { to: "/antrenman", label: t("nav.workout"), icon: CalendarDays },
+    {
+      to: "/",
+      label: t("nav.panel"),
+      icon: LayoutDashboard,
+      iconSolid: LayoutDashboardSolid,
+    },
+    {
+      to: "/antrenman",
+      label: t("nav.workout"),
+      icon: CalendarDays,
+      iconSolid: CalendarDaysSolid,
+    },
   ] as const;
 
   const RIGHT_NAV = [
-    { to: "/program", label: t("nav.program"), icon: Dumbbell },
+    {
+      to: "/program",
+      label: t("nav.program"),
+      icon: Dumbbell,
+      iconSolid: Dumbbell,
+    },
   ] as const;
 
   const initials = (user?.displayName || user?.primaryEmail || "S")
@@ -62,6 +81,7 @@ export function AppShell({
   const onSettings = pathname === "/ayarlar";
   const searchActive = pathname === "/kesfet";
   const onProfile = pathname === "/profil" || pathname.startsWith("/u/");
+  const onNotif = pathname === "/bildirimler";
 
   function navOn(to: string) {
     if (to === "/") return pathname === "/";
@@ -69,27 +89,26 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-[calc(100dvh-var(--grok-banner-h,0px))] w-full overflow-x-clip bg-bg text-text">
-      {/* Centered phone column — no separate desktop layout */}
+    <div className="min-h-[calc(100dvh-var(--grok-banner-h,0px))] w-full overflow-x-clip bg-canvas text-text">
       <div
         className={cn(
           "relative mx-auto flex min-h-[calc(100dvh-var(--grok-banner-h,0px))] w-full flex-col",
           SHELL_MAX,
-          "border-x border-line/70 bg-bg shadow-[0_0_40px_rgba(0,0,0,0.35)]",
+          "border-x border-rule/70 bg-canvas shadow-[0_0_40px_rgba(0,0,0,0.35)]",
         )}
       >
-        <header className="sticky top-[var(--grok-banner-h,0px)] z-30 border-b border-line/80 bg-bg/95 backdrop-blur-md">
+        <header className="sticky top-[var(--grok-banner-h,0px)] z-30 border-b border-rule/80 bg-canvas/95 backdrop-blur-md">
           <div className="flex w-full items-center gap-2 px-3 py-2.5">
             <div className="flex min-w-0 flex-1 items-center gap-2.5">
-              <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-yellow/15 text-yellow ring-1 ring-yellow/15">
-                <Activity className="size-5" strokeWidth={2.25} />
+              <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent ring-1 ring-accent/15">
+                <ActivitySolid className="size-5" />
               </div>
               <div className="min-w-0">
                 <p className="font-display truncate text-lg leading-none tracking-wide">
                   {title ?? t("app.name")}
                 </p>
                 {subtitle ? (
-                  <p className="mt-0.5 truncate text-xs text-muted">{subtitle}</p>
+                  <p className="mt-0.5 truncate text-xs text-text-2">{subtitle}</p>
                 ) : null}
               </div>
             </div>
@@ -100,15 +119,19 @@ export function AppShell({
                 to="/bildirimler"
                 className={cn(
                   "relative grid size-12 place-items-center rounded-2xl transition active:scale-95",
-                  pathname === "/bildirimler"
-                    ? "bg-yellow/15 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
-                    : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:text-text",
+                  onNotif
+                    ? "bg-accent/15 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                    : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:text-text",
                 )}
                 aria-label={t("nav.notifications")}
               >
-                <Bell className="size-5" strokeWidth={pathname === "/bildirimler" ? 2.4 : 2} />
+                {onNotif ? (
+                  <BellSolid className="size-5" />
+                ) : (
+                  <Bell className="size-5" />
+                )}
                 {unread > 0 ? (
-                  <span className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-red px-1 text-[9px] font-bold leading-4 text-white">
+                  <span className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-bold leading-4 text-white">
                     {unread > 99 ? "99+" : unread}
                   </span>
                 ) : null}
@@ -118,12 +141,16 @@ export function AppShell({
                 className={cn(
                   "grid size-12 place-items-center rounded-2xl transition active:scale-95",
                   onSettings
-                    ? "bg-yellow/15 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
-                    : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:text-text",
+                    ? "bg-accent/15 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                    : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:text-text",
                 )}
                 aria-label={t("nav.settings")}
               >
-                <Settings className="size-5" strokeWidth={onSettings ? 2.4 : 2} />
+                {onSettings ? (
+                  <SettingsSolid className="size-5" />
+                ) : (
+                  <Settings className="size-5" />
+                )}
               </Link>
             </div>
           </div>
@@ -140,7 +167,7 @@ export function AppShell({
 
         <nav
           className={cn(
-            "fixed bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md",
+            "fixed bottom-0 z-40 border-t border-rule bg-sunken/95 backdrop-blur-md",
             "left-1/2 w-full -translate-x-1/2",
             SHELL_MAX,
           )}
@@ -149,20 +176,20 @@ export function AppShell({
           <div className="grid w-full grid-cols-5 items-end">
             {LEFT_NAV.map((item) => {
               const isOn = navOn(item.to);
-              const Icon = item.icon;
+              const Icon = isOn ? item.iconSolid : item.icon;
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   className={cn(
                     "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
-                    isOn ? "text-yellow" : "text-muted hover:text-text",
+                    isOn ? "text-accent" : "text-text-2 hover:text-text",
                   )}
                 >
                   {isOn && (
-                    <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-yellow" />
+                    <span className="absolute inset-x-5 top-0 h-0.5 bg-accent" />
                   )}
-                  <Icon className="size-5 shrink-0" strokeWidth={isOn ? 2.4 : 2} />
+                  <Icon className="size-5 shrink-0" />
                   <span className="max-w-full truncate">{item.label}</span>
                 </Link>
               );
@@ -173,32 +200,36 @@ export function AppShell({
                 to="/kesfet"
                 aria-label={t("nav.discover")}
                 className={cn(
-                  "grid size-14 place-items-center rounded-full shadow-lg shadow-black/40 ring-4 ring-bg transition -translate-y-3",
+                  "grid size-14 place-items-center rounded-full shadow-lg shadow-black/40 ring-4 ring-canvas transition -translate-y-3",
                   searchActive
-                    ? "bg-yellow text-bg"
-                    : "bg-yellow/90 text-bg hover:bg-yellow",
+                    ? "bg-primary text-on-primary"
+                    : "bg-primary/90 text-on-primary hover:bg-primary",
                 )}
               >
-                <Search className="size-6" strokeWidth={2.5} />
+                {searchActive ? (
+                  <SearchSolid className="size-6" />
+                ) : (
+                  <Search className="size-6" />
+                )}
               </Link>
             </div>
 
             {RIGHT_NAV.map((item) => {
               const isOn = navOn(item.to) && !searchActive;
-              const Icon = item.icon;
+              const Icon = isOn ? item.iconSolid : item.icon;
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   className={cn(
                     "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
-                    isOn ? "text-yellow" : "text-muted hover:text-text",
+                    isOn ? "text-accent" : "text-text-2 hover:text-text",
                   )}
                 >
                   {isOn && (
-                    <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-yellow" />
+                    <span className="absolute inset-x-5 top-0 h-0.5 bg-accent" />
                   )}
-                  <Icon className="size-5 shrink-0" strokeWidth={isOn ? 2.4 : 2} />
+                  <Icon className="size-5 shrink-0" />
                   <span className="max-w-full truncate">{item.label}</span>
                 </Link>
               );
@@ -209,18 +240,18 @@ export function AppShell({
               aria-label={t("nav.profile")}
               className={cn(
                 "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
-                onProfile ? "text-yellow" : "text-muted hover:text-text",
+                onProfile ? "text-accent" : "text-text-2 hover:text-text",
               )}
             >
               {onProfile && (
-                <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-yellow" />
+                <span className="absolute inset-x-5 top-0 h-0.5 bg-accent" />
               )}
               <span
                 className={cn(
                   "grid size-7 place-items-center overflow-hidden rounded-full font-display text-[11px]",
                   onProfile
-                    ? "bg-yellow/20 text-yellow ring-2 ring-yellow/50"
-                    : "bg-surface2 text-muted ring-1 ring-line",
+                    ? "bg-accent/20 text-accent ring-2 ring-accent/50"
+                    : "bg-raised text-text-2 ring-1 ring-rule",
                 )}
               >
                 {user?.profileImageUrl ? (
@@ -244,11 +275,11 @@ export function AppShell({
 
 export function AuthGateSkeleton() {
   return (
-    <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-bg px-6">
+    <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-canvas px-6">
       <div className="mx-auto w-full max-w-[480px] space-y-3 px-6">
-        <div className="mx-auto h-10 w-10 animate-pulse rounded-lg bg-surface2" />
-        <div className="h-4 animate-pulse rounded bg-surface2" />
-        <div className="h-4 w-2/3 animate-pulse rounded bg-surface2" />
+        <div className="mx-auto h-10 w-10 animate-pulse rounded-lg bg-raised" />
+        <div className="h-4 animate-pulse rounded bg-raised" />
+        <div className="h-4 w-2/3 animate-pulse rounded bg-raised" />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Share2, Trophy, X } from "lucide-react";
+import { Share2, Trophy, X } from "@/components/icons";
 import { toast } from "sonner";
 import { renderShareCard, shareOrDownload } from "@/lib/share-card";
 import { haptic } from "@/lib/haptics";
@@ -93,38 +93,38 @@ export function PrCelebration({
       {!reduced ? <Confetti /> : null}
       <div
         className={cn(
-          "relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl border border-yellow/30 bg-surface p-6 sm:rounded-3xl",
+          "relative z-10 w-full max-w-md overflow-hidden rounded-t-3xl border border-accent/30 bg-sunken p-6 sm:rounded-3xl",
           !reduced && "animate-[fade-up_0.4s_ease]",
         )}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 grid size-10 place-items-center rounded-xl text-muted"
+          className="absolute right-3 top-3 grid size-10 place-items-center rounded-xl text-text-2"
           aria-label={t("common.close")}
         >
           <X className="size-5" />
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="grid size-16 place-items-center rounded-2xl bg-yellow text-bg shadow-[0_8px_32px_rgba(245,197,66,0.35)]">
+          <div className="grid size-16 place-items-center rounded-2xl bg-primary text-on-primary shadow-[var(--shadow-primary)]">
             <Trophy className="size-8" />
           </div>
-          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.2em] text-yellow">
+          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
             {t("pr.badge")}
           </p>
           <h2 className="font-display mt-2 text-3xl tracking-wide">{pr.exercise_name}</h2>
-          <p className="num mt-3 text-5xl leading-none text-yellow">
+          <p className="num mt-3 text-5xl leading-none text-accent">
             {pr.weight}
-            <span className="ml-1 text-lg font-sans text-muted">{pr.unit}</span>
+            <span className="ml-1 text-lg font-sans text-text-2">{pr.unit}</span>
           </p>
           {delta != null ? (
-            <p className="mt-2 text-sm font-semibold text-green">
+            <p className="mt-2 text-sm font-semibold text-success">
               +{delta % 1 ? delta.toFixed(1) : delta} {pr.unit}{" "}
-              <span className="font-normal text-muted">{t("pr.vsPrev")}</span>
+              <span className="font-normal text-text-2">{t("pr.vsPrev")}</span>
             </p>
           ) : (
-            <p className="mt-2 text-sm text-muted">{t("pr.firstRecord")}</p>
+            <p className="mt-2 text-sm text-text-2">{t("pr.firstRecord")}</p>
           )}
         </div>
 
@@ -132,7 +132,7 @@ export function PrCelebration({
           <button
             type="button"
             onClick={onClose}
-            className="h-12 flex-1 rounded-2xl bg-surface2 text-sm font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+            className="h-12 flex-1 rounded-2xl bg-raised text-sm font-semibold text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
           >
             {t("pr.continue")}
           </button>
@@ -140,7 +140,7 @@ export function PrCelebration({
             type="button"
             disabled={sharing}
             onClick={() => void share()}
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-yellow text-sm font-semibold text-bg shadow-[0_4px_16px_rgba(245,197,66,0.3)] disabled:opacity-60"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-on-primary shadow-[var(--shadow-primary)] disabled:opacity-60"
           >
             <Share2 className="size-4" />
             {t("pr.share")}
