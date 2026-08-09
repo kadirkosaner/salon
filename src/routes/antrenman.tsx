@@ -559,9 +559,14 @@ function ProgramSocialLine({
             </p>
           ) : (
             <ul className="divide-y divide-rule">
-              {peers.map((f) => (
+              {peers.map((f) => {
+                const isSelf = "isSelf" in f && !!f.isSelf;
+                return (
                 <li key={f.id} className="flex items-center gap-3 py-2.5">
-                  <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
+                  <span className={cn(
+                    "grid size-10 place-items-center overflow-hidden rounded-full text-sm font-semibold",
+                    isSelf ? "bg-primary/20 text-primary ring-2 ring-accent/40" : "bg-accent/15 text-accent",
+                  )}>
                     {f.image ? (
                       <img src={f.image} alt="" className="size-full object-cover" />
                     ) : (
@@ -570,9 +575,13 @@ function ProgramSocialLine({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
-                      {f.name}
-                      {f.isFollowing ? (
+                      {isSelf ? t("compare.you") : f.name}
+                      {isSelf ? (
                         <span className="ml-1.5 text-[10px] font-semibold text-accent">
+                          · {f.name}
+                        </span>
+                      ) : f.isFollowing ? (
+                        <span className="ml-1.5 text-[10px] font-semibold text-text-3">
                           ·
                         </span>
                       ) : null}
@@ -581,7 +590,7 @@ function ProgramSocialLine({
                       {t("compare.weekStreak", { w: f.week, s: f.streak })}
                     </p>
                   </div>
-                  {f.username ? (
+                  {!isSelf && f.username ? (
                     <Link
                       to="/u/$username"
                       params={{ username: f.username }}
@@ -590,9 +599,14 @@ function ProgramSocialLine({
                     >
                       @{f.username}
                     </Link>
+                  ) : isSelf ? (
+                    <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                      {t("compare.you")}
+                    </span>
                   ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </AppSheet>

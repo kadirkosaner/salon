@@ -370,6 +370,7 @@ export const getProgramSocial = createServerFn({ method: "GET" })
           week: number;
           streak: number;
           isFollowing: boolean;
+          isSelf: boolean;
         }[],
         peers: [] as {
           id: string;
@@ -379,34 +380,42 @@ export const getProgramSocial = createServerFn({ method: "GET" })
           week: number;
           streak: number;
           isFollowing: boolean;
+          isSelf: boolean;
         }[],
         todayDone: 0,
       };
     }
     const src = mine[0]!.source_program_id ?? mine[0]!.id;
-    // Count active programs cloned from same source (or same catalog id)
+    const mineFrom = mine[0]!.valid_from;
+
+    // Same-source match (include self)
+    // Count: everyone on this program lineage I can see, including me
     const cnt = await sql<{ c: number }>`
       select count(*)::int as c
       from programs p
       left join user_profiles up on up.user_id = p.user_id
       where p.is_active = true
-        and p.user_id <> ${me}
         and (
           p.source_program_id = ${src}
           or p.id = ${src}
           or p.source_program_id = (select source_program_id from programs where id = ${src})
         )
-        and coalesce(up.visibility, 'public') <> 'private'
         and (
-          coalesce(up.visibility, 'public') = 'public'
-          or exists (
-            select 1 from user_follows f
-            where f.follower_id = ${me} and f.following_id = p.user_id
+          p.user_id = ${me}
+          or (
+            coalesce(up.visibility, 'public') <> 'private'
+            and (
+              coalesce(up.visibility, 'public') = 'public'
+              or exists (
+                select 1 from user_follows f
+                where f.follower_id = ${me} and f.following_id = p.user_id
+              )
+            )
           )
         )
     `;
 
-    // Peers on same source: following first, then public
+    // Peers: you first, then following, then public others
     const peers = await sql<{
       id: string;
       name: string;
@@ -414,6 +423,7 @@ export const getProgramSocial = createServerFn({ method: "GET" })
       username: string | null;
       valid_from: string;
       is_following: boolean;
+      is_self: boolean;
     }>`
       select
         u.id,
@@ -424,26 +434,32 @@ export const getProgramSocial = createServerFn({ method: "GET" })
         exists (
           select 1 from user_follows f
           where f.follower_id = ${me} and f.following_id = u.id
-        ) as is_following
+        ) as is_following,
+        (u.id = ${me}) as is_self
       from programs p
       join "user" u on u.id = p.user_id
       left join user_profiles up on up.user_id = u.id
       where p.is_active = true
-        and p.user_id <> ${me}
         and (
           p.source_program_id = ${src}
           or p.id = ${src}
           or p.source_program_id = (select source_program_id from programs where id = ${src})
         )
-        and coalesce(up.visibility, 'public') <> 'private'
         and (
-          coalesce(up.visibility, 'public') = 'public'
-          or exists (
-            select 1 from user_follows f
-            where f.follower_id = ${me} and f.following_id = p.user_id
+          p.user_id = ${me}
+          or (
+            coalesce(up.visibility, 'public') <> 'private'
+            and (
+              coalesce(up.visibility, 'public') = 'public'
+              or exists (
+                select 1 from user_follows f
+                where f.follower_id = ${me} and f.following_id = p.user_id
+              )
+            )
           )
         )
       order by
+        (u.id = ${me}) desc,
         exists (
           select 1 from user_follows f
           where f.follower_id = ${me} and f.following_id = u.id
@@ -517,14 +533,15 @@ export const getProgramSocial = createServerFn({ method: "GET" })
       name: f.name,
       image: f.image,
       username: f.username,
-      week: weekNum(f.valid_from),
+      week: weekNum(f.is_self ? mineFrom : f.valid_from),
       streak: streakMap.get(f.id) ?? 0,
       isFollowing: f.is_following,
+      isSelf: f.is_self,
     }));
 
     return {
       count: cnt[0]?.c ?? 0,
-      following: peerOut.filter((p) => p.isFollowing).slice(0, 12),
+      following: peerOut.filter((p) => p.isFollowing && !p.isSelf).slice(0, 12),
       peers: peerOut,
       todayDone: todayDone[0]?.c ?? 0,
     };
