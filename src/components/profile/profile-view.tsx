@@ -22,6 +22,7 @@ import {
   type ProfileHub,
 } from "@/lib/server/social";
 import { cloneProgram } from "@/lib/server/share";
+import { DetailModal } from "@/components/discover-panel";
 import { cn, formatDate } from "@/lib/utils";
 
 type Tab = "activity" | "programs" | "stats";
@@ -65,6 +66,7 @@ export function ProfileView({
   const [following, setFollowing] = useState(hub.is_following);
   const [followers, setFollowers] = useState(hub.followers);
   const [dismissPick, setDismissPick] = useState(false);
+  const [detailId, setDetailId] = useState<number | null>(null);
 
   const initials = (hub.name || "?")
     .split(/\s+/)
@@ -273,19 +275,36 @@ export function ProfileView({
               />
             </div>
           ) : (
-            <ul className="divide-y divide-rule">
+            <>
+              <ul className="divide-y divide-rule">
               {hub.programs.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{p.name}</p>
-                    <p className="text-[11px] text-text-2">
-                      {t("discover.daysShort", { n: p.day_count })}
-                      {p.clone_count > 0
-                        ? ` · ${t("discover.clones", { n: p.clone_count })}`
-                        : ""}
-                    </p>
-                  </div>
-                  {!hub.is_self && (
+                <li key={p.id} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetailId(p.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left active:bg-sunken/60"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+                      <BookOpen className="size-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">
+                        {p.name}
+                      </span>
+                      <span className="block text-[11px] text-text-2">
+                        {t("discover.daysShort", { n: p.day_count })}
+                        {p.clone_count > 0
+                          ? ` · ${t("discover.clones", { n: p.clone_count })}`
+                          : ""}
+                      </span>
+                    </span>
+                    {hub.is_self ? (
+                      <span className="shrink-0 text-xs font-medium text-accent">
+                        {t("discover.goToProgram")}
+                      </span>
+                    ) : null}
+                  </button>
+                  {!hub.is_self ? (
                     <button
                       type="button"
                       disabled={busy}
@@ -294,10 +313,23 @@ export function ProfileView({
                     >
                       <Download className="size-3.5" /> {t("common.copy")}
                     </button>
-                  )}
+                  ) : null}
                 </li>
               ))}
             </ul>
+            {detailId != null ? (
+              <DetailModal
+                id={detailId}
+                busy={busy}
+                onClose={() => setDetailId(null)}
+                onClone={(name) => {
+                  const id = detailId;
+                  setDetailId(null);
+                  void adopt(id, name);
+                }}
+              />
+            ) : null}
+            </>
           )}
         </div>
       )}
