@@ -78,8 +78,9 @@ export function ThemeProvider({
   }, []);
 
   const setThemeAndAccent = useCallback((t: ThemeId, a?: AccentId) => {
-    setThemeState(t);
-    setAccentState(normalizeAccent(t, a));
+    const nextA = normalizeAccent(t, a);
+    setThemeState((prev) => (prev === t ? prev : t));
+    setAccentState((prev) => (prev === nextA ? prev : nextA));
   }, []);
 
   const value = useMemo(

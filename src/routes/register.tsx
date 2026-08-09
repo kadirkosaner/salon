@@ -176,7 +176,7 @@ function RegisterPage() {
       } catch (claimErr) {
         console.warn(claimErr);
       }
-      window.location.href = "/";
+      window.location.href = "/hosgeldin";
     } catch {
       setError(t("auth.networkError"));
     } finally {

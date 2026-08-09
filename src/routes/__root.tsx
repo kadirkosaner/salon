@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/auth/provider";
+import { OnboardingGate } from "@/components/onboarding-gate";
 import { I18nProvider } from "@/lib/i18n/provider";
 import { ThemeProvider } from "@/lib/theme/provider";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme/tokens";
@@ -58,7 +59,9 @@ export const Route = createRootRoute({
           <I18nProvider>
             <ThemeProvider>
               <AuthProvider>
-                <Outlet />
+                <OnboardingGate>
+                  <Outlet />
+                </OnboardingGate>
                 <Toaster
                   theme="dark"
                   position="bottom-center"

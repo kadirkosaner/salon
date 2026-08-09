@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AntrenmanRouteImport } from './routes/antrenman'
 import { Route as AyarlarRouteImport } from './routes/ayarlar'
 import { Route as BildirimlerRouteImport } from './routes/bildirimler'
+import { Route as HosgeldinRouteImport } from './routes/hosgeldin'
 import { Route as KesfetRouteImport } from './routes/kesfet'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OlculerRouteImport } from './routes/olculer'
@@ -42,6 +43,11 @@ const AyarlarRoute = AyarlarRouteImport.update({
 const BildirimlerRoute = BildirimlerRouteImport.update({
   id: '/bildirimler',
   path: '/bildirimler',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HosgeldinRoute = HosgeldinRouteImport.update({
+  id: '/hosgeldin',
+  path: '/hosgeldin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KesfetRoute = KesfetRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
   '/bildirimler': typeof BildirimlerRoute
+  '/hosgeldin': typeof HosgeldinRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
   '/bildirimler': typeof BildirimlerRoute
+  '/hosgeldin': typeof HosgeldinRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
   '/bildirimler': typeof BildirimlerRoute
+  '/hosgeldin': typeof HosgeldinRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/antrenman'
     | '/ayarlar'
     | '/bildirimler'
+    | '/hosgeldin'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/antrenman'
     | '/ayarlar'
     | '/bildirimler'
+    | '/hosgeldin'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/antrenman'
     | '/ayarlar'
     | '/bildirimler'
+    | '/hosgeldin'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   AntrenmanRoute: typeof AntrenmanRoute
   AyarlarRoute: typeof AyarlarRoute
   BildirimlerRoute: typeof BildirimlerRoute
+  HosgeldinRoute: typeof HosgeldinRoute
   KesfetRoute: typeof KesfetRoute
   LoginRoute: typeof LoginRoute
   OlculerRoute: typeof OlculerRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/bildirimler'
       fullPath: '/bildirimler'
       preLoaderRoute: typeof BildirimlerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hosgeldin': {
+      id: '/hosgeldin'
+      path: '/hosgeldin'
+      fullPath: '/hosgeldin'
+      preLoaderRoute: typeof HosgeldinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kesfet': {
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   AntrenmanRoute: AntrenmanRoute,
   AyarlarRoute: AyarlarRoute,
   BildirimlerRoute: BildirimlerRoute,
+  HosgeldinRoute: HosgeldinRoute,
   KesfetRoute: KesfetRoute,
   LoginRoute: LoginRoute,
   OlculerRoute: OlculerRoute,

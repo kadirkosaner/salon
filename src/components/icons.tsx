@@ -10,6 +10,7 @@ import {
   ArrowLeftRight,
   ArrowUpRight,
   AtSign,
+  BarChart3,
   Bell,
   BookOpen,
   CalendarDays,
@@ -75,6 +76,7 @@ export type { LucideIcon };
 
 export {
   Activity,
+  BarChart3,
   ArrowDownRight,
   ArrowLeftRight,
   ArrowUpRight,
