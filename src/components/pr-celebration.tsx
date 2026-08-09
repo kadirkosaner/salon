@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Share2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import { renderShareCard, shareOrDownload } from "@/lib/share-card";
@@ -82,7 +83,7 @@ export function PrCelebration({
     }
   }
 
-  return (
+  const node = (
     <div
       className="fixed inset-0 z-[80] flex items-end justify-center bg-black/80 p-0 sm:items-center sm:p-4"
       role="dialog"
@@ -148,6 +149,9 @@ export function PrCelebration({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(node, document.body);
 }
 
 function Confetti() {

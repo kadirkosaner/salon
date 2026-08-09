@@ -3,6 +3,7 @@ import { getSql, withTransaction } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
 import { matchExerciseName, parseProgramText } from "@/lib/program-parser";
+import { todayForUser } from "./time";
 import { v, optionalString } from "@/lib/validation";
 import { z } from "zod";
 
@@ -81,6 +82,14 @@ export const commitProgramImport = createServerFn({ method: "POST" })
           where user_id = ${context.userId}
         `;
         await sql`delete from programs where user_id = ${context.userId}`;
+        // Drop orphan future shells (same as clone/abandon) so calendar refills
+        const todayIso = await todayForUser(sql, context.userId);
+        await sql`
+          delete from workouts
+          where user_id = ${context.userId}
+            and date >= ${todayIso}::date
+            and status in ('planned', 'skipped', 'in_progress')
+        `;
       }
 
       const prog = await sql<{ id: number }>`

@@ -159,6 +159,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     "program.nowPrivate": "Program artık gizli",
     "program.addExercise": "Hareket ekle",
     "program.abandon": "Programı terk et",
+    "program.abandonConfirm":
+      "Program silinecek ve gelecekteki planlı seanslar kaldırılacak. Tamamladığın antrenmanlar geçmişte kalır. Devam?",
+    "program.abandoned": "Program terk edildi",
     "discover.title": "Keşfet",
     "discover.subtitle": "Program & sporcu ara",
     "discover.programs": "Programlar",
@@ -457,6 +460,9 @@ export const messages: Record<Locale, Record<string, string>> = {
     "program.nowPrivate": "Program is now private",
     "program.addExercise": "Add exercise",
     "program.abandon": "Leave program",
+    "program.abandonConfirm":
+      "The program will be deleted and future planned sessions removed. Completed workouts stay in history. Continue?",
+    "program.abandoned": "Program left",
     "discover.title": "Discover",
     "discover.subtitle": "Programs & athletes",
     "discover.programs": "Programs",

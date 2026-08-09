@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Play, X } from "lucide-react";
+import { Play } from "lucide-react";
+import { AppSheet } from "@/components/ui/sheet";
 import { getExercisePreview } from "@/data/exercise-previews";
 import { getExerciseMedia } from "@/lib/server/exercises";
 import { mediaSrc } from "@/lib/exercise-media";
@@ -80,14 +81,6 @@ export function ExercisePreviewModal({
   const [stage, setStage] = useState(0);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  useEffect(() => {
     setStage(0);
     // If props already have media, skip fetch
     if (gifUrl || imageUrl) {
@@ -130,41 +123,11 @@ export function ExercisePreviewModal({
   })();
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/75 sm:items-center sm:p-3">
-      <button
-        type="button"
-        className="absolute inset-0"
-        aria-label="Kapat"
-        onClick={onClose}
-      />
-      <div
-        className="relative z-10 flex max-h-[94dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-line bg-surface sm:rounded-2xl"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="flex justify-center pt-2 sm:hidden">
-          <span className="h-1 w-10 rounded-full bg-line" />
-        </div>
-
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-2 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur">
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-xl leading-tight tracking-wide text-yellow">
-              {name}
-            </p>
-            <p className="mt-1 text-xs leading-snug text-muted">
-              {fallback.summary}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-line text-muted active:bg-surface2"
-            aria-label="Kapat"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
+    <AppSheet title={name} onClose={onClose} nested>
+      <p className="-mt-1 mb-3 text-xs leading-snug text-muted">
+        {fallback.summary}
+      </p>
+      <div className="space-y-4">
           <div className="overflow-hidden rounded-2xl border border-line bg-[#0a0a0c]">
             {loading ? (
               <div className="grid h-40 place-items-center text-xs text-muted">
@@ -216,8 +179,7 @@ export function ExercisePreviewModal({
               </ul>
             </div>
           )}
-        </div>
       </div>
-    </div>
+    </AppSheet>
   );
 }

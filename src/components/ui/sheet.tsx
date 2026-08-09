@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * Mobile-first bottom sheet (vaul).
  * Drop-in for the old Modal/Sheet pattern: render when open, call onClose to dismiss.
- * Provides: drag handle, focus trap, Escape, scroll lock, backdrop scale.
+ * Nested drawers (sheet-inside-sheet) must pass nested — uses Drawer.NestedRoot.
  */
 export function AppSheet({
   title,
@@ -14,6 +14,9 @@ export function AppSheet({
   open = true,
   className,
   contentClassName,
+  nested = false,
+  dismissible = true,
+  showClose = true,
 }: {
   title?: string;
   children: React.ReactNode;
@@ -21,17 +24,22 @@ export function AppSheet({
   open?: boolean;
   className?: string;
   contentClassName?: string;
+  /** Use when this sheet opens above another AppSheet (vaul NestedRoot). */
+  nested?: boolean;
+  /** false = cannot dismiss via drag/backdrop/Escape (e.g. username claim). */
+  dismissible?: boolean;
+  showClose?: boolean;
 }) {
   const hasTitle = title != null && title !== "";
+  const Root = nested ? Drawer.NestedRoot : Drawer.Root;
 
   return (
-    <Drawer.Root
+    <Root
       open={open}
       onOpenChange={(next) => {
-        if (!next) onClose();
+        if (!next && dismissible) onClose();
       }}
-      shouldScaleBackground
-      setBackgroundColorOnScale={false}
+      dismissible={dismissible}
     >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/70" />
@@ -43,9 +51,19 @@ export function AppSheet({
             className,
           )}
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          onPointerDownOutside={(e) => {
+            if (!dismissible) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (!dismissible) e.preventDefault();
+          }}
         >
           <div className="flex justify-center pt-2.5 pb-1">
-            <Drawer.Handle className="mx-auto !h-1 !w-10 !rounded-full !bg-line-strong" />
+            {dismissible ? (
+              <Drawer.Handle className="mx-auto !h-1 !w-10 !rounded-full !bg-line-strong" />
+            ) : (
+              <span className="h-1 w-10 rounded-full bg-line-strong" aria-hidden />
+            )}
           </div>
 
           <div className="flex items-start justify-between gap-3 border-b border-line/80 px-4 pb-3 pt-1">
@@ -57,13 +75,17 @@ export function AppSheet({
             >
               {hasTitle ? title : "Dialog"}
             </Drawer.Title>
-            <Drawer.Close
-              type="button"
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-surface2 text-muted shadow-[var(--shadow-highlight)] active:scale-95 active:bg-surface"
-              aria-label="Kapat"
-            >
-              <X className="size-5" />
-            </Drawer.Close>
+            {showClose && dismissible ? (
+              <Drawer.Close
+                type="button"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-surface2 text-muted shadow-[var(--shadow-highlight)] active:scale-95 active:bg-surface"
+                aria-label="Kapat"
+              >
+                <X className="size-5" />
+              </Drawer.Close>
+            ) : (
+              <span className="size-11 shrink-0" aria-hidden />
+            )}
           </div>
 
           <div
@@ -76,7 +98,7 @@ export function AppSheet({
           </div>
         </Drawer.Content>
       </Drawer.Portal>
-    </Drawer.Root>
+    </Root>
   );
 }
 
@@ -85,6 +107,7 @@ export function Modal(props: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  nested?: boolean;
 }) {
   return <AppSheet {...props} />;
 }
@@ -94,6 +117,7 @@ export function Sheet(props: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  nested?: boolean;
 }) {
   return <AppSheet {...props} />;
 }

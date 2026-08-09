@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CalendarRange,
   ChevronDown,
@@ -54,6 +55,7 @@ import {
 import { abandonProgram } from "@/lib/server/share";
 import { clearFutureWorkouts } from "@/lib/server/workouts";
 import { DOW_LABELS, DOW_SHORT } from "@/data/library";
+import { qk } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/program")({
@@ -64,6 +66,7 @@ function ProgramPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
   const t = useT();
+  const qc = useQueryClient();
 
   const [program, setProgram] = useState<ProgramDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,7 +210,7 @@ function ProgramPage() {
                 <>
                   <button
                     type="button"
-                    className="fixed inset-0 z-40"
+                    className="fixed left-0 top-0 z-40 h-dvh w-dvw"
                     aria-label={t("common.close")}
                     onClick={() => setMoreOpen(false)}
                   />
@@ -277,21 +280,23 @@ function ProgramPage() {
                       className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-red hover:bg-red/10"
                       onClick={() => {
                         setMoreOpen(false);
-                        if (
-                          !confirm(
-                            "Programı terk etmek istiyor musun? Program silinir; geçmiş antrenmanların kalır. Yeni programı Keşfet’ten seçersin.",
-                          )
-                        )
-                          return;
+                        if (!confirm(t("program.abandonConfirm"))) return;
                         void abandonProgram()
                           .then(async () => {
-                            toast.success("Program terk edildi");
+                            toast.success(t("program.abandoned"));
                             setLoading(true);
+                            await Promise.all([
+                              qc.invalidateQueries({ queryKey: qk.activeProgram }),
+                              qc.invalidateQueries({ queryKey: ["workouts"] }),
+                              qc.invalidateQueries({ queryKey: qk.dashboard }),
+                              qc.invalidateQueries({ queryKey: qk.feed }),
+                              qc.invalidateQueries({ queryKey: qk.me }),
+                            ]);
                             await reload();
                             setLoading(false);
                           })
                           .catch((e) =>
-                            toast.error(e instanceof Error ? e.message : "Hata"),
+                            toast.error(e instanceof Error ? e.message : t("common.error")),
                           );
                       }}
                     >

@@ -50,6 +50,20 @@ async function clearFuturePlanned(sql: Sql, userId: string) {
   `;
 }
 
+/**
+ * On abandon: remove future shells but keep today's in-progress session
+ * (user may leave mid-workout without losing entered sets).
+ */
+async function clearFutureOnAbandon(sql: Sql, userId: string) {
+  const todayIso = await todayForUser(sql, userId);
+  await sql`
+    delete from workouts
+    where user_id = ${userId}
+      and date >= ${todayIso}::date
+      and status in ('planned', 'skipped')
+  `;
+}
+
 export const listDiscoverPrograms = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(noInput)
@@ -449,6 +463,7 @@ export const abandonProgram = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     return withTransaction(async (sql) => {
       await deleteUserPrograms(sql, context.userId);
+      await clearFutureOnAbandon(sql, context.userId);
       return { ok: true as const };
     });
   });

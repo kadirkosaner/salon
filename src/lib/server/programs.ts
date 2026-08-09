@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql, withTransaction } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
+import { todayForUser } from "./time";
 import {
   v,
   positiveId,
@@ -411,6 +412,15 @@ export const setWeekSchedule = createServerFn({ method: "POST" })
         await sql`update program_days set dow = ${park} where id = ${d.id}`;
       }
 
+      // Calendar shells used old DOW mapping — drop future planned so horizon rebuilds
+      const todayIso = await todayForUser(sql, context.userId);
+      await sql`
+        delete from workouts
+        where user_id = ${context.userId}
+          and date >= ${todayIso}::date
+          and status in ('planned', 'skipped')
+      `;
+
       return { ok: true };
     });
   });
@@ -420,6 +430,18 @@ export const deleteProgramDay = createServerFn({ method: "POST" })
   .validator(v(positiveId))
   .handler(async ({ context, data: id }) => {
     const sql = await getSql();
+    // Drop future shells that still point at this day (completed stay; FK nulls on delete)
+    await sql`
+      delete from workouts w
+      using programs p
+      where w.program_day_id = ${id}
+        and w.user_id = ${context.userId}
+        and w.status in ('planned', 'skipped')
+        and p.id = (
+          select program_id from program_days where id = ${id}
+        )
+        and p.user_id = ${context.userId}
+    `;
     await sql`
       delete from program_days pd
       using programs p

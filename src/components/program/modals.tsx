@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Share2, X } from "lucide-react";
+import { Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { MuscleBadge } from "@/components/muscle-badge";
@@ -1818,184 +1818,175 @@ function ExerciseQuickPicker({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0"
-        onClick={onClose}
-        aria-label="close"
-      />
-      <div className="relative z-10 flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-line bg-surface sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h4 className="font-display text-lg tracking-wide">
-            {picked ? "Set & tekrar" : "1300+ hareket"}
-          </h4>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-11 place-items-center rounded-full bg-surface2"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        {!picked ? (
-          <>
-            <div className="space-y-2 p-3">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Ara…"
-                className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm"
-                autoFocus
-              />
-              <div className="flex gap-1.5 overflow-x-auto">
-                {tabs.map(([id, lab]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setMuscle(id)}
-                    className={cn(
-                      "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold",
-                      muscle === id
-                        ? "bg-yellow text-bg"
-                        : "bg-surface2 text-muted",
-                    )}
-                  >
-                    {lab}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-              {loading ? (
-                <li className="py-10 text-center text-xs text-muted">
-                  <div className="mx-auto h-24 w-full animate-pulse rounded-2xl bg-surface2" aria-busy="true" />
-                </li>
-              ) : (
-                rows.map((e) => (
-                  <li key={`${e.id}-${e.external_id ?? e.name}`}>
-                    <button
-                      type="button"
-                      onClick={() => setPicked(e)}
-                      className="flex w-full items-center justify-between gap-2 rounded-xl bg-surface2/60 px-3 py-3 text-left text-sm active:bg-yellow/10"
-                    >
-                      <span className="min-w-0 truncate font-medium">
-                        {e.name}
-                      </span>
-                      <MuscleBadge group={e.muscle_group} size="xs" />
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </>
-        ) : (
-          <div className="space-y-3 overflow-y-auto p-4">
-            <div className="rounded-2xl bg-surface2 px-3 py-2.5">
-              <p className="text-sm font-semibold">{picked.name}</p>
-              <p className="text-[11px] text-muted">
-                Set, tekrar ve dinlenmeyi sen gir — otomatik doldurulmaz
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block min-w-0 space-y-1">
-                <span className="text-xs text-muted">Set *</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={sets}
-                  onChange={(e) =>
-                    setSets(e.target.value === "" ? "" : Number(e.target.value))
-                  }
-                  placeholder="örn. 4"
-                  className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                  autoFocus
-                />
-              </label>
-              <label className="block min-w-0 space-y-1">
-                <span className="text-xs text-muted">Dinlenme sn *</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={rest}
-                  onChange={(e) =>
-                    setRest(e.target.value === "" ? "" : Number(e.target.value))
-                  }
-                  placeholder="örn. 90"
-                  className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                />
-              </label>
-              <label className="block min-w-0 space-y-1">
-                <span className="text-xs text-muted">Tekrar min *</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={repLo}
-                  onChange={(e) => {
-                    const v =
-                      e.target.value === "" ? "" : Number(e.target.value);
-                    setRepLo(v);
-                    if (typeof v === "number" && (repHi === "" || (typeof repHi === "number" && repHi < v))) {
-                      setRepHi(v);
-                    }
-                  }}
-                  placeholder="örn. 6"
-                  className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                />
-              </label>
-              <label className="block min-w-0 space-y-1">
-                <span className="text-xs text-muted">Tekrar max</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={repHi}
-                  onChange={(e) =>
-                    setRepHi(
-                      e.target.value === "" ? "" : Number(e.target.value),
-                    )
-                  }
-                  placeholder="örn. 8"
-                  className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                />
-              </label>
-            </div>
-            <label className="block space-y-1">
-              <span className="text-xs text-muted">Yük</span>
-              <AppSelect
-                value={tag}
-                onValueChange={setTag}
-                options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
-                  value: k,
-                  label: LOAD_TAG_LABELS[k],
-                }))}
-                triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-                aria-label="Yük"
-              />
-            </label>
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
-                onClick={() => setPicked(null)}
-              >
-                Hareket değiştir
-              </button>
-              <button
-                type="button"
-                className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
-                onClick={submit}
-              >
-                Ekle
-              </button>
+    <AppSheet
+      title={picked ? "Set & tekrar" : "1300+ hareket"}
+      onClose={onClose}
+      nested
+      contentClassName="!p-0"
+    >
+      {!picked ? (
+        <>
+          <div className="space-y-2 p-3">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Ara…"
+              className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm"
+              autoFocus
+            />
+            <div className="flex gap-1.5 overflow-x-auto">
+              {tabs.map(([id, lab]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setMuscle(id)}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold",
+                    muscle === id
+                      ? "bg-yellow text-bg"
+                      : "bg-surface2 text-muted",
+                  )}
+                >
+                  {lab}
+                </button>
+              ))}
             </div>
           </div>
-        )}
-      </div>
-    </div>
+          <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+            {loading ? (
+              <li className="py-10 text-center text-xs text-muted">
+                <div
+                  className="mx-auto h-24 w-full animate-pulse rounded-2xl bg-surface2"
+                  aria-busy="true"
+                />
+              </li>
+            ) : (
+              rows.map((e) => (
+                <li key={`${e.id}-${e.external_id ?? e.name}`}>
+                  <button
+                    type="button"
+                    onClick={() => setPicked(e)}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl bg-surface2/60 px-3 py-3 text-left text-sm active:bg-yellow/10"
+                  >
+                    <span className="min-w-0 truncate font-medium">
+                      {e.name}
+                    </span>
+                    <MuscleBadge group={e.muscle_group} size="xs" />
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </>
+      ) : (
+        <div className="space-y-3 overflow-y-auto p-4">
+          <div className="rounded-2xl bg-surface2 px-3 py-2.5">
+            <p className="text-sm font-semibold">{picked.name}</p>
+            <p className="text-[11px] text-muted">
+              Set, tekrar ve dinlenmeyi sen gir — otomatik doldurulmaz
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block min-w-0 space-y-1">
+              <span className="text-xs text-muted">Set *</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={sets}
+                onChange={(e) =>
+                  setSets(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="örn. 4"
+                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+                autoFocus
+              />
+            </label>
+            <label className="block min-w-0 space-y-1">
+              <span className="text-xs text-muted">Dinlenme sn *</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={rest}
+                onChange={(e) =>
+                  setRest(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="örn. 90"
+                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              />
+            </label>
+            <label className="block min-w-0 space-y-1">
+              <span className="text-xs text-muted">Tekrar min *</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={repLo}
+                onChange={(e) => {
+                  const v =
+                    e.target.value === "" ? "" : Number(e.target.value);
+                  setRepLo(v);
+                  if (
+                    typeof v === "number" &&
+                    (repHi === "" ||
+                      (typeof repHi === "number" && repHi < v))
+                  ) {
+                    setRepHi(v);
+                  }
+                }}
+                placeholder="örn. 6"
+                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              />
+            </label>
+            <label className="block min-w-0 space-y-1">
+              <span className="text-xs text-muted">Tekrar max</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={repHi}
+                onChange={(e) =>
+                  setRepHi(
+                    e.target.value === "" ? "" : Number(e.target.value),
+                  )
+                }
+                placeholder="örn. 8"
+                className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              />
+            </label>
+          </div>
+          <label className="block space-y-1">
+            <span className="text-xs text-muted">Yük</span>
+            <AppSelect
+              value={tag}
+              onValueChange={setTag}
+              options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+                value: k,
+                label: LOAD_TAG_LABELS[k],
+              }))}
+              triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
+              aria-label="Yük"
+            />
+          </label>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
+              onClick={() => setPicked(null)}
+            >
+              Hareket değiştir
+            </button>
+            <button
+              type="button"
+              className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
+              onClick={submit}
+            >
+              Ekle
+            </button>
+          </div>
+        </div>
+      )}
+    </AppSheet>
   );
 }

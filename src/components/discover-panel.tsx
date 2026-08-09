@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Copy, Download, Search, Users, X } from "lucide-react";
+import { BookOpen, Copy, Download, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { LoadTagBadge } from "@/components/load-tag";
@@ -16,6 +16,7 @@ import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { todayISO, addDaysISO, cn, isoDow } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { AppSheet } from "@/components/ui/sheet";
 
 export type Pending = {
   kind: "id" | "code";
@@ -312,16 +313,8 @@ export function StartProgramModal({
   const selected = days.find((d) => d.id === startDayId);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/65 p-0 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0"
-        aria-label="Kapat"
-        onClick={onCancel}
-      />
-      <div className="relative z-10 max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 sm:rounded-2xl">
-        <h3 className="font-display text-xl tracking-wide">Programı başlat</h3>
-        <p className="mt-1 text-sm text-muted">
+    <AppSheet title="Programı başlat" onClose={onCancel}>
+        <p className="-mt-1 mb-3 text-sm text-muted">
           <span className="font-medium text-text">“{pending.name}”</span>
         </p>
 
@@ -429,8 +422,7 @@ export function StartProgramModal({
             Başlat
           </button>
         </div>
-      </div>
-    </div>
+    </AppSheet>
   );
 }
 
@@ -542,14 +534,7 @@ export function DetailModal({
   }, [id]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/65 p-0 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0"
-        aria-label="Kapat"
-        onClick={onClose}
-      />
-      <div className="relative z-10 max-h-[92dvh] w-full max-w-lg overflow-y-auto overflow-x-hidden rounded-t-2xl border border-line bg-surface p-4 sm:rounded-2xl">
+    <AppSheet title={data?.name ?? "Program"} onClose={onClose}>
         {!data && !err && (
           <div className="space-y-3 py-6" aria-busy="true">
             <div className="h-8 w-2/3 animate-pulse rounded-lg bg-surface2" />
@@ -560,19 +545,7 @@ export function DetailModal({
         {err && <p className="py-8 text-center text-sm text-red">{err}</p>}
         {data && (
           <>
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <p className="font-display text-2xl tracking-wide text-yellow">
-                {data.name}
-              </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="grid size-9 shrink-0 place-items-center rounded-md border border-line text-muted"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-muted">{data.author_name}</p>
+            <p className="-mt-1 mb-2 text-xs text-muted">{data.author_name}</p>
             {data.description && (
               <p className="mt-2 text-sm leading-relaxed text-muted">
                 {data.description}
@@ -637,7 +610,6 @@ export function DetailModal({
             </button>
           </>
         )}
-      </div>
-    </div>
+    </AppSheet>
   );
 }
