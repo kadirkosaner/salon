@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ComposePost } from "@/components/feed/compose-post";
 import {
   BookOpen,
   Download,
@@ -214,12 +213,7 @@ export function ProfileView({
       </div>
 
       {tab === "activity" && (
-        <div className="space-y-5">
-          {hub.is_self ? (
-            <div className="pb-1">
-              <ComposePost onPosted={() => onChanged?.()} />
-            </div>
-          ) : null}
+        <div className="space-y-3">
           {hub.recent.length === 0 ? (
             <div className="py-6">
               <EmptyState
