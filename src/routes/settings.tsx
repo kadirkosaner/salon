@@ -33,6 +33,9 @@ import {
   updateSettings,
 } from "@/lib/server/settings";
 import { setHapticEnabled } from "@/lib/haptics";
+import { useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
+
 import {
   getMyProfileHub,
   type ProfileHub,
@@ -63,6 +66,8 @@ function SettingsPage() {
   const navigate = useNavigate();
   const { t, locale, setLocale, locales } = useI18n();
   const { theme, accent, setThemeAndAccent } = useTheme();
+  const queryClient = useQueryClient();
+
   const [panel, setPanel] = useState<Panel>("menu");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -620,9 +625,13 @@ function SettingsPage() {
                   onClick={() => {
                     setUnitSystem(k);
                     void updateSettings({ data: { unitSystem: k } }).then(() => {
+                      void queryClient.invalidateQueries({
+                        queryKey: [...qk.settings, "units"],
+                      });
                       toast.success(t("common.saved"));
                       setPanel("menu");
                     });
+
                   }}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left",

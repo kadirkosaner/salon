@@ -8,6 +8,9 @@ import {
 } from "@/lib/server/workouts";
 import { useI18n } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import { displayVolume, displayWeight, weightUnit } from "@/lib/units";
+
 
 export function WorkoutDetailSheet({
   workoutId,
@@ -17,9 +20,12 @@ export function WorkoutDetailSheet({
   onClose: () => void;
 }) {
   const { t, locale } = useI18n();
+  const unitSystem = useUnitSystem();
+  const wu = weightUnit(unitSystem);
   const [data, setData] = useState<PublicWorkoutView | null | undefined>(
     undefined,
   );
+
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,8 +70,9 @@ export function WorkoutDetailSheet({
             <p className="text-xs text-text-2">
               {formatDate(data.date, locale)}
               {data.tonnage > 0
-                ? ` · ${data.tonnage.toLocaleString(locale)} kg`
+                ? ` · ${displayVolume(data.tonnage, unitSystem).toLocaleString(locale)} ${wu}`
                 : ""}
+
             </p>
             {data.program && data.program.is_public ? (
               <p className="mt-1 text-xs text-accent">
@@ -86,7 +93,10 @@ export function WorkoutDetailSheet({
                     >
                       <span className="w-6 text-text-3">{s.set_index}</span>
                       <span>
-                        {s.weight != null ? `${s.weight} kg` : "—"}
+                        {s.weight != null
+                          ? `${displayWeight(s.weight, unitSystem)} ${wu}`
+                          : "—"}
+
                         {" × "}
                         {s.reps != null ? s.reps : "—"}
                       </span>

@@ -24,6 +24,9 @@ import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 import { WorkoutDetailSheet } from "@/components/feed/workout-detail-sheet";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import { displayVolume, displayWeight, weightUnit } from "@/lib/units";
+
 
 export function ActivityCard({
   item,
@@ -37,7 +40,10 @@ export function ActivityCard({
   onRemoved?: (id: number) => void;
 }) {
   const { locale } = useI18n();
+  const unitSystem = useUnitSystem();
+  const wu = weightUnit(unitSystem);
   const [liked, setLiked] = useState(item.liked_by_me);
+
   const [likes, setLikes] = useState(item.like_count);
   const [comments, setComments] = useState(item.comment_count);
   const [busy, setBusy] = useState(false);
@@ -81,7 +87,8 @@ export function ActivityCard({
   }
 
   async function share() {
-    const text = shareText(item);
+    const text = shareText(item, unitSystem);
+
     try {
       if (navigator.share) {
         await navigator.share({ text });
@@ -158,7 +165,8 @@ export function ActivityCard({
       </div>
 
       <div className="px-3.5 pb-3">
-        {renderBody(item, t, locale, (id) => setOpenWorkoutId(id))}
+        {renderBody(item, t, locale, unitSystem, (id) => setOpenWorkoutId(id))}
+
       </div>
       {openWorkoutId != null ? (
         <WorkoutDetailSheet
@@ -223,10 +231,13 @@ function renderBody(
   item: FeedItem,
   t: (k: string) => string,
   locale: string,
+  unitSystem: "metric" | "imperial",
   onOpenWorkout?: (id: number) => void,
 ) {
   const p = item.payload;
+  const wu = weightUnit(unitSystem);
   if (item.type === "workout_completed") {
+
     const wid = item.subject_id ?? p.workout_id ?? null;
     return (
       <button
@@ -244,8 +255,9 @@ function renderBody(
           <p className="mt-1 text-xs text-text-2">
             {Number(p.exercise_count ?? 0)} {t("feed.exercises")}
             {Number(p.tonnage) > 0
-              ? ` · ${Number(p.tonnage).toLocaleString(locale === "en" ? "en-GB" : locale)} kg`
+              ? ` · ${displayVolume(Number(p.tonnage), unitSystem).toLocaleString(locale === "en" ? "en-GB" : locale)} ${wu}`
               : ""}
+
           </p>
         </div>
       </button>
@@ -271,14 +283,20 @@ function renderBody(
             </p>
             <p className="mt-1 truncate font-medium">{String(p.exercise_name)}</p>
             <p className="num mt-1 truncate text-2xl leading-none text-accent sm:text-3xl">
-              {w}
-              <span className="ml-1 text-sm font-sans text-text-2">kg</span>
+              {displayWeight(w, unitSystem)}
+              <span className="ml-1 text-sm font-sans text-text-2">{wu}</span>
             </p>
             {prev != null && prev > 0 ? (
               <p className="mt-1 text-xs text-text-2">
-                +{(w - prev).toFixed(w % 1 || prev % 1 ? 1 : 0)} kg
+                +
+                {(
+                  (displayWeight(w, unitSystem) ?? 0) -
+                  (displayWeight(prev, unitSystem) ?? 0)
+                ).toFixed(w % 1 || prev % 1 ? 1 : 0)}{" "}
+                {wu}
               </p>
             ) : null}
+
           </div>
         </div>
       </button>
@@ -364,8 +382,9 @@ function renderBody(
                   ? ` · ${p.workout.exercise_count} ${t("feed.exercises")}`
                   : ""}
                 {Number(p.workout.tonnage) > 0
-                  ? ` · ${Number(p.workout.tonnage).toLocaleString(locale)} kg`
+                  ? ` · ${displayVolume(Number(p.workout.tonnage), unitSystem).toLocaleString(locale)} ${wu}`
                   : ""}
+
               </p>
             </div>
           </button>
@@ -389,22 +408,27 @@ function renderBody(
   return null;
 }
 
-function shareText(item: FeedItem): string {
+function shareText(
+  item: FeedItem,
+  unitSystem: "metric" | "imperial" = "metric",
+): string {
   const p = item.payload;
+  const wu = weightUnit(unitSystem);
   if (item.type === "user_post") {
     return `${item.author.name}: ${p.body ?? ""} — Salon`;
   }
   if (item.type === "personal_record") {
-    return `🏆 ${p.exercise_name}: ${p.weight} kg — Salon`;
+    return `🏆 ${p.exercise_name}: ${displayWeight(Number(p.weight), unitSystem)} ${wu} — Salon`;
   }
   if (item.type === "workout_completed") {
-    return `✅ ${p.day_name} · ${p.tonnage ?? 0} kg — Salon`;
+    return `✅ ${p.day_name} · ${displayVolume(Number(p.tonnage ?? 0), unitSystem)} ${wu} — Salon`;
   }
   if (item.type === "program_published") {
     return `📋 ${p.name} — Salon`;
   }
   return `Salon · ${item.author.name}`;
 }
+
 
 export function bumpCommentCount(
   setComments: React.Dispatch<React.SetStateAction<number>>,

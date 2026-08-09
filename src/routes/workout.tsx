@@ -38,6 +38,14 @@ import { WorkoutSkeleton } from "@/components/ui/skeleton";
 import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
 import { haptic } from "@/lib/haptics";
 import { ComparisonStrip } from "@/components/workout/comparison-strip";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import {
+  displayWeight,
+  toStorageWeight,
+  weightUnit,
+  type UnitSystem,
+} from "@/lib/units";
+
 import { getProgramSocial } from "@/lib/server/benchmarks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
@@ -1279,13 +1287,29 @@ function ExerciseCard({
 }) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [highlightSet, setHighlightSet] = useState<number | null>(null);
+  const unitSystem = useUnitSystem();
+  const wu = weightUnit(unitSystem);
+  const weightIsMass =
+    exercise.unit === "kg" || exercise.unit === "lb" || !exercise.unit;
+  const displayUnit = weightIsMass ? wu : exercise.unit || "kg";
+  const toDisplayW = (kg: number | string | null | undefined) => {
+    if (kg == null || kg === "") return null;
+    const n = typeof kg === "number" ? kg : Number(kg);
+    if (!Number.isFinite(n)) return null;
+    return weightIsMass ? displayWeight(n, unitSystem) : n;
+  };
+  const toStoreW = (display: number, system: UnitSystem) =>
+    weightIsMass ? toStorageWeight(display, system) : display;
+
   const doneCount = exercise.sets.filter((s) => s.completed).length;
   const allDone = doneCount === exercise.sets.length && exercise.sets.length > 0;
-  const topLast =
+  const topLastRaw =
     exercise.lastTime?.sets.reduce<number | null>((m, s) => {
       if (s.weight == null) return m;
       return m == null || s.weight > m ? s.weight : m;
     }, null) ?? null;
+  const topLast = toDisplayW(topLastRaw);
+
 
   function repeatLast() {
     for (const s of exercise.sets) {
@@ -1379,8 +1403,9 @@ function ExerciseCard({
           {topLast != null ? (
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <p className="text-[11px] text-text-3">
-                {t("workout.lastKg", { w: topLast })}
+                {t("workout.lastKg", { w: topLast, unit: displayUnit })}
               </p>
+
               <button
                 type="button"
                 onClick={repeatLast}
@@ -1399,12 +1424,12 @@ function ExerciseCard({
 
           <div className="set-grid mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-3">
             <span>#</span>
-            <span>{exercise.unit || "kg"}</span>
+            <span>{displayUnit}</span>
             <span>{t("workout.reps")}</span>
             <span />
           </div>
           {exercise.sets.map((s) => {
-            const ghostW = lastWeightForSet(exercise, s.set_index);
+            const ghostW = toDisplayW(lastWeightForSet(exercise, s.set_index));
             const ghostR = lastRepsForSet(exercise, s.set_index);
             const weightRequired = exercise.unit === "kg" || exercise.unit === "lb";
             const hasWeight = s.weight != null && Number(s.weight) > 0;
@@ -1412,18 +1437,24 @@ function ExerciseCard({
             const canComplete = hasReps && (!weightRequired || hasWeight);
             const missingWeight = weightRequired && !hasWeight;
             const missingReps = !hasReps;
+            const weightDisplay = toDisplayW(s.weight);
             return (
               <div key={s.id} className="set-grid">
                 <span className="num text-xs text-text-3">{s.set_index}</span>
                 <input
                   type="number"
                   inputMode="decimal"
-                  value={s.weight ?? ""}
+                  value={weightDisplay ?? ""}
                   placeholder={ghostW != null ? String(ghostW) : "—"}
                   data-set-weight={s.id}
                   onChange={(e) => {
                     const v = e.target.value;
-                    onSetSave(s.id, { weight: v === "" ? null : Number(v) });
+                    onSetSave(s.id, {
+                      weight:
+                        v === ""
+                          ? null
+                          : toStoreW(Number(v), unitSystem),
+                    });
                   }}
                   className={cn(
                     "rounded-lg border bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70",
@@ -1432,6 +1463,7 @@ function ExerciseCard({
                       : "border-edge",
                   )}
                 />
+
                 <input
                   type="number"
                   inputMode="numeric"

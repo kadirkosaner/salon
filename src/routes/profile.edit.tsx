@@ -15,6 +15,12 @@ import {
 } from "@/lib/server/social";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  ftInFromCm,
+  heightCmFromFtIn,
+  type UnitSystem,
+} from "@/lib/units";
+
 
 export const Route = createFileRoute("/profile/edit")({
   component: EditProfilePage,
@@ -38,6 +44,9 @@ function EditProfilePage() {
   const [birthDate, setBirthDate] = useState("");
   const [sex, setSex] = useState<"female" | "male" | "unspecified">("unspecified");
   const [heightCm, setHeightCm] = useState("");
+  const [heightFt, setHeightFt] = useState("");
+  const [heightIn, setHeightIn] = useState("");
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>("metric");
   const [detailsPublic, setDetailsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FieldErr>({});
@@ -54,11 +63,23 @@ function EditProfilePage() {
         setMeasuresPublic(h.measures_public);
         setBirthDate(h.birth_date ?? "");
         setSex((h.sex as "female" | "male" | "unspecified") || "unspecified");
-        setHeightCm(h.height_cm != null ? String(h.height_cm) : "");
+        const us = h.unit_system === "imperial" ? "imperial" : "metric";
+        setUnitSystem(us);
+        if (h.height_cm != null) {
+          setHeightCm(String(h.height_cm));
+          const fi = ftInFromCm(h.height_cm);
+          setHeightFt(String(fi.ft));
+          setHeightIn(String(fi.inch));
+        } else {
+          setHeightCm("");
+          setHeightFt("");
+          setHeightIn("");
+        }
         setDetailsPublic(h.details_public === true);
       })
       .catch(() => toast.error(t("common.error")));
   }, [user?.id, user?.displayName, t]);
+
 
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;
@@ -115,7 +136,29 @@ function EditProfilePage() {
       next.username = t("profile.usernameInvalid");
     }
     let heightNum: number | null | undefined = undefined;
-    if (heightCm.trim() === "") {
+    if (unitSystem === "imperial") {
+      const empty = heightFt.trim() === "" && heightIn.trim() === "";
+      if (empty) {
+        heightNum = null;
+      } else {
+        const ft = Number(heightFt.replace(",", ".") || "0");
+        const inch = Number(heightIn.replace(",", ".") || "0");
+        if (
+          Number.isNaN(ft) ||
+          Number.isNaN(inch) ||
+          ft < 0 ||
+          ft > 8 ||
+          inch < 0 ||
+          inch >= 12
+        ) {
+          next.height_cm = t("profile.height");
+        } else {
+          const cm = heightCmFromFtIn(ft, inch);
+          if (cm < 80 || cm > 250) next.height_cm = t("profile.height");
+          else heightNum = cm;
+        }
+      }
+    } else if (heightCm.trim() === "") {
       heightNum = null;
     } else {
       const parsed = Number(heightCm.replace(",", "."));
@@ -125,6 +168,7 @@ function EditProfilePage() {
         heightNum = parsed;
       }
     }
+
     if (birthDate.trim()) {
       const d = new Date(birthDate + "T12:00:00");
       const age =
@@ -371,26 +415,63 @@ function EditProfilePage() {
           data-field-error={errors.height_cm ? "" : undefined}
         >
           <span className="text-xs font-medium text-text-2">
-            {t("profile.height")} (cm)
+            {t("profile.height")}{" "}
+            {unitSystem === "imperial" ? "(ft / in)" : "(cm)"}
           </span>
-          <input
-            type="number"
-            inputMode="decimal"
-            min={80}
-            max={250}
-            step={0.5}
-            value={heightCm}
-            onChange={(e) => {
-              setHeightCm(e.target.value);
-              setErrors((er) => ({ ...er, height_cm: undefined }));
-            }}
-            placeholder="170"
-            className={fieldClass("height_cm")}
-          />
+          {unitSystem === "imperial" ? (
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={8}
+                step={1}
+                value={heightFt}
+                onChange={(e) => {
+                  setHeightFt(e.target.value);
+                  setErrors((er) => ({ ...er, height_cm: undefined }));
+                }}
+                placeholder="5"
+                className={fieldClass("height_cm")}
+                aria-label="ft"
+              />
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={11}
+                step={0.5}
+                value={heightIn}
+                onChange={(e) => {
+                  setHeightIn(e.target.value);
+                  setErrors((er) => ({ ...er, height_cm: undefined }));
+                }}
+                placeholder="10"
+                className={fieldClass("height_cm")}
+                aria-label="in"
+              />
+            </div>
+          ) : (
+            <input
+              type="number"
+              inputMode="decimal"
+              min={80}
+              max={250}
+              step={0.5}
+              value={heightCm}
+              onChange={(e) => {
+                setHeightCm(e.target.value);
+                setErrors((er) => ({ ...er, height_cm: undefined }));
+              }}
+              placeholder="170"
+              className={fieldClass("height_cm")}
+            />
+          )}
           {errors.height_cm ? (
             <p className="text-xs text-danger">{errors.height_cm}</p>
           ) : null}
         </label>
+
 
         <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
           <span className="text-sm">{t("profile.detailsPublic")}</span>

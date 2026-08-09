@@ -24,6 +24,16 @@ import { cn, formatChartDate, formatDate, todayISO } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
 import { useI18n, useT } from "@/lib/i18n/provider";
 import { Spinner } from "@/components/ui/spinner";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import {
+  displayLength,
+  displayWeight,
+  lengthUnit,
+  toStorageLength,
+  toStorageWeight,
+  weightUnit,
+  type UnitSystem,
+} from "@/lib/units";
 
 export const Route = createFileRoute("/measurements")({ component: MeasurementsPage });
 
@@ -31,18 +41,23 @@ type Tab = "today" | "charts" | "history";
 
 type MetricKey = "body_weight" | "waist" | "chest" | "arm" | "thigh";
 
-function metricsFor(t: (k: string) => string): {
+function metricsFor(
+  t: (k: string) => string,
+  system: UnitSystem,
+): {
   key: MetricKey;
   label: string;
   unit: string;
   form: "weight" | "circ";
 }[] {
+  const wu = weightUnit(system);
+  const lu = lengthUnit(system);
   return [
-    { key: "body_weight", label: t("measure.weight"), unit: "kg", form: "weight" },
-    { key: "waist", label: t("measure.waist"), unit: "cm", form: "circ" },
-    { key: "chest", label: t("measure.chest"), unit: "cm", form: "circ" },
-    { key: "arm", label: t("measure.arm"), unit: "cm", form: "circ" },
-    { key: "thigh", label: t("measure.thigh"), unit: "cm", form: "circ" },
+    { key: "body_weight", label: t("measure.weight"), unit: wu, form: "weight" },
+    { key: "waist", label: t("measure.waist"), unit: lu, form: "circ" },
+    { key: "chest", label: t("measure.chest"), unit: lu, form: "circ" },
+    { key: "arm", label: t("measure.arm"), unit: lu, form: "circ" },
+    { key: "thigh", label: t("measure.thigh"), unit: lu, form: "circ" },
   ];
 }
 
@@ -60,12 +75,20 @@ function deltaOf(
   return Math.round((a - b) * 10) / 10;
 }
 
+function fmtNum(n: number | null | undefined): string {
+  if (n == null) return "";
+  return String(n);
+}
+
 function MeasurementsPage() {
   const t = useT();
   const { locale } = useI18n();
-  const METRICS = metricsFor(t);
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
+  const unitSystem = useUnitSystem(!!userId);
+  const wu = weightUnit(unitSystem);
+  const lu = lengthUnit(unitSystem);
+  const METRICS = metricsFor(t, unitSystem);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("charts");
   const [date, setDate] = useState(todayISO());
@@ -75,6 +98,7 @@ function MeasurementsPage() {
   const [arm, setArm] = useState("");
   const [thigh, setThigh] = useState("");
   const [saving, setSaving] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const [show, setShow] = useState({
     waist: true,
     chest: true,
@@ -94,17 +118,28 @@ function MeasurementsPage() {
     await queryClient.invalidateQueries({ queryKey: qk.measurements });
   }
 
-  // Prefill today's form from latest snapshot
+  // Prefill today's form from latest snapshot (display units)
   useEffect(() => {
-    if (rows.length === 0) return;
+    if (rows.length === 0 || prefilled) return;
     const latest = [...rows].sort((a, b) => b.date.localeCompare(a.date))[0]!;
     if (date !== todayISO()) return;
-    if (!bw && latest.body_weight) setBw(String(latest.body_weight));
-    if (!waist && latest.waist) setWaist(String(latest.waist));
-    if (!chest && latest.chest) setChest(String(latest.chest));
-    if (!arm && latest.arm) setArm(String(latest.arm));
-    if (!thigh && latest.thigh) setThigh(String(latest.thigh));
-  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!bw && latest.body_weight) {
+      setBw(fmtNum(displayWeight(Number(latest.body_weight), unitSystem)));
+    }
+    if (!waist && latest.waist) {
+      setWaist(fmtNum(displayLength(Number(latest.waist), unitSystem)));
+    }
+    if (!chest && latest.chest) {
+      setChest(fmtNum(displayLength(Number(latest.chest), unitSystem)));
+    }
+    if (!arm && latest.arm) {
+      setArm(fmtNum(displayLength(Number(latest.arm), unitSystem)));
+    }
+    if (!thigh && latest.thigh) {
+      setThigh(fmtNum(displayLength(Number(latest.thigh), unitSystem)));
+    }
+    setPrefilled(true);
+  }, [rows, unitSystem, date, prefilled, bw, waist, chest, arm, thigh]);
 
   const chronological = useMemo(
     () => [...rows].sort((a, b) => a.date.localeCompare(b.date)),
@@ -115,29 +150,40 @@ function MeasurementsPage() {
   const prev =
     chronological.length >= 2 ? chronological[chronological.length - 2] : null;
 
-  const weightNow = num(latest?.body_weight);
-  const weightPrev = num(prev?.body_weight);
+  const weightNow = displayWeight(num(latest?.body_weight), unitSystem);
+  const weightPrev = displayWeight(num(prev?.body_weight), unitSystem);
   const weightDelta = deltaOf(weightNow, weightPrev);
 
-  // First vs last for longer-term trend
   const first = chronological[0];
-  const totalWeightDelta = deltaOf(weightNow, num(first?.body_weight));
+  const totalWeightDelta = deltaOf(
+    weightNow,
+    displayWeight(num(first?.body_weight), unitSystem),
+  );
 
   const weightSeries = chronological
     .filter((r) => r.body_weight != null)
-    .map((r) => ({ date: r.date, body_weight: Number(r.body_weight) }));
+    .map((r) => ({
+      date: r.date,
+      body_weight: displayWeight(Number(r.body_weight), unitSystem) ?? 0,
+    }));
 
   const measureSeries = chronological.map((r) => ({
     date: r.date,
-    waist: r.waist != null ? Number(r.waist) : null,
-    chest: r.chest != null ? Number(r.chest) : null,
-    arm: r.arm != null ? Number(r.arm) : null,
-    thigh: r.thigh != null ? Number(r.thigh) : null,
+    waist: displayLength(r.waist != null ? Number(r.waist) : null, unitSystem),
+    chest: displayLength(r.chest != null ? Number(r.chest) : null, unitSystem),
+    arm: displayLength(r.arm != null ? Number(r.arm) : null, unitSystem),
+    thigh: displayLength(r.thigh != null ? Number(r.thigh) : null, unitSystem),
   }));
 
   const circCards = METRICS.filter((m) => m.form === "circ").map((m) => {
-    const cur = num(latest?.[m.key]);
-    const before = num(prev?.[m.key]);
+    const cur = displayLength(
+      latest?.[m.key] != null ? Number(latest[m.key]) : null,
+      unitSystem,
+    );
+    const before = displayLength(
+      prev?.[m.key] != null ? Number(prev[m.key]) : null,
+      unitSystem,
+    );
     return {
       ...m,
       value: cur,
@@ -153,17 +199,38 @@ function MeasurementsPage() {
     }
     setSaving(true);
     try {
+      const bwN = bw === "" ? null : Number(bw);
+      const waistN = waist === "" ? null : Number(waist);
+      const chestN = chest === "" ? null : Number(chest);
+      const armN = arm === "" ? null : Number(arm);
+      const thighN = thigh === "" ? null : Number(thigh);
       await saveMeasurement({
         data: {
           date,
-          body_weight: bw === "" ? null : Number(bw),
-          waist: waist === "" ? null : Number(waist),
-          chest: chest === "" ? null : Number(chest),
-          arm: arm === "" ? null : Number(arm),
-          thigh: thigh === "" ? null : Number(thigh),
+          body_weight:
+            bwN == null || !Number.isFinite(bwN)
+              ? null
+              : toStorageWeight(bwN, unitSystem),
+          waist:
+            waistN == null || !Number.isFinite(waistN)
+              ? null
+              : toStorageLength(waistN, unitSystem),
+          chest:
+            chestN == null || !Number.isFinite(chestN)
+              ? null
+              : toStorageLength(chestN, unitSystem),
+          arm:
+            armN == null || !Number.isFinite(armN)
+              ? null
+              : toStorageLength(armN, unitSystem),
+          thigh:
+            thighN == null || !Number.isFinite(thighN)
+              ? null
+              : toStorageLength(thighN, unitSystem),
         },
       });
       toast.success(t("measure.saved"));
+      setPrefilled(false);
       await reload();
       setTab("charts");
     } catch {
@@ -196,7 +263,7 @@ function MeasurementsPage() {
                       {weightNow != null ? weightNow : t("measure.noValue")}
                     </span>
                     {weightNow != null && (
-                      <span className="mb-1 text-sm text-text-2">kg</span>
+                      <span className="mb-1 text-sm text-text-2">{wu}</span>
                     )}
                   </div>
                   <p className="mt-2 text-xs text-text-2">
@@ -207,11 +274,11 @@ function MeasurementsPage() {
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <DeltaPill value={weightDelta} unit="kg" label={t("measure.prev")} />
+                  <DeltaPill value={weightDelta} unit={wu} label={t("measure.prev")} />
                   {totalWeightDelta != null && chronological.length > 2 && (
                     <DeltaPill
                       value={totalWeightDelta}
-                      unit="kg"
+                      unit={wu}
                       label={t("measure.total")}
                       subtle
                     />
@@ -227,7 +294,6 @@ function MeasurementsPage() {
                 </div>
               </div>
 
-              {/* Circumference strip */}
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {circCards.map((c) => (
                   <div
@@ -322,7 +388,7 @@ function MeasurementsPage() {
                       placeholder={t("measure.weightPlaceholder")}
                       className="num h-14 min-w-0 flex-1 rounded-lg border border-accent/30 bg-raised px-3 text-2xl text-accent"
                     />
-                    <span className="shrink-0 text-sm text-text-2">kg</span>
+                    <span className="shrink-0 text-sm text-text-2">{wu}</span>
                   </div>
                 </div>
 
@@ -330,10 +396,10 @@ function MeasurementsPage() {
                   {t("measure.girthsOptional")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Num label={t("measure.waist")} value={waist} onChange={setWaist} unit="cm" />
-                  <Num label={t("measure.chest")} value={chest} onChange={setChest} unit="cm" />
-                  <Num label={t("measure.arm")} value={arm} onChange={setArm} unit="cm" />
-                  <Num label={t("measure.thigh")} value={thigh} onChange={setThigh} unit="cm" />
+                  <Num label={t("measure.waist")} value={waist} onChange={setWaist} unit={lu} />
+                  <Num label={t("measure.chest")} value={chest} onChange={setChest} unit={lu} />
+                  <Num label={t("measure.arm")} value={arm} onChange={setArm} unit={lu} />
+                  <Num label={t("measure.thigh")} value={thigh} onChange={setThigh} unit={lu} />
                 </div>
                 <button
                   type="submit"
@@ -375,7 +441,7 @@ function MeasurementsPage() {
                       xKey="date"
                       yKey="body_weight"
                       valueLabel={t("measure.weight")}
-                      valueUnit="kg"
+                      valueUnit={wu}
                       xFormatter={formatChartDate}
                       emptyHint={t("measure.chartEmptyHint")}
                     />
@@ -471,10 +537,12 @@ function MeasurementsPage() {
                     .sort((a, b) => b.date.localeCompare(a.date))
                     .map((r, idx, arr) => {
                       const older = arr[idx + 1];
-                      const dW = deltaOf(
-                        num(r.body_weight),
+                      const wDisp = displayWeight(num(r.body_weight), unitSystem);
+                      const wOld = displayWeight(
                         num(older?.body_weight),
+                        unitSystem,
                       );
+                      const dW = deltaOf(wDisp, wOld);
                       return (
                         <li
                           key={r.id}
@@ -494,9 +562,9 @@ function MeasurementsPage() {
                               <p className="font-medium">
                                 {formatDate(r.date, locale)}
                               </p>
-                              {r.body_weight != null && (
+                              {wDisp != null && (
                                 <p className="num text-sm text-accent">
-                                  {r.body_weight} kg
+                                  {wDisp} {wu}
                                   {dW != null && dW !== 0 && (
                                     <span className="ml-1 text-[11px] text-text-2">
                                       ({dW > 0 ? "+" : ""}
@@ -508,10 +576,14 @@ function MeasurementsPage() {
                             </div>
                             <p className="mt-0.5 truncate text-xs text-text-2">
                               {[
-                                r.waist != null && `${t("measure.waist")} ${r.waist}`,
-                                r.chest != null && `${t("measure.chest")} ${r.chest}`,
-                                r.arm != null && `${t("measure.arm")} ${r.arm}`,
-                                r.thigh != null && `${t("measure.thigh")} ${r.thigh}`,
+                                r.waist != null &&
+                                  `${t("measure.waist")} ${displayLength(Number(r.waist), unitSystem)} ${lu}`,
+                                r.chest != null &&
+                                  `${t("measure.chest")} ${displayLength(Number(r.chest), unitSystem)} ${lu}`,
+                                r.arm != null &&
+                                  `${t("measure.arm")} ${displayLength(Number(r.arm), unitSystem)} ${lu}`,
+                                r.thigh != null &&
+                                  `${t("measure.thigh")} ${displayLength(Number(r.thigh), unitSystem)} ${lu}`,
                               ]
                                 .filter(Boolean)
                                 .join(" · ") || t("measure.weightOnly")}
@@ -558,40 +630,36 @@ function DeltaPill({
     return (
       <span
         className={cn(
-          "rounded-full border border-rule px-2.5 py-1 text-[11px] text-text-2",
-          subtle && "opacity-70",
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] text-text-3",
+          subtle ? "bg-transparent" : "bg-raised",
         )}
       >
-        — {label}
+        {label}
       </span>
     );
   }
   const up = value > 0;
-  const flat = value === 0;
+  const down = value < 0;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-        flat
-          ? "border-rule text-text-2"
-          : up
-            ? "border-warning/30 bg-warning/10 text-warning"
-            : "border-success/30 bg-success/10 text-success",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+        down && "bg-success/15 text-success",
+        up && "bg-warning/15 text-warning",
+        !up && !down && "bg-raised text-text-2",
         subtle && "opacity-80",
       )}
     >
-      {flat ? (
-        <Minus className="size-3" />
+      {down ? (
+        <ArrowDownRight className="size-3" />
       ) : up ? (
         <ArrowUpRight className="size-3" />
       ) : (
-        <ArrowDownRight className="size-3" />
+        <Minus className="size-3" />
       )}
-      <span className="num">
-        {up ? "+" : ""}
-        {value} {unit}
-      </span>
-      <span className="text-text-3">· {label}</span>
+      {value > 0 ? "+" : ""}
+      {value} {unit}
+      <span className="font-normal opacity-70">{label}</span>
     </span>
   );
 }
@@ -605,22 +673,22 @@ function Num({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  unit?: string;
+  unit: string;
 }) {
   return (
-    <label className="block min-w-0 space-y-1">
-      <span className="text-xs text-text-2">
-        {label}
-        {unit ? ` (${unit})` : ""}
-      </span>
-      <input
-        type="number"
-        inputMode="decimal"
-        step="0.1"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="num h-12 w-full min-w-0 rounded-lg border border-rule bg-raised px-3 text-lg"
-      />
+    <label className="block space-y-1">
+      <span className="text-xs text-text-2">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="num h-12 min-w-0 flex-1 rounded-lg border border-rule bg-raised px-3"
+        />
+        <span className="shrink-0 text-xs text-text-3">{unit}</span>
+      </div>
     </label>
   );
 }

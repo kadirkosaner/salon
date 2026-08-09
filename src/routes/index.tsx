@@ -31,6 +31,8 @@ import { useI18n } from "@/lib/i18n/provider";
 import { qk } from "@/lib/query-keys";
 import { cn, formatDate } from "@/lib/utils";
 import { WeeklyVolume } from "@/components/ui/weekly-volume";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import { displayVolume, weightUnit } from "@/lib/units";
 
 const CommentSheet = lazy(() =>
   import("@/components/feed/comment-sheet").then((m) => ({
@@ -53,7 +55,18 @@ const ComposePost = lazy(() =>
   })),
 );
 
-export const Route = createFileRoute("/")({ component: FeedPage });
+export const Route = createFileRoute("/")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const out: { activity?: string; post?: string } = {};
+    if (typeof s.activity === "string" && s.activity) out.activity = s.activity;
+    else if (typeof s.activity === "number") out.activity = String(s.activity);
+    if (typeof s.post === "string" && s.post) out.post = s.post;
+    else if (typeof s.post === "number") out.post = String(s.post);
+    return out;
+  },
+  component: FeedPage,
+});
+
 
 function FeedPage() {
   const { user, isPending } = useCurrentUserState();
@@ -61,9 +74,12 @@ function FeedPage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const unitSystem = useUnitSystem(!!userId);
+  const search = Route.useSearch();
   const [commentItem, setCommentItem] = useState<FeedItem | null>(null);
   const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [highlightId, setHighlightId] = useState<number | null>(null);
   const touchStart = useRef<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -126,6 +142,26 @@ function FeedPage() {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length]);
 
+  // Deep-link from notifications: highlight + open comments when possible
+  useEffect(() => {
+    if (!search.activity || items.length === 0) return;
+    const id = Number(search.activity);
+    if (!Number.isFinite(id)) return;
+    const found = items.find((it) => it.id === id);
+    setHighlightId(id);
+    if (found) {
+      setCommentItem(found);
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-activity-id="${id}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+    // Clear search so back doesn't re-open
+    void navigate({ to: "/", search: {}, replace: true });
+
+  }, [search.activity, items, navigate]);
+
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -168,6 +204,7 @@ function FeedPage() {
 
   const greeting = user.displayName?.split(" ")[0] ?? t("common.athlete");
   const next = dashQuery.data?.next;
+  const volUnit = weightUnit(unitSystem);
 
   return (
     <AppShell title={t("feed.title")} subtitle={t("panel.hello", { name: greeting })}>
@@ -233,13 +270,13 @@ function FeedPage() {
 
         {dashQuery.data?.hasActiveProgram && dashQuery.data?.week ? (
           <WeeklyVolume
-            current={dashQuery.data.week.volume}
+            current={displayVolume(dashQuery.data.week.volume, unitSystem)}
             sessionsLeft={Math.max(
               0,
               (dashQuery.data.week.planned ?? 0) -
                 (dashQuery.data.week.completed ?? 0),
             )}
-            unitLabel="kg"
+            unitLabel={volUnit}
           />
         ) : null}
 
@@ -286,18 +323,31 @@ function FeedPage() {
               }
             >
               {items.map((item) => (
-                <ActivityCard
+                <div
                   key={item.id}
-                  item={item}
-                  t={t}
-                  onComment={setCommentItem}
-                  onRemoved={() => void qc.invalidateQueries({ queryKey: qk.feed })}
-                />
+                  data-activity-id={item.id}
+                  className={cn(
+                    highlightId === item.id &&
+                      "rounded-2xl ring-2 ring-accent/60 ring-offset-2 ring-offset-canvas",
+                  )}
+                >
+                  <ActivityCard
+                    item={item}
+                    t={t}
+                    onComment={setCommentItem}
+                    onRemoved={() =>
+                      void qc.invalidateQueries({ queryKey: qk.feed })
+                    }
+                  />
+                </div>
               ))}
             </Suspense>
             <div ref={sentinelRef} className="flex justify-center py-3">
               {feedQuery.isFetchingNextPage ? (
-                <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-raised" aria-hidden />
+                <div
+                  className="mx-auto h-8 w-8 animate-pulse rounded-full bg-raised"
+                  aria-hidden
+                />
               ) : feedQuery.hasNextPage ? (
                 <span className="text-xs text-text-3">{t("feed.loadMore")}</span>
               ) : (

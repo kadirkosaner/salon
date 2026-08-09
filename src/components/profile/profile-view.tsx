@@ -25,6 +25,13 @@ import { DetailModal } from "@/components/discover-panel";
 import { useI18n } from "@/lib/i18n/provider";
 import { cn, formatDate } from "@/lib/utils";
 import { bmiBand, calcBmi } from "@/lib/bmi";
+import {
+  displayVolume,
+  displayWeight,
+  formatHeight,
+  weightUnit,
+} from "@/lib/units";
+
 
 type Tab = "activity" | "programs" | "stats";
 
@@ -39,19 +46,6 @@ function ageFromBirth(iso: string | null | undefined): number | null {
   return age >= 0 && age < 130 ? age : null;
 }
 
-function formatHeight(
-  cm: number | null | undefined,
-  unit: "metric" | "imperial",
-): string | null {
-  if (cm == null || !Number.isFinite(cm)) return null;
-  if (unit === "imperial") {
-    const totalIn = cm / 2.54;
-    const ft = Math.floor(totalIn / 12);
-    const inch = Math.round(totalIn - ft * 12);
-    return `${ft}'${inch}"`;
-  }
-  return `${Math.round(cm)} cm`;
-}
 
 export function ProfileView({
   hub,
@@ -134,7 +128,10 @@ export function ProfileView({
   const heatHasData = hub.heatmap.some((d) => d.count > 0);
   const age = ageFromBirth(hub.birth_date);
   const heightLabel = formatHeight(hub.height_cm, hub.unit_system);
+  const wu = weightUnit(hub.unit_system);
+  const totalVol = displayVolume(hub.total_volume, hub.unit_system);
   const bmi = calcBmi(hub.measurement?.body_weight, hub.height_cm);
+
   const bmiLabel =
     bmi == null
       ? null
@@ -255,10 +252,13 @@ export function ProfileView({
                     </div>
                     <div className="text-right">
                       <p className="num text-sm text-accent">
-                        {r.tonnage > 0 ? r.tonnage : "—"}
+                        {r.tonnage > 0
+                          ? displayVolume(r.tonnage, hub.unit_system)
+                          : "—"}
                       </p>
-                      <p className="text-[10px] text-text-3">kg</p>
+                      <p className="text-[10px] text-text-3">{wu}</p>
                     </div>
+
                   </div>
                 </li>
               ))}
@@ -358,11 +358,12 @@ export function ProfileView({
                 {t("profile.volume")}
               </p>
               <p className="num mt-0.5 text-2xl text-text">
-                {hub.total_volume >= 1000
-                  ? `${(hub.total_volume / 1000).toFixed(1)}k`
-                  : hub.total_volume}
+                {totalVol >= 1000
+                  ? `${(totalVol / 1000).toFixed(1)}k`
+                  : totalVol}
               </p>
-              <p className="text-[11px] text-text-3">kg</p>
+              <p className="text-[11px] text-text-3">{wu}</p>
+
             </div>
           </div>
 
@@ -381,8 +382,11 @@ export function ProfileView({
                       <p className="truncate text-sm font-medium">{r.name}</p>
                       <p className="text-[11px] text-text-2">{formatDate(r.date, locale)}</p>
                     </div>
-                    <span className="num text-lg text-accent">{r.weight}</span>
-                    <span className="text-xs text-text-2">kg</span>
+                    <span className="num text-lg text-accent">
+                      {displayWeight(r.weight, hub.unit_system)}
+                    </span>
+                    <span className="text-xs text-text-2">{wu}</span>
+
                   </li>
                 ))}
               </ul>
@@ -415,9 +419,11 @@ export function ProfileView({
                 <div className="flex flex-wrap gap-2 text-sm">
                   {hub.measurement.body_weight != null && (
                     <span className="num rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-accent">
-                      {hub.measurement.body_weight} kg
+                      {displayWeight(hub.measurement.body_weight, hub.unit_system)}{" "}
+                      {wu}
                     </span>
                   )}
+
                   {bmi != null ? (
                     <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-sm text-accent">
                       {t("profile.bmiValue", { n: bmi })}

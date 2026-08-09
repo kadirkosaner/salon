@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "@/components/icons";
 import { toast } from "sonner";
@@ -46,11 +46,35 @@ function labelFor(
   }
 }
 
+function hrefFor(n: NotificationRow): {
+  to: string;
+  params?: Record<string, string>;
+  search?: Record<string, string>;
+} {
+  if (n.type === "follow" || n.subject_type === "user") {
+    return {
+      to: "/u/$username",
+      params: { username: n.actor.username || n.actor.id },
+    };
+  }
+  if (n.activity_id != null) {
+    return { to: "/", search: { activity: String(n.activity_id) } };
+  }
+  if (n.subject_type === "post") {
+    return { to: "/", search: { post: n.subject_id } };
+  }
+  return {
+    to: "/u/$username",
+    params: { username: n.actor.username || n.actor.id },
+  };
+}
+
 function NotificationsPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
   const { t, locale } = useI18n();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const listQuery = useQuery({
     queryKey: qk.notifications,
@@ -80,6 +104,40 @@ function NotificationsPage() {
     } catch {
       toast.error(t("common.error"));
     }
+  }
+
+  async function openItem(n: NotificationRow) {
+    if (!n.read_at) {
+      const now = new Date().toISOString();
+      qc.setQueryData(qk.notifications, (prev: { items: NotificationRow[] } | undefined) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((x) =>
+                x.id === n.id ? { ...x, read_at: now } : x,
+              ),
+            }
+          : prev,
+      );
+      void markNotificationsRead({ data: { ids: [n.id] } })
+        .then(() => {
+          void qc.invalidateQueries({ queryKey: [...qk.settings, "notif-count"] });
+        })
+        .catch(() => {});
+    }
+    const dest = hrefFor(n);
+    if (dest.to === "/u/$username" && dest.params) {
+      void navigate({ to: "/u/$username", params: dest.params as { username: string } });
+    } else if (dest.to === "/") {
+      void navigate({
+        to: "/",
+        search: {
+          activity: dest.search?.activity,
+          post: dest.search?.post,
+        },
+      });
+    }
+
   }
 
   if (isPending) return <AuthGateSkeleton />;
@@ -113,16 +171,19 @@ function NotificationsPage() {
           </div>
         ) : (
           items.map((n) => (
-            <div
+            <button
               key={n.id}
+              type="button"
+              onClick={() => void openItem(n)}
               className={cn(
-                "flex gap-3 rounded-2xl border border-rule px-3 py-3",
+                "flex w-full gap-3 rounded-2xl border border-rule px-3 py-3 text-left transition active:scale-[0.99]",
                 n.read_at ? "bg-sunken" : "bg-accent/8 border-accent/25",
               )}
             >
               <Link
                 to="/u/$username"
                 params={{ username: n.actor.username || n.actor.id }}
+                onClick={(e) => e.stopPropagation()}
                 className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-xs font-semibold text-accent"
               >
                 {n.actor.image ? (
@@ -137,7 +198,7 @@ function NotificationsPage() {
                   {relativeTime(n.created_at, locale)}
                 </p>
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>

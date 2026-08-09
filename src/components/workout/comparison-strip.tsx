@@ -4,13 +4,17 @@ import { getExerciseBenchmarks } from "@/lib/server/benchmarks";
 import { useT } from "@/lib/i18n/provider";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { useUnitSystem } from "@/lib/use-unit-system";
+import { displayWeight, weightUnit } from "@/lib/units";
 
 /**
  * Lightweight in-session “what’s the best on this lift?” strip.
- * Absolute kg only — fun, not a science panel.
+ * Absolute weights only — fun, not a science panel. Labels follow unit system.
  */
 export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
   const t = useT();
+  const unitSystem = useUnitSystem();
+  const unit = weightUnit(unitSystem);
 
   const q = useQuery({
     queryKey: ["bench", exerciseId, "best"] as const,
@@ -46,9 +50,11 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
     );
   }
 
-  const best = slice.best;
-  const mine = slice.myValue;
-  const youAreBest = mine != null && mine >= best - 0.05;
+  const best = displayWeight(slice.best, unitSystem) ?? 0;
+  const mine =
+    slice.myValue != null ? displayWeight(slice.myValue, unitSystem) : null;
+  const youAreBest =
+    slice.myValue != null && slice.myValue >= slice.best - 0.05;
   const topPct =
     slice.myPercentile != null
       ? Math.max(1, 100 - slice.myPercentile)
@@ -61,7 +67,7 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
       </p>
       <div className="flex items-baseline justify-between gap-2">
         <p className="text-sm font-semibold text-text">
-          {t("compare.bestKg", { n: Math.round(best) })}
+          {t("compare.bestKg", { n: Math.round(best), unit })}
         </p>
         {mine != null ? (
           <p
@@ -72,7 +78,7 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
           >
             {youAreBest
               ? t("compare.youBest")
-              : t("compare.youKg", { n: Math.round(mine) })}
+              : t("compare.youKg", { n: Math.round(mine), unit })}
           </p>
         ) : (
           <p className="text-[11px] text-text-3">{t("compare.logToJoin")}</p>

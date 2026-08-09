@@ -17,6 +17,8 @@ export type NotificationRow = {
   type: NotificationType;
   subject_type: string;
   subject_id: string;
+  /** Resolved activity event id for deep-links (likes, comments, etc.). */
+  activity_id: number | null;
   read_at: string | null;
   created_at: string;
   actor: {
@@ -28,6 +30,7 @@ export type NotificationRow = {
   /** Grouped extras (same subject/type, other actors). */
   others: number;
 };
+
 
 /** Create a notification unless actor == recipient. Honors notifications_enabled. */
 export async function notify(
@@ -101,16 +104,28 @@ export const listNotifications = createServerFn({ method: "GET" })
       actor_image: string | null;
       username: string | null;
       avatar_url: string | null;
+      activity_id: number | null;
     }>`
       select
         n.id, n.type, n.subject_type, n.subject_id,
         n.read_at::text as read_at,
         n.created_at::text as created_at,
         u.id as actor_id, u.name as actor_name, u.image as actor_image,
-        up.username, up.avatar_url
+        up.username, up.avatar_url,
+        case
+          when n.subject_type = 'activity' and n.subject_id ~ '^[0-9]+$'
+            then n.subject_id::int
+          when n.subject_type = 'comment' and ac.event_id is not null
+            then ac.event_id
+          else null
+        end as activity_id
       from notifications n
       join "user" u on u.id = n.actor_id
       left join user_profiles up on up.user_id = n.actor_id
+      left join activity_comments ac
+        on n.subject_type = 'comment'
+        and n.subject_id ~ '^[0-9]+$'
+        and ac.id = n.subject_id::int
       where n.user_id = ${context.userId}
         and (
           ${cursor}::timestamptz is null
@@ -135,6 +150,7 @@ export const listNotifications = createServerFn({ method: "GET" })
         type: r.type as NotificationType,
         subject_type: r.subject_type,
         subject_id: r.subject_id,
+        activity_id: r.activity_id != null ? Number(r.activity_id) : null,
         read_at: r.read_at,
         created_at: r.created_at,
         actor: {
@@ -148,6 +164,7 @@ export const listNotifications = createServerFn({ method: "GET" })
       seen.set(key, item);
       grouped.push(item);
     }
+
 
     const hasMore = rows.length > limit;
     const nextCursor =

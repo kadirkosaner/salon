@@ -17,6 +17,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgramRouteImport } from './routes/program'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as WorkoutRouteImport } from './routes/workout'
@@ -65,6 +66,11 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/workout': typeof WorkoutRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/workout': typeof WorkoutRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/welcome': typeof WelcomeRoute
   '/workout': typeof WorkoutRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/program'
     | '/register'
+    | '/reset-password'
     | '/settings'
     | '/welcome'
     | '/workout'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/program'
     | '/register'
+    | '/reset-password'
     | '/settings'
     | '/welcome'
     | '/workout'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/program'
     | '/register'
+    | '/reset-password'
     | '/settings'
     | '/welcome'
     | '/workout'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   ProgramRoute: typeof ProgramRoute
   RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   WelcomeRoute: typeof WelcomeRoute
   WorkoutRoute: typeof WorkoutRoute
@@ -280,6 +293,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -354,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   ProgramRoute: ProgramRoute,
   RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   WelcomeRoute: WelcomeRoute,
   WorkoutRoute: WorkoutRoute,

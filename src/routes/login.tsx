@@ -77,12 +77,16 @@ function LoginPage() {
         }) => Promise<{ error?: { message?: string } | null }>;
       };
       const fn =
-        client.forgetPassword?.bind(client) ??
-        client.requestPasswordReset?.bind(client);
+        client.requestPasswordReset?.bind(client) ??
+        client.forgetPassword?.bind(client);
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/reset-password`
+          : "/reset-password";
       if (fn) {
         const { error: err } = await fn({
           email: email.trim(),
-          redirectTo: "/login",
+          redirectTo,
         });
         if (err) {
           // Still show success-style message to avoid email enumeration
@@ -97,6 +101,7 @@ function LoginPage() {
       setForgotLoading(false);
     }
   }
+
 
   return (
     <main className="mx-auto flex min-h-[calc(100dvh-var(--grok-banner-h,0px))] max-w-md flex-col justify-center px-5 py-10">
