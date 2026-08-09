@@ -3,11 +3,12 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getUserTimeZone, setUserTimeZone } from "./time";
 import { ensureUserProfile } from "./social";
-import { parseOrThrow } from "@/lib/validation";
+import { parseOrThrow, v, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export const getSettings = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     const timeZone = await getUserTimeZone(sql, context.userId);
@@ -48,17 +49,12 @@ export const getSettings = createServerFn({ method: "GET" })
 
 export const updateSettings = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: unknown) =>
-    parseOrThrow(
-      z.object({
-        timeZone: z.string().trim().min(1).max(64).optional(),
-        hapticEnabled: z.boolean().optional(),
-        notificationsEnabled: z.boolean().optional(),
-        unitSystem: z.enum(["metric", "imperial"]).optional(),
-      }),
-      d,
-    ),
-  )
+  .validator(v(z.object({
+    timeZone: z.string().trim().min(1).max(64).optional(),
+    hapticEnabled: z.boolean().optional(),
+    notificationsEnabled: z.boolean().optional(),
+    unitSystem: z.enum(["metric", "imperial"]).optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserProfile(sql, context.userId);
@@ -95,6 +91,7 @@ export const updateSettings = createServerFn({ method: "POST" })
 /** Export user data as JSON (GDPR). */
 export const exportMyData = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     const user = await sql<{
@@ -203,9 +200,7 @@ export const exportMyData = createServerFn({ method: "GET" })
 /** Hard-delete account (cascade via FKs). */
 export const deleteMyAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: unknown) =>
-    parseOrThrow(z.object({ confirm: z.literal("DELETE") }), d),
-  )
+  .validator(v(z.object({ confirm: z.literal("DELETE") })))
   .handler(async ({ context }) => {
     const sql = await getSql();
     await sql`delete from "user" where id = ${context.userId}`;

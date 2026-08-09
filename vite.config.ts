@@ -135,11 +135,20 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules/recharts") || id.includes("node_modules/victory-vendor")) {
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/victory-vendor") || id.includes("node_modules/d3-")) {
             return "recharts";
           }
           if (id.includes("node_modules/@tanstack/react-router") || id.includes("node_modules/@tanstack/router-core")) {
             return "router";
+          }
+          if (id.includes("node_modules/@tanstack/query-core") || id.includes("node_modules/@tanstack/react-query")) {
+            return "query";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "icons";
+          }
+          if (id.includes("node_modules/vaul") || id.includes("node_modules/@radix-ui")) {
+            return "ui-vendor";
           }
         },
       },

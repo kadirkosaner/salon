@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   useInfiniteQuery,
   useQuery,
@@ -7,9 +7,7 @@ import {
 } from "@tanstack/react-query";
 import {
   ChevronRight,
-  Loader2,
   RefreshCw,
-  UserPlus,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,7 +17,6 @@ import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/section";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { ActivityCard } from "@/components/feed/activity-card";
-import { CommentSheet } from "@/components/feed/comment-sheet";
 import {
   followUser,
 } from "@/lib/server/social";
@@ -34,6 +31,17 @@ import { listDiscoverPrograms } from "@/lib/server/share";
 import { useI18n } from "@/lib/i18n/provider";
 import { qk } from "@/lib/query-keys";
 import { cn, formatDateTR } from "@/lib/utils";
+
+const CommentSheet = lazy(() =>
+  import("@/components/feed/comment-sheet").then((m) => ({
+    default: m.CommentSheet,
+  })),
+);
+const FeedEmptyDiscover = lazy(() =>
+  import("@/components/feed/empty-discover").then((m) => ({
+    default: m.FeedEmptyDiscover,
+  })),
+);
 
 export const Route = createFileRoute("/")({ component: FeedPage });
 
@@ -206,96 +214,23 @@ function FeedPage() {
               actionTo="/kesfet"
             />
 
-            {(suggestedQuery.data?.length ?? 0) > 0 && (
-              <section>
-                <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                  {t("feed.suggested")}
-                </h2>
-                <ul className="space-y-2">
-                  {suggestedQuery.data!.map((u) => (
-                    <li
-                      key={u.id}
-                      className="flex items-center gap-3 rounded-xl border border-line bg-surface2/40 px-3 py-2.5"
-                    >
-                      <Link
-                        to="/u/$username"
-                        params={{ username: u.username || u.id }}
-                        className="flex min-w-0 flex-1 items-center gap-3"
-                      >
-                        <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-yellow/15 text-sm font-semibold text-yellow">
-                          {u.image ? (
-                            <img src={u.image} alt="" className="size-full object-cover" />
-                          ) : (
-                            u.name
-                              .split(/\s+/)
-                              .map((p) => p[0])
-                              .join("")
-                              .slice(0, 2)
-                              .toUpperCase()
-                          )}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium">{u.name}</span>
-                          <span className="text-[11px] text-muted">
-                            {u.username ? `@${u.username}` : ""} · {u.followers}{" "}
-                            {t("profile.followers").toLowerCase()}
-                          </span>
-                        </span>
-                      </Link>
-                      {!u.is_following ? (
-                        <button
-                          type="button"
-                          onClick={() => void follow(u.id)}
-                          className="flex h-9 items-center gap-1 rounded-lg bg-yellow px-2.5 text-xs font-semibold text-bg"
-                        >
-                          <UserPlus className="size-3.5" />
-                          {t("profile.follow")}
-                        </button>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {(discoverQuery.data?.length ?? 0) > 0 && (
-              <section className="space-y-3">
-                <h2 className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                  {t("feed.publicActivity")}
-                </h2>
-                {discoverQuery.data!.map((item) => (
-                  <ActivityCard
-                    key={item.id}
-                    item={item}
-                    t={t}
-                    onComment={setCommentItem}
-                  />
-                ))}
-              </section>
-            )}
-
-            {(programsQuery.data?.length ?? 0) > 0 && (
-              <section>
-                <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                  {t("feed.featuredPrograms")}
-                </h2>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {programsQuery.data!.slice(0, 8).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => navigate({ to: "/kesfet" })}
-                      className="w-40 shrink-0 rounded-xl border border-line bg-surface2/50 p-3 text-left"
-                    >
-                      <p className="truncate text-sm font-semibold">{p.name}</p>
-                      <p className="mt-1 text-[11px] text-muted">
-                        {p.day_count} {t("feed.days")} · {p.clone_count} kopya
-                      </p>
-                    </button>
-                  ))}
+            <Suspense
+              fallback={
+                <div className="space-y-3" aria-busy="true">
+                  <div className="h-16 animate-pulse rounded-xl bg-surface2" />
+                  <div className="h-16 animate-pulse rounded-xl bg-surface2" />
                 </div>
-              </section>
-            )}
+              }
+            >
+              <FeedEmptyDiscover
+                t={t}
+                suggested={suggestedQuery.data ?? []}
+                discoverItems={discoverQuery.data ?? []}
+                programs={programsQuery.data ?? []}
+                onFollow={(id) => void follow(id)}
+                onComment={setCommentItem}
+              />
+            </Suspense>
           </div>
         ) : (
           <div className="space-y-3">
@@ -310,7 +245,7 @@ function FeedPage() {
             ))}
             <div ref={sentinelRef} className="flex justify-center py-3">
               {feedQuery.isFetchingNextPage ? (
-                <Loader2 className="size-5 animate-spin text-muted" />
+                <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-surface2" aria-hidden />
               ) : feedQuery.hasNextPage ? (
                 <span className="text-xs text-dim">{t("feed.loadMore")}</span>
               ) : (
@@ -322,14 +257,16 @@ function FeedPage() {
       </div>
 
       {commentItem ? (
-        <CommentSheet
-          item={commentItem}
-          t={t}
-          onClose={() => setCommentItem(null)}
-          onAdded={() => {
-            void qc.invalidateQueries({ queryKey: qk.feed });
-          }}
-        />
+        <Suspense fallback={null}>
+          <CommentSheet
+            item={commentItem}
+            t={t}
+            onClose={() => setCommentItem(null)}
+            onAdded={() => {
+              void qc.invalidateQueries({ queryKey: qk.feed });
+            }}
+          />
+        </Suspense>
       ) : null}
     </AppShell>
   );

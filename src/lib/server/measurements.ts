@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
-import { v, isoDate, positiveId } from "@/lib/validation";
+import { v, isoDate, positiveId, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type MeasurementRow = {
@@ -17,6 +17,7 @@ export type MeasurementRow = {
 
 export const listMeasurements = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

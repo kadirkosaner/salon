@@ -3,8 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { addDaysISO, isoDow } from "@/lib/utils";
 import { ensureUserSeeded } from "./seed";
-import {
-  v,
+import { v,
   isoDate,
   positiveId,
   workoutStatus,
@@ -16,8 +15,7 @@ import {
   repRange,
   loadTag,
   optionalText,
-  parseOrThrow,
-} from "@/lib/validation";
+  parseOrThrow, noInput } from "@/lib/validation";
 import { z } from "zod";
 import {
   emitPersonalRecordIfAny,
@@ -358,6 +356,7 @@ export const deleteWorkout = createServerFn({ method: "POST" })
  */
 export const clearFutureWorkouts = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     const today = new Date();
@@ -714,83 +713,105 @@ async function ensureRollingHorizon(
     // (end already set). When user scrolls further, coverUntil extends end.
   }
 
-  let created = 0;
-  let replaced = 0;
+  // --- Bulk horizon fill (O(1) SQL, no per-day round-trips) ---
 
-  // Prefetch program days + existing workouts in range (2 queries, not 3×days)
-  const programDays = await sql<{
-    id: number;
-    name: string;
-    dow: number;
-    valid_from: string | null;
-    valid_to: string | null;
-  }>`
-    select pd.id, pd.name, pd.dow,
-           p.valid_from::text as valid_from, p.valid_to::text as valid_to
-    from program_days pd
-    join programs p on p.id = pd.program_id
-    where p.user_id = ${userId} and p.is_active = true
-    order by p.id desc, pd.dow
-  `;
-  const dayByDow = new Map<number, { id: number; name: string; valid_from: string | null; valid_to: string | null }>();
-  for (const d of programDays) {
-    if (!dayByDow.has(d.dow)) {
-      dayByDow.set(d.dow, {
-        id: d.id,
-        name: d.name,
-        valid_from: d.valid_from,
-        valid_to: d.valid_to,
-      });
-    }
-  }
-
-  const existingRows = await sql<{
-    id: number;
-    date: string;
-    status: string;
-    n: number;
-  }>`
-    select w.id, w.date::text as date, w.status,
-           (select count(*)::int from workout_exercises we where we.workout_id = w.id) as n
-    from workouts w
+  // 1) Drop hollow shells (planned/in_progress with zero exercises)
+  const hollow = await sql<{ id: number }>`
+    delete from workouts w
     where w.user_id = ${userId}
       and w.date >= ${start}::date
       and w.date <= ${end}::date
+      and w.status not in ('completed', 'skipped')
+      and not exists (
+        select 1 from workout_exercises we where we.workout_id = w.id
+      )
+    returning w.id
   `;
-  const existingByDate = new Map(
-    existingRows.map((r) => [r.date, r] as const),
-  );
+  const replaced = hollow.length;
 
-  // Walk day by day — only materialize when needed
-  let cursor = start;
-  for (let i = 0; i < 120; i++) {
-    if (cursor > end) break;
-    const dateStr = cursor;
-    const dow = isoDow(dateStr);
-    const day = dayByDow.get(dow);
-    if (day) {
-      const vf = day.valid_from;
-      const vt = day.valid_to;
-      const inRange =
-        (vf == null || vf <= dateStr) && (vt == null || vt >= dateStr);
-      if (inRange) {
-        const existing = existingByDate.get(dateStr);
-        if (!existing) {
-          await materializeWorkout(sql, userId, dateStr, day.id);
-          created += 1;
-        } else if (
-          existing.n === 0 &&
-          existing.status !== "completed" &&
-          existing.status !== "skipped"
-        ) {
-          await sql`delete from workouts where id = ${existing.id}`;
-          await materializeWorkout(sql, userId, dateStr, day.id);
-          replaced += 1;
-        }
-      }
-    }
-    cursor = addDaysISO(cursor, 1);
-  }
+  // 2) Insert missing workout rows for active program days in range
+  const createdRows = await sql<{ id: number }>`
+    with series as (
+      select gs::date as d,
+             extract(isodow from gs)::int as dow
+      from generate_series(${start}::date, ${end}::date, interval '1 day') as gs
+    ),
+    active_days as (
+      select distinct on (pd.dow)
+        pd.id as program_day_id,
+        pd.name as day_name,
+        pd.dow,
+        p.valid_from,
+        p.valid_to
+      from program_days pd
+      join programs p on p.id = pd.program_id
+      where p.user_id = ${userId}
+        and p.is_active = true
+      order by pd.dow, p.id desc
+    ),
+    wanted as (
+      select s.d, ad.program_day_id, ad.day_name
+      from series s
+      join active_days ad on ad.dow = s.dow
+      where (ad.valid_from is null or ad.valid_from <= s.d)
+        and (ad.valid_to is null or ad.valid_to >= s.d)
+        and not exists (
+          select 1 from workouts w
+          where w.user_id = ${userId} and w.date = s.d
+        )
+    )
+    insert into workouts (user_id, date, program_day_id, day_name, status)
+    select ${userId}, wanted.d, wanted.program_day_id, wanted.day_name, 'planned'
+    from wanted
+    returning id
+  `;
+  const created = createdRows.length;
+
+  // 3) Materialize exercises for any planned workout in range still missing rows
+  await sql`
+    insert into workout_exercises (
+      workout_id, exercise_id, exercise_name, detail, unit,
+      target_sets, target_rep_lo, target_rep_hi, rest_sec, load_tag, note, sort
+    )
+    select
+      w.id,
+      pe.exercise_id,
+      e.name,
+      coalesce(pe.detail, e.detail),
+      coalesce(e.unit, 'kg'),
+      pe.sets,
+      pe.rep_lo,
+      pe.rep_hi,
+      pe.rest_sec,
+      pe.load_tag,
+      pe.note,
+      pe.sort
+    from workouts w
+    join program_exercises pe on pe.program_day_id = w.program_day_id
+    join exercises e on e.id = pe.exercise_id
+    where w.user_id = ${userId}
+      and w.date >= ${start}::date
+      and w.date <= ${end}::date
+      and w.program_day_id is not null
+      and not exists (
+        select 1 from workout_exercises we where we.workout_id = w.id
+      )
+  `;
+
+  // 4) Generate sets for exercises that have none
+  await sql`
+    insert into workout_sets (workout_exercise_id, set_index)
+    select we.id, gs
+    from workout_exercises we
+    join workouts w on w.id = we.workout_id
+    cross join lateral generate_series(1, greatest(we.target_sets, 1)) as gs
+    where w.user_id = ${userId}
+      and w.date >= ${start}::date
+      and w.date <= ${end}::date
+      and not exists (
+        select 1 from workout_sets ws where ws.workout_exercise_id = we.id
+      )
+  `;
 
   return { created, replaced };
 }
@@ -822,15 +843,10 @@ export const generateWorkouts = createServerFn({ method: "POST" })
 /** Explicit ensure for clients that only open a far future date */
 export const ensureWorkoutHorizon = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: unknown) =>
-    parseOrThrow(
-      z.object({
-        untilDate: isoDate.optional(),
-        daysAhead: z.number().int().min(1).max(120).optional(),
-      }).default({}),
-      d ?? {},
-    ),
-  )
+  .validator(v(z.object({
+    untilDate: isoDate.optional(),
+    daysAhead: z.number().int().min(1).max(120).optional(),
+  }).default({})))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

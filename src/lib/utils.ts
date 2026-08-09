@@ -56,3 +56,26 @@ export function parseNum(v: string | number | null | undefined): number | null {
   const n = typeof v === "number" ? v : Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+/** Remap program day DOWs so anchor lands on start weekday (rest days stay empty). */
+export function remapDow(
+  originalDow: number,
+  anchorOriginalDow: number,
+  startDateDow: number,
+): number {
+  const rel = (originalDow - anchorOriginalDow + 7) % 7;
+  return ((startDateDow - 1 + rel) % 7) + 1;
+}
+
+/** Short chart tick: YYYY-MM-DD → DD.MM */
+export function formatChartDate(iso: string): string {
+  if (iso.length >= 10) {
+    const [, m, d] = iso.slice(0, 10).split("-");
+    return `${d}.${m}`;
+  }
+  if (iso.includes("-") && iso.length <= 5) {
+    const [m, d] = iso.split("-");
+    return `${d}.${m}`;
+  }
+  return iso;
+}

@@ -10,7 +10,7 @@ import {
   resolveDataset,
   searchDataset,
 } from "./seed";
-import { v, positiveId, shortText, optionalString } from "@/lib/validation";
+import { v, positiveId, shortText, optionalString, parseOrThrow, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type ExerciseRow = {
@@ -60,6 +60,7 @@ function mapDatasetRow(d: {
 
 export const listExercises = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureExerciseLibrary(sql);
@@ -91,14 +92,17 @@ export const listExercises = createServerFn({ method: "GET" })
 export const searchExerciseCatalog = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((d: unknown) => {
-    if (typeof d === "string") return { q: d.slice(0, 120) };
-    return v(
+    // Accept legacy string shorthand or object
+    const raw =
+      typeof d === "string" ? { q: d } : d == null ? {} : d;
+    return parseOrThrow(
       z.object({
         q: z.string().trim().max(120).optional(),
         muscleGroup: z.string().trim().max(40).optional(),
         limit: z.number().int().min(1).max(200).optional(),
       }),
-    )(d);
+      raw,
+    );
   })
   .handler(async ({ context, data }) => {
     const sql = await getSql();

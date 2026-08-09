@@ -76,8 +76,13 @@ export function CommentSheet({
       <div className="flex min-h-[40vh] flex-col">
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pb-3">
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="size-5 animate-spin text-muted" />
+            <div className="space-y-3 py-2" aria-busy="true">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex gap-2.5">
+                  <div className="size-8 shrink-0 animate-pulse rounded-full bg-surface2" />
+                  <div className="h-14 min-w-0 flex-1 animate-pulse rounded-xl bg-surface2" />
+                </div>
+              ))}
             </div>
           ) : rows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted">

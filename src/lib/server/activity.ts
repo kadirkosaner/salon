@@ -3,7 +3,7 @@ import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
 import { ensureUserProfile } from "./social";
-import { v, positiveId, parseOrThrow } from "@/lib/validation";
+import { v, positiveId, parseOrThrow, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type ActivityType =
@@ -383,6 +383,7 @@ export const getFeed = createServerFn({ method: "GET" })
 /** Public feed for empty state: recent public events from anyone. */
 export const getDiscoverFeed = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -440,6 +441,7 @@ export const getDiscoverFeed = createServerFn({ method: "GET" })
 
 export const getSuggestedAthletes = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -527,16 +529,10 @@ export const listComments = createServerFn({ method: "GET" })
 
 export const addComment = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator(
-    (d) =>
-      parseOrThrow(
-        z.object({
-          eventId: positiveId,
-          body: z.string().trim().min(1).max(280),
-        }),
-        d,
-      ),
-  )
+  .validator(v(z.object({
+    eventId: positiveId,
+    body: z.string().trim().min(1).max(280),
+  })))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const exists = await sql`select id from activity_events where id = ${data.eventId}`;

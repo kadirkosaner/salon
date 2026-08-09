@@ -66,3 +66,19 @@ export function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown): T {
 export function v<T>(schema: z.ZodType<T>) {
   return (data: unknown) => parseOrThrow(schema, data);
 }
+
+/**
+ * Server fns that take no client payload (GET/POST with auth-only context).
+ * Accepts undefined / null / {} from the RPC layer and returns undefined.
+ */
+export function noInput(data?: unknown): undefined {
+  if (
+    data != null &&
+    typeof data === "object" &&
+    !Array.isArray(data) &&
+    Object.keys(data as object).length > 0
+  ) {
+    // Soft-allow unexpected keys — never block no-arg endpoints on {}
+  }
+  return undefined;
+}

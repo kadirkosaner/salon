@@ -5,7 +5,7 @@ import { ensureUserSeeded, searchDataset } from "./seed";
 import { ensureCatalogSeeded } from "./catalog";
 import { ensureUserProfile, type PublicUserCard } from "./social";
 import type { PublicProgramCard } from "./share";
-import { v } from "@/lib/validation";
+import { v, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type DiscoverShelves = {
@@ -84,6 +84,7 @@ async function loadPublicPrograms(
 
 export const getDiscoverHome = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }): Promise<DiscoverShelves> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

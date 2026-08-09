@@ -906,7 +906,7 @@ export function AddModal({
       <div className="mt-2 max-h-52 overflow-y-auto rounded-2xl bg-surface2/40 p-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
         {loadingCat ? (
           <p className="flex items-center justify-center gap-2 py-8 text-xs text-muted">
-            <Loader2 className="size-4 animate-spin" /> Yükleniyor…
+            <span className="inline-flex items-center gap-2 text-sm text-muted"><span className="size-4 animate-pulse rounded-full bg-surface2" /> Yükleniyor…</span>
           </p>
         ) : catalog.length === 0 ? (
           <div className="py-6 text-center">
@@ -1873,7 +1873,7 @@ function ExerciseQuickPicker({
             <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
               {loading ? (
                 <li className="py-10 text-center text-xs text-muted">
-                  <Loader2 className="mx-auto size-5 animate-spin" />
+                  <div className="mx-auto h-24 w-full animate-pulse rounded-2xl bg-surface2" aria-busy="true" />
                 </li>
               ) : (
                 rows.map((e) => (

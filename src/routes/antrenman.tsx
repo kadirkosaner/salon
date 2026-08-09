@@ -1292,7 +1292,7 @@ function AddExModal({
       </div>
       {loading ? (
         <p className="py-8 text-center text-xs text-muted">
-          <Loader2 className="mx-auto size-5 animate-spin" />
+          <div className="mx-auto h-10 w-full max-w-xs animate-pulse rounded-xl bg-surface2" />
         </p>
       ) : (
         <ul className="max-h-72 space-y-1 overflow-y-auto">

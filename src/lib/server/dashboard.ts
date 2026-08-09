@@ -4,11 +4,12 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { MAIN_LIFTS } from "@/data/library";
 import { ensureUserSeeded } from "./seed";
 import { todayForUser, startOfWeekMonday as startOfWeekPg } from "./time";
-import { v, shortText } from "@/lib/validation";
+import { v, shortText, noInput } from "@/lib/validation";
 import { addDaysISO } from "@/lib/utils";
 
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

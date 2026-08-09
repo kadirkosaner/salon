@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownRight,
@@ -18,18 +18,20 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState, PageSection } from "@/components/ui/section";
 import { PageSkeleton } from "@/components/ui/skeleton";
-import {
-  MultiLineChart,
-  ProgressAreaChart,
-  formatChartDate,
-} from "@/components/ui/charts";
+const ProgressAreaChart = lazy(() =>
+  import("@/components/ui/charts").then((m) => ({ default: m.ProgressAreaChart })),
+);
+const MultiLineChart = lazy(() =>
+  import("@/components/ui/charts").then((m) => ({ default: m.MultiLineChart })),
+);
+
 import {
   deleteMeasurement,
   listMeasurements,
   saveMeasurement,
   type MeasurementRow,
 } from "@/lib/server/measurements";
-import { cn, formatDateTR, todayISO } from "@/lib/utils";
+import { cn, formatChartDate, formatDateTR, todayISO } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
 import { useT } from "@/lib/i18n/provider";
 
@@ -359,6 +361,7 @@ function MeasurementsPage() {
           )}
 
           {tab === "charts" && (
+            <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface2" />}>
             <>
               {rows.length === 0 ? (
                 <EmptyState
@@ -460,6 +463,7 @@ function MeasurementsPage() {
                 </>
               )}
             </>
+            </Suspense>
           )}
 
           {tab === "history" && (

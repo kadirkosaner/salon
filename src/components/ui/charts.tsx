@@ -355,15 +355,4 @@ function fmtTon(n: number): string {
   return n.toLocaleString("tr-TR");
 }
 
-export function formatChartDate(iso: string): string {
-  if (iso.length >= 10) {
-    const [, m, d] = iso.slice(0, 10).split("-");
-    return `${d}.${m}`;
-  }
-  // already short like MM-DD
-  if (iso.includes("-") && iso.length <= 5) {
-    const [m, d] = iso.split("-");
-    return `${d}.${m}`;
-  }
-  return iso;
-}
+export { formatChartDate } from "@/lib/utils";

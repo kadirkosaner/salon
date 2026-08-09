@@ -21,7 +21,11 @@ function LoginPage() {
   if (isPending) {
     return (
       <div className="grid min-h-[calc(100dvh-var(--grok-banner-h,0px))] place-items-center bg-bg">
-        <Loader2 className="size-8 animate-spin text-yellow" />
+        <div className="w-full max-w-sm space-y-3 px-6">
+          <div className="mx-auto size-14 animate-pulse rounded-xl bg-yellow/20" />
+          <div className="mx-auto h-8 w-32 animate-pulse rounded-lg bg-surface2" />
+          <div className="h-48 animate-pulse rounded-xl bg-surface2" />
+        </div>
       </div>
     );
   }

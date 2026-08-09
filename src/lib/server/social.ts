@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
-import { v, userIdStr, parseOrThrow } from "@/lib/validation";
+import { v, userIdStr, parseOrThrow, noInput } from "@/lib/validation";
 import { z } from "zod";
 import { todayForUser, startOfWeekMonday as startOfWeekPg } from "./time";
 import {
@@ -137,20 +137,38 @@ export async function ensureUserProfile(
   `;
 }
 
+function looksLikeUserId(key: string): boolean {
+  // Better Auth / seeded ids: long, dashed, or non-username charset
+  if (key.length > 24) return true;
+  if (key.includes("-")) return true;
+  if (!/^[a-z0-9_]+$/i.test(key)) return true;
+  return false;
+}
+
 async function resolveUserId(
   sql: Sql,
   usernameOrId: string,
 ): Promise<string | null> {
   const key = usernameOrId.trim();
   if (!key) return null;
-  // Prefer username (case-insensitive)
+
+  // Prefer raw user id when the path looks like an id (legacy /u/$userId links)
+  if (looksLikeUserId(key)) {
+    const byId = await sql<{ id: string }>`
+      select id from "user" where id = ${key} limit 1
+    `;
+    if (byId[0]) return byId[0].id;
+  }
+
+  // Username (case-insensitive)
   const byName = await sql<{ user_id: string }>`
     select user_id from user_profiles
     where lower(username) = ${key.toLowerCase()}
     limit 1
   `;
   if (byName[0]) return byName[0].user_id;
-  // Fallback: raw user id
+
+  // Fallback id for short ids that still exist
   const byId = await sql<{ id: string }>`
     select id from "user" where id = ${key} limit 1
   `;
@@ -464,6 +482,7 @@ async function loadProfileHub(
 /** Own profile hub (stats, measures, activity). */
 export const getMyProfileHub = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -538,6 +557,7 @@ export const searchUsers = createServerFn({ method: "GET" })
 
 export const listFollowing = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -563,6 +583,7 @@ export const listFollowing = createServerFn({ method: "GET" })
 
 export const listFollowers = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     return sql<{
@@ -624,7 +645,7 @@ const profileUpdateSchema = z.object({
 
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d) => parseOrThrow(profileUpdateSchema, d))
+  .validator(v(profileUpdateSchema))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

@@ -3,10 +3,10 @@ import { getSql, withTransaction, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureCatalogSeeded } from "./catalog";
 import { ensureUserSeeded } from "./seed";
-import { isoDow } from "@/lib/utils";
+import { isoDow, remapDow } from "@/lib/utils";
 import { todayForUser } from "./time";
 import { emitProgramPublished } from "./activity";
-import { parseOrThrow, v, positiveId, isoDate, optionalText } from "@/lib/validation";
+import { parseOrThrow, v, positiveId, isoDate, optionalText, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type PublicProgramCard = {
@@ -50,21 +50,9 @@ async function clearFuturePlanned(sql: Sql, userId: string) {
   `;
 }
 
-/**
- * Remap program day DOWs so `startSourceDayId` lands on `startDate`'s weekday,
- * preserving relative gaps between sessions (rest days stay as empty DOWs).
- */
-function remapDow(
-  originalDow: number,
-  anchorOriginalDow: number,
-  startDateDow: number,
-): number {
-  const rel = (originalDow - anchorOriginalDow + 7) % 7;
-  return ((startDateDow - 1 + rel) % 7) + 1;
-}
-
 export const listDiscoverPrograms = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -310,19 +298,14 @@ export const updateProgramMeta = createServerFn({ method: "POST" })
  */
 export const cloneProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((d: unknown) =>
-    parseOrThrow(
-      z.object({
-        programId: positiveId.optional(),
-        shareCode: z.string().trim().min(4).max(8).optional(),
-        setActive: z.boolean().optional(),
-        name: z.string().trim().max(80).optional(),
-        startDate: isoDate.optional(),
-        startSourceDayId: positiveId.optional(),
-      }),
-      d,
-    ),
-  )
+  .validator(v(z.object({
+    programId: positiveId.optional(),
+    shareCode: z.string().trim().min(4).max(8).optional(),
+    setActive: z.boolean().optional(),
+    name: z.string().trim().max(80).optional(),
+    startDate: isoDate.optional(),
+    startSourceDayId: positiveId.optional(),
+  })))
   .handler(async ({ context, data }) => {
     const sql0 = await getSql();
     await ensureUserSeeded(sql0, context.userId);
@@ -400,26 +383,47 @@ export const cloneProgram = createServerFn({ method: "POST" })
       const startDow = isoDow(startDate);
       const anchorOrigDow = anchor?.dow ?? 1;
 
-      for (const d of days) {
-        const newDow = remapDow(d.dow, anchorOrigDow, startDow);
-        const dayRow = await sql<{ id: number }>`
-          insert into program_days (program_id, dow, name, focus, sort)
-          values (${newId}, ${newDow}, ${d.name}, ${d.focus}, ${d.sort})
-          returning id
-        `;
-        const newDayId = dayRow[0]!.id;
-        // Set-based exercise copy
+      // Bulk insert remapped days (1 query), then copy all exercises (1 query)
+      if (days.length > 0) {
+        const values: unknown[] = [];
+        const placeholders: string[] = [];
+        let p = 1;
+        for (const d of days) {
+          const newDow = remapDow(d.dow, anchorOrigDow, startDow);
+          placeholders.push(
+            `($${p++}, $${p++}, $${p++}, $${p++}, $${p++})`,
+          );
+          values.push(newId, newDow, d.name, d.focus, d.sort);
+        }
+        await sql.query(
+          `insert into program_days (program_id, dow, name, focus, sort)
+           values ${placeholders.join(", ")}`,
+          values,
+        );
+
+        // Match old→new days by sort (stable within a program)
         await sql`
           insert into program_exercises (
             program_day_id, exercise_id, detail, sets, rep_lo, rep_hi,
             rest_sec, load_tag, note, sort
           )
           select
-            ${newDayId}, exercise_id, detail, sets, rep_lo, rep_hi,
-            rest_sec, load_tag, note, sort
-          from program_exercises
-          where program_day_id = ${d.id}
-          order by sort
+            npd.id,
+            pe.exercise_id,
+            pe.detail,
+            pe.sets,
+            pe.rep_lo,
+            pe.rep_hi,
+            pe.rest_sec,
+            pe.load_tag,
+            pe.note,
+            pe.sort
+          from program_exercises pe
+          join program_days opd
+            on opd.id = pe.program_day_id and opd.program_id = ${s.id}
+          join program_days npd
+            on npd.program_id = ${newId} and npd.sort = opd.sort
+          order by npd.sort, pe.sort
         `;
       }
 
@@ -441,6 +445,7 @@ export const cloneProgram = createServerFn({ method: "POST" })
 /** Leave / abandon current program entirely (no auto-replacement). */
 export const abandonProgram = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     return withTransaction(async (sql) => {
       await deleteUserPrograms(sql, context.userId);

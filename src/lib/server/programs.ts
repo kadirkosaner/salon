@@ -13,6 +13,7 @@ import {
   restSec,
   repRange,
   loadTag,
+  noInput,
 } from "@/lib/validation";
 import { z } from "zod";
 
@@ -59,6 +60,7 @@ export type ProgramDetail = {
 
 export const listPrograms = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -82,6 +84,7 @@ export const listPrograms = createServerFn({ method: "GET" })
 
 export const getActiveProgram = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
+  .validator(noInput)
   .handler(async ({ context }): Promise<ProgramDetail | null> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);

@@ -668,7 +668,11 @@ function SearchResults({
   if (!results && searching) {
     return (
       <div className="flex justify-center py-10">
-        <Loader2 className="size-6 animate-spin text-yellow" />
+        <div className="mx-auto space-y-3 p-4 w-full max-w-md">
+          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
+          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
+          <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
+        </div>
       </div>
     );
   }

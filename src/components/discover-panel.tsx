@@ -344,8 +344,10 @@ export function StartProgramModal({
             Hangi seansla başlansın?
           </span>
           {loadingDays ? (
-            <div className="flex justify-center py-6">
-              <Loader2 className="size-5 animate-spin text-yellow" />
+            <div className="space-y-2 py-2" aria-busy="true">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-12 animate-pulse rounded-2xl bg-surface2" />
+              ))}
             </div>
           ) : days.length === 0 ? (
             <p className="rounded-xl bg-surface2 px-3 py-3 text-xs text-muted">
@@ -548,8 +550,10 @@ export function DetailModal({
       />
       <div className="relative z-10 max-h-[92dvh] w-full max-w-lg overflow-y-auto overflow-x-hidden rounded-t-2xl border border-line bg-surface p-4 sm:rounded-2xl">
         {!data && !err && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-7 animate-spin text-yellow" />
+          <div className="space-y-3 py-6" aria-busy="true">
+            <div className="h-8 w-2/3 animate-pulse rounded-lg bg-surface2" />
+            <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
+            <div className="h-24 animate-pulse rounded-2xl bg-surface2" />
           </div>
         )}
         {err && <p className="py-8 text-center text-sm text-red">{err}</p>}
