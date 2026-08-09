@@ -5,7 +5,7 @@ import { ensureUserSeeded, searchDataset } from "./seed";
 import { ensureCatalogSeeded } from "./catalog";
 import { ensureUserProfile, type PublicUserCard } from "./social";
 import type { PublicProgramCard } from "./share";
-import { v, noInput } from "@/lib/validation";
+import { v } from "@/lib/validation";
 import { z } from "zod";
 import { translatePrograms } from "./translations";
 
@@ -110,19 +110,6 @@ export const getDiscoverHome = createServerFn({ method: "GET" })
     const levelHint: DiscoverShelves["levelHint"] =
       completed < 8 ? "baslangic" : completed < 40 ? "orta" : "ileri";
 
-    const featured = [...all]
-      .sort((a, b) => {
-        if (a.is_catalog !== b.is_catalog) return a.is_catalog ? -1 : 1;
-        const order = (c: string | null) =>
-          c === "FULL6X" ? 0 : c === "FULL3X" ? 1 : c === "UL4DAY" ? 2 : 9;
-        return order(a.share_code) - order(b.share_code);
-      })
-      .slice(0, 10);
-
-    const topCloned = [...all]
-      .sort((a, b) => b.clone_count - a.clone_count)
-      .slice(0, 12);
-
     const followRows = await sql<{
       id: number;
       name: string;
@@ -155,29 +142,74 @@ export const getDiscoverHome = createServerFn({ method: "GET" })
       order by p.clone_count desc, p.id desc
       limit 20
     `;
-    const fromFollowing = followRows.map((r) => mapProgram(r, context.userId));
+    const followMapped = followRows.map((r) => mapProgram(r, context.userId));
+    // Translate following shelf too
+    const followTr = await translatePrograms(sql, followMapped, locale);
+    const followWithTr = followMapped.map((p) => {
+      const hit = followTr.get(p.id);
+      return hit ? { ...p, name: hit.name, description: hit.description } : p;
+    });
 
-    const forLevel = all
-      .filter((p) => {
-        const tags = (p.tags ?? "").toLowerCase();
-        if (levelHint === "baslangic")
-          return tags.includes("baslangic") || tags.includes("beginner");
-        if (levelHint === "orta")
-          return tags.includes("orta") || tags.includes("intermediate");
-        return tags.includes("ileri") || tags.includes("advanced");
-      })
-      .slice(0, 12);
+    /** Each program appears on at most one shelf (priority order). */
+    const used = new Set<number>();
+    function take(
+      list: PublicProgramCard[],
+      n: number,
+    ): PublicProgramCard[] {
+      const out: PublicProgramCard[] = [];
+      for (const p of list) {
+        if (used.has(p.id)) continue;
+        used.add(p.id);
+        out.push(p);
+        if (out.length >= n) break;
+      }
+      return out;
+    }
 
-    const levelFilled =
-      forLevel.length > 0
-        ? forLevel
-        : all.filter((p) => p.is_catalog).slice(0, 6);
+    const FEATURED_ORDER = [
+      "FULL6X",
+      "PPL6XX",
+      "UL4DAY",
+      "STR5XX",
+      "ATH5XX",
+      "DB4HYP",
+      "FULL3X",
+    ];
+    const featuredSorted = [...all].sort((a, b) => {
+      if (a.is_catalog !== b.is_catalog) return a.is_catalog ? -1 : 1;
+      const ia = FEATURED_ORDER.indexOf(a.share_code ?? "");
+      const ib = FEATURED_ORDER.indexOf(b.share_code ?? "");
+      const ra = ia === -1 ? 99 : ia;
+      const rb = ib === -1 ? 99 : ib;
+      if (ra !== rb) return ra - rb;
+      return b.clone_count - a.clone_count;
+    });
+
+    const newSorted = [...all].sort((a, b) => {
+      if (b.clone_count !== a.clone_count) return b.clone_count - a.clone_count;
+      return b.id - a.id;
+    });
+
+    const levelFiltered = all.filter((p) => {
+      const tags = (p.tags ?? "").toLowerCase();
+      if (levelHint === "baslangic")
+        return tags.includes("baslangic") || tags.includes("beginner");
+      if (levelHint === "orta")
+        return tags.includes("orta") || tags.includes("intermediate");
+      return tags.includes("ileri") || tags.includes("advanced");
+    });
+
+    // Priority: following → featured → new/top → level (no fake fill)
+    const fromFollowing = take(followWithTr, 8);
+    const featured = take(featuredSorted, 6);
+    const topCloned = take(newSorted, 6);
+    const forLevel = take(levelFiltered, 6);
 
     return {
       featured,
       topCloned,
       fromFollowing,
-      forLevel: levelFilled,
+      forLevel,
       levelHint,
     };
   });

@@ -456,7 +456,7 @@ export function WeekStrip({ dayCount }: { dayCount: number }) {
           className={
             filled.has(i)
               ? "size-1.5 rounded-full bg-accent"
-              : "size-1.5 rounded-full bg-rule"
+              : "size-1.5 rounded-full border border-edge bg-transparent"
           }
         />
       ))}
@@ -495,12 +495,24 @@ export function ProgramRow({
             </span>
           ) : null}
         </span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] tabular-nums text-text-2">
+        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] tabular-nums text-text-2">
           <span>{t("discover.daysShort", { n: p.day_count })}</span>
           <span className="text-text-3">·</span>
-          <span className="num">{p.clone_count.toLocaleString()}</span>
-          <span className="text-text-3">·</span>
-          <span className="truncate">{p.author_name}</span>
+          <span>{t("discover.exercisesShort", { n: p.exercise_count })}</span>
+          {p.clone_count > 0 ? (
+            <>
+              <span className="text-text-3">·</span>
+              <span className="num">
+                {t("discover.clones", { n: p.clone_count.toLocaleString() })}
+              </span>
+            </>
+          ) : null}
+          {!p.is_catalog && p.author_name ? (
+            <>
+              <span className="text-text-3">·</span>
+              <span className="truncate">{p.author_name}</span>
+            </>
+          ) : null}
         </span>
         <div className="mt-1.5">
           <WeekStrip dayCount={p.day_count} />

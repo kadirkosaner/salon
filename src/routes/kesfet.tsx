@@ -92,6 +92,7 @@ function DiscoverPage() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [cloning, setCloning] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [tab, setTab] = useState<"forYou" | "programs" | "people" | "exercises">("forYou");
   const raceRef = useRef(0);
 
@@ -248,6 +249,11 @@ function DiscoverPage() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => {
+              // delay so chip click still registers
+              window.setTimeout(() => setSearchFocused(false), 180);
+            }}
             placeholder={t("discover.searchPlaceholder")}
             className="h-12 w-full rounded-xl border border-edge bg-raised py-2 pl-10 pr-10 text-sm"
             autoComplete="off"
@@ -316,27 +322,26 @@ function DiscoverPage() {
           />
         ) : (
           <>
-            {/* Recent + suggested when idle */}
-            {(recent.length > 0 || SUGGESTED_Q.length > 0) && (
+            {/* Recent + suggested only while search focused */}
+            {searchFocused && !searchingMode && (recent.length > 0 || SUGGESTED_Q.length > 0) ? (
               <div className="space-y-2">
                 {recent.length > 0 ? (
                   <div>
                     <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
                       {t("discover.recent")}
                     </p>
-                    <div className="scroll-rail-wrap">
-                      <div className="scroll-rail">
-                        {recent.map((r) => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => setQ(r)}
-                            className="shrink-0 rounded-full border border-rule bg-raised px-3 py-1.5 text-xs font-medium"
-                          >
-                            {r}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {recent.map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => setQ(r)}
+                          className="rounded-full border border-rule bg-raised px-3 py-1.5 text-xs font-medium"
+                        >
+                          {r}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 ) : null}
@@ -344,23 +349,22 @@ function DiscoverPage() {
                   <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
                     {t("discover.suggested")}
                   </p>
-                  <div className="scroll-rail-wrap">
-                    <div className="scroll-rail">
-                      {SUGGESTED_Q.map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setQ(r)}
-                          className="shrink-0 rounded-full border border-edge bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent"
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SUGGESTED_Q.map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setQ(r)}
+                        className="rounded-full border border-edge bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent"
+                      >
+                        {r}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {homeQuery.isLoading || !shelves ? (
               <ProgramCardSkeleton />
@@ -572,7 +576,7 @@ function FilterChips({
                 {t("discover.filterDays")}
               </p>
               <div className="flex flex-wrap gap-2">
-                {[3, 4, 6].map((d) => (
+                {[2, 3, 4, 5, 6].map((d) => (
                   <button key={d} type="button" className={chip(filters.days === d)} onClick={() => toggleDays(d)}>
                     {d} {t("feed.days")}
                   </button>
@@ -661,8 +665,6 @@ function Shelf({
   onOpen,
   onClone,
   onCopyCode,
-  empty,
-  horizontal: _horizontal,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -671,35 +673,30 @@ function Shelf({
   onOpen: (id: number) => void;
   onClone: (p: PublicProgramCard) => void;
   onCopyCode: (c: string) => void;
-  empty: string;
+  empty?: string;
   horizontal?: boolean;
 }) {
+  if (items.length === 0) return null;
   return (
     <section>
       <h3 className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
         {icon}
         {title}
       </h3>
-      {items.length === 0 ? (
-        <p className="border-t border-rule px-1 py-4 text-center text-xs text-text-2">
-          {empty}
-        </p>
-      ) : (
-        <ul className="divide-y divide-rule border-t border-rule">
-          {items.map((p, i) => (
-            <li key={p.id}>
-              <ProgramCard
-                rank={i + 1}
-                p={p}
-                busy={cloning}
-                onOpen={() => onOpen(p.id)}
-                onClone={() => onClone(p)}
-                onCopyCode={() => p.share_code && onCopyCode(p.share_code)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="divide-y divide-rule border-t border-rule">
+        {items.map((p, i) => (
+          <li key={p.id}>
+            <ProgramCard
+              rank={i + 1}
+              p={p}
+              busy={cloning}
+              onOpen={() => onOpen(p.id)}
+              onClone={() => onClone(p)}
+              onCopyCode={() => p.share_code && onCopyCode(p.share_code)}
+            />
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

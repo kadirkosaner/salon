@@ -31,6 +31,7 @@ export function parseProgramTags(tags: string | null | undefined): ProgramFacets
       days = Number(dm[1]);
       continue;
     }
+    if (t === "2gun" || t === "2-gun") days = 2;
     if (t === "3gun" || t === "3-gun") days = 3;
     if (t === "4gun" || t === "4-gun") days = 4;
     if (t === "5gun" || t === "5-gun") days = 5;
