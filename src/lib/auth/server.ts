@@ -101,7 +101,13 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
+  // Capacitor WebView (bundled assets mode)
+  "capacitor://localhost",
+  "http://localhost",
+  "https://localhost",
+  "ionic://localhost",
 ];
+
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
   // (not only the preview wildcard).

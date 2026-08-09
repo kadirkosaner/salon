@@ -7,7 +7,9 @@ import { ThemeProvider } from "@/lib/theme/provider";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme/tokens";
 import { CreatedWithGrokBanner } from "@/components/created-with-grok-banner";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { NativeShell } from "@/components/pwa/native-shell";
 import { Toaster } from "sonner";
+
 import { createAppQueryClient } from "@/lib/query-client";
 import appCss from "../styles.css?url";
 
@@ -77,6 +79,7 @@ export const Route = createRootRoute({
             <ThemeProvider>
               <AuthProvider>
                 <PwaBootstrap />
+                <NativeShell />
                 <OnboardingGate>
                   <Outlet />
                 </OnboardingGate>

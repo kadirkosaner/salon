@@ -1,0 +1,1 @@
+import{d as e}from"./router-ySdpK7M_.js";import{o as t}from"./query-q9e_x-3n.js";var n=t(),r=`/login`;function i({to:t=r}){return(0,n.jsx)(e,{to:t})}export{i as t};

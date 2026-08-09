@@ -1,0 +1,1 @@
+import{n as e}from"./query-q9e_x-3n.js";import{r as t}from"./settings-DzWVSuhR.js";import{t as n}from"./query-keys-CWuHdht7.js";function r(r=!0){return e({queryKey:[...n.settings,`units`],queryFn:()=>t(),enabled:r,staleTime:6e4,select:e=>e.unitSystem===`imperial`?`imperial`:`metric`}).data??`metric`}export{r as t};

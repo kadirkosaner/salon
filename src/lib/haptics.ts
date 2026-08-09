@@ -24,8 +24,31 @@ export function setHapticEnabled(on: boolean) {
 type Pattern = number | number[];
 
 function vibe(pattern: Pattern) {
-  if (typeof navigator === "undefined" || !navigator.vibrate) return;
   if (!isHapticEnabled()) return;
+
+  // Native Capacitor haptics (iOS/Android)
+  void (async () => {
+    try {
+      const cap = (
+        window as Window & {
+          Capacitor?: { isNativePlatform?: () => boolean };
+        }
+      ).Capacitor;
+      if (cap?.isNativePlatform?.()) {
+        const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+        if (Array.isArray(pattern) && pattern.length > 2) {
+          await Haptics.impact({ style: ImpactStyle.Heavy });
+        } else {
+          await Haptics.impact({ style: ImpactStyle.Light });
+        }
+        return;
+      }
+    } catch {
+      /* fall through to vibrate */
+    }
+  })();
+
+  if (typeof navigator === "undefined" || !navigator.vibrate) return;
   try {
     navigator.vibrate(pattern);
   } catch {
@@ -38,5 +61,7 @@ export const haptic = {
   pr: () => vibe([30, 40, 30, 40, 60]),
   like: () => vibe(8),
   follow: () => vibe(14),
-  light: () => vibe(6),
+  finish: () => vibe([20, 30, 40]),
+  error: () => vibe([40, 60, 40]),
+  soft: () => vibe(6),
 };

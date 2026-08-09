@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Salon</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #0c0c0b;
+        color: #f2eee6;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      .mark {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 1rem;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #1a1410, #0b0b0c);
+        border: 1px solid rgba(201, 162, 39, 0.35);
+        display: grid;
+        place-items: center;
+        font-size: 1.75rem;
+      }
+      h1 {
+        font-weight: 600;
+        font-size: 1.35rem;
+        letter-spacing: 0.02em;
+        margin: 0 0 0.5rem;
+      }
+      p {
+        margin: 0;
+        color: #8a8478;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        max-width: 22rem;
+      }
+      .spin {
+        width: 28px;
+        height: 28px;
+        margin: 1.25rem auto 0;
+        border: 2px solid rgba(185, 161, 119, 0.25);
+        border-top-color: #b9a177;
+        border-radius: 50%;
+        animation: r 0.8s linear infinite;
+      }
+      @keyframes r {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      code {
+        font-size: 0.8rem;
+        color: #b9a177;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="mark" aria-hidden="true">🏋️</div>
+      <h1>Salon</h1>
+      <p id="msg">Connecting to your social server…</p>
+      <div class="spin" id="spin" aria-hidden="true"></div>
+    </div>
+    <script>
+      // Fallback shell when CAPACITOR_SERVER_URL is not set at build time.
+      // With server.url configured, Capacitor never shows this page.
+      (function () {
+        var msg = document.getElementById("msg");
+        var spin = document.getElementById("spin");
+        msg.textContent =
+          "Native shell is ready. Rebuild with CAPACITOR_SERVER_URL pointing at your live Salon deploy so social features talk to the real server.";
+        spin.style.display = "none";
+      })();
+    </script>
+  </body>
+</html>

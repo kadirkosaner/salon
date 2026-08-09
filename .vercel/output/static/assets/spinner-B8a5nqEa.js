@@ -1,0 +1,1 @@
+import{o as e}from"./query-q9e_x-3n.js";import{o as t}from"./provider-DEqkxCUA.js";var n=e();function r({className:e,label:r}){return(0,n.jsx)(`span`,{role:r?`status`:void 0,"aria-label":r,"aria-hidden":!r||void 0,className:t(`inline-block size-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent`,e)})}export{r as t};

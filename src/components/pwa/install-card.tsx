@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, Share2, Smartphone } from "@/components/icons";
 import { useT } from "@/lib/i18n/provider";
+import { isNativeApp, nativePlatform } from "@/lib/native";
 import {
   getInstallPrompt,
   isAndroid,
@@ -13,9 +14,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 /**
- * Compact install CTA for settings / empty states.
- * Android Chrome: native install prompt when available.
- * iOS Safari: Share → Add to Home Screen instructions.
+ * Install CTA — PWA on mobile browsers, status line inside Capacitor native.
  */
 export function InstallCard({ className }: { className?: string }) {
   const t = useT();
@@ -23,15 +22,32 @@ export function InstallCard({ className }: { className?: string }) {
   const [canPrompt, setCanPrompt] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showIosHelp, setShowIosHelp] = useState(false);
+  const [native, setNative] = useState(false);
+  const [platform, setPlatform] = useState<"ios" | "android" | "web">("web");
 
   useEffect(() => {
     setStandalone(isStandalone());
     setCanPrompt(!!getInstallPrompt());
+    setNative(isNativeApp());
+    setPlatform(nativePlatform());
     return subscribeInstallAvailability(() => {
       setCanPrompt(!!getInstallPrompt());
       setStandalone(isStandalone());
     });
   }, []);
+
+  if (native) {
+    return (
+      <div
+        className={cn(
+          "rounded-2xl border border-success/25 bg-success/10 px-4 py-3 text-sm text-success",
+          className,
+        )}
+      >
+        {t("pwa.installed")} · {platform === "ios" ? "iOS" : "Android"}
+      </div>
+    );
+  }
 
   if (standalone) {
     return (
