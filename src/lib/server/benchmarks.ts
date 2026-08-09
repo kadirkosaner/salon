@@ -360,7 +360,28 @@ export const getProgramSocial = createServerFn({ method: "GET" })
       limit 1
     `;
     if (mine.length === 0) {
-      return { count: 0, following: [] as { id: string; name: string; image: string | null; username: string | null; week: number; streak: number }[], todayDone: 0 };
+      return {
+        count: 0,
+        following: [] as {
+          id: string;
+          name: string;
+          image: string | null;
+          username: string | null;
+          week: number;
+          streak: number;
+          isFollowing: boolean;
+        }[],
+        peers: [] as {
+          id: string;
+          name: string;
+          image: string | null;
+          username: string | null;
+          week: number;
+          streak: number;
+          isFollowing: boolean;
+        }[],
+        todayDone: 0,
+      };
     }
     const src = mine[0]!.source_program_id ?? mine[0]!.id;
     // Count active programs cloned from same source (or same catalog id)
@@ -385,34 +406,52 @@ export const getProgramSocial = createServerFn({ method: "GET" })
         )
     `;
 
-    const following = await sql<{
+    // Peers on same source: following first, then public
+    const peers = await sql<{
       id: string;
       name: string;
       image: string | null;
       username: string | null;
       valid_from: string;
+      is_following: boolean;
     }>`
       select
         u.id,
         coalesce(u.name, 'User') as name,
         coalesce(up.avatar_url, u.image) as image,
         up.username,
-        p.valid_from::text as valid_from
+        p.valid_from::text as valid_from,
+        exists (
+          select 1 from user_follows f
+          where f.follower_id = ${me} and f.following_id = u.id
+        ) as is_following
       from programs p
-      join user_follows f on f.following_id = p.user_id and f.follower_id = ${me}
       join "user" u on u.id = p.user_id
       left join user_profiles up on up.user_id = u.id
       where p.is_active = true
+        and p.user_id <> ${me}
         and (
           p.source_program_id = ${src}
           or p.id = ${src}
+          or p.source_program_id = (select source_program_id from programs where id = ${src})
         )
         and coalesce(up.visibility, 'public') <> 'private'
-      order by p.valid_from asc
-      limit 12
+        and (
+          coalesce(up.visibility, 'public') = 'public'
+          or exists (
+            select 1 from user_follows f
+            where f.follower_id = ${me} and f.following_id = p.user_id
+          )
+        )
+      order by
+        exists (
+          select 1 from user_follows f
+          where f.follower_id = ${me} and f.following_id = u.id
+        ) desc,
+        p.valid_from asc
+      limit 40
     `;
 
-    // Today completed same program day name as mine today
     const todayDone = await sql<{ c: number }>`
       select count(distinct w.user_id)::int as c
       from workouts w
@@ -432,16 +471,61 @@ export const getProgramSocial = createServerFn({ method: "GET" })
       return Math.max(1, Math.floor((n - a) / (7 * 86400000)) + 1);
     }
 
+    // Batch streaks for peer list (one query)
+    const peerIds = peers.map((f) => f.id);
+    const streakMap = new Map<string, number>();
+    if (peerIds.length > 0) {
+      const days = await sql<{ user_id: string; d: string }>`
+        select user_id, date::text as d
+        from workouts
+        where user_id = any(${peerIds}::text[])
+          and status = 'completed'
+          and date >= (current_date - interval '60 days')
+        order by user_id, d desc
+      `;
+      const byUser = new Map<string, Set<string>>();
+      for (const r of days) {
+        const s = byUser.get(r.user_id) ?? new Set();
+        s.add(r.d);
+        byUser.set(r.user_id, s);
+      }
+      for (const [uid, set] of byUser) {
+        let streak = 0;
+        const cur = new Date();
+        for (let i = 0; i < 60; i++) {
+          const y = cur.getFullYear();
+          const m = String(cur.getMonth() + 1).padStart(2, "0");
+          const day = String(cur.getDate()).padStart(2, "0");
+          const key = `${y}-${m}-${day}`;
+          if (set.has(key)) {
+            streak += 1;
+            cur.setDate(cur.getDate() - 1);
+            continue;
+          }
+          if (i === 0) {
+            cur.setDate(cur.getDate() - 1);
+            continue;
+          }
+          break;
+        }
+        streakMap.set(uid, streak);
+      }
+    }
+
+    const peerOut = peers.map((f) => ({
+      id: f.id,
+      name: f.name,
+      image: f.image,
+      username: f.username,
+      week: weekNum(f.valid_from),
+      streak: streakMap.get(f.id) ?? 0,
+      isFollowing: f.is_following,
+    }));
+
     return {
       count: cnt[0]?.c ?? 0,
-      following: following.map((f) => ({
-        id: f.id,
-        name: f.name,
-        image: f.image,
-        username: f.username,
-        week: weekNum(f.valid_from),
-        streak: 0,
-      })),
+      following: peerOut.filter((p) => p.isFollowing).slice(0, 12),
+      peers: peerOut,
       todayDone: todayDone[0]?.c ?? 0,
     };
   });

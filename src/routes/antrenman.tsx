@@ -34,13 +34,13 @@ import {
 } from "@/lib/server/exercises";
 import { useI18n } from "@/lib/i18n/provider";
 import { btnClass } from "@/components/ui/btn";
-import { Sheet } from "@/components/ui/sheet";
+import { AppSheet, Sheet } from "@/components/ui/sheet";
 import { WorkoutSkeleton } from "@/components/ui/skeleton";
 import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
 import { haptic } from "@/lib/haptics";
 import { ComparisonStrip } from "@/components/workout/comparison-strip";
 import { getProgramSocial } from "@/lib/server/benchmarks";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -56,6 +56,7 @@ function WorkoutPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
   const { t, locale } = useI18n();
+  const qc = useQueryClient();
   const navigate = useNavigate({ from: "/antrenman" });
   const search = Route.useSearch();
   const date = search.date || todayISO();
@@ -337,6 +338,36 @@ function WorkoutPage() {
         seconds: exercise.rest_sec || 90,
         exerciseName: exercise.exercise_name,
       });
+      // Quiet tip when cache says you're above median (PR overlay still wins visually)
+      try {
+        const all = qc.getQueriesData<{
+          slices: {
+            exerciseId: number;
+            myPercentile: number | null;
+            enough: boolean;
+          }[];
+        }>({ queryKey: ["bench", exercise.exercise_id] });
+        let pct: number | null = null;
+        for (const [, data] of all) {
+          const s = data?.slices?.find(
+            (x) => x.exerciseId === exercise.exercise_id,
+          );
+          if (s?.enough && s.myPercentile != null && s.myPercentile >= 50) {
+            pct = s.myPercentile;
+            break;
+          }
+        }
+        if (pct != null) {
+          window.setTimeout(() => {
+            toast.message(
+              t("compare.setAbove", { p: Math.max(1, 100 - pct!) }),
+              { duration: 2200 },
+            );
+          }, 450);
+        }
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -486,33 +517,91 @@ function ProgramSocialLine({
     queryFn: () => getProgramSocial(),
     staleTime: 5 * 60_000,
   });
+  const [open, setOpen] = useState(false);
   if (!q.data || (q.data.count === 0 && q.data.todayDone === 0)) return null;
+  const peers = q.data.peers ?? q.data.following ?? [];
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-3">
-      {q.data.count > 0 ? (
-        <span className="inline-flex items-center gap-1.5">
-          <span className="flex -space-x-1.5">
-            {q.data.following.slice(0, 4).map((f) => (
-              <span
-                key={f.id}
-                className="grid size-5 place-items-center overflow-hidden rounded-full border border-sunken bg-accent/20 text-[8px] font-semibold text-accent"
-                title={f.name}
-              >
-                {f.image ? (
-                  <img src={f.image} alt="" className="size-full object-cover" />
-                ) : (
-                  (f.name[0] ?? "?").toUpperCase()
-                )}
-              </span>
-            ))}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-rule/70 bg-raised/30 px-2.5 py-2 text-left text-[11px] text-text-3 active:bg-raised/50"
+      >
+        {q.data.count > 0 ? (
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <span className="flex -space-x-1.5">
+              {peers.slice(0, 4).map((f) => (
+                <span
+                  key={f.id}
+                  className="grid size-5 place-items-center overflow-hidden rounded-full border border-sunken bg-accent/20 text-[8px] font-semibold text-accent"
+                  title={f.name}
+                >
+                  {f.image ? (
+                    <img src={f.image} alt="" className="size-full object-cover" />
+                  ) : (
+                    (f.name[0] ?? "?").toUpperCase()
+                  )}
+                </span>
+              ))}
+            </span>
+            <span className="truncate font-medium text-text-2">
+              {t("compare.programCount", { n: q.data.count })}
+            </span>
           </span>
-          {t("compare.programCount", { n: q.data.count })}
-        </span>
+        ) : null}
+        {q.data.todayDone > 0 ? (
+          <span className="truncate">
+            {t("compare.todayDone", { n: q.data.todayDone })}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <AppSheet title={t("compare.peersTitle")} onClose={() => setOpen(false)}>
+          {peers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-text-3">
+              {t("compare.needPool")}
+            </p>
+          ) : (
+            <ul className="divide-y divide-rule">
+              {peers.map((f) => (
+                <li key={f.id} className="flex items-center gap-3 py-2.5">
+                  <span className="grid size-10 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
+                    {f.image ? (
+                      <img src={f.image} alt="" className="size-full object-cover" />
+                    ) : (
+                      (f.name[0] ?? "?").toUpperCase()
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {f.name}
+                      {f.isFollowing ? (
+                        <span className="ml-1.5 text-[10px] font-semibold text-accent">
+                          ·
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="text-[11px] text-text-3">
+                      {t("compare.weekStreak", { w: f.week, s: f.streak })}
+                    </p>
+                  </div>
+                  {f.username ? (
+                    <Link
+                      to="/u/$username"
+                      params={{ username: f.username }}
+                      className="text-xs font-medium text-accent"
+                      onClick={() => setOpen(false)}
+                    >
+                      @{f.username}
+                    </Link>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </AppSheet>
       ) : null}
-      {q.data.todayDone > 0 ? (
-        <span>{t("compare.todayDone", { n: q.data.todayDone })}</span>
-      ) : null}
-    </div>
+    </>
   );
 }
 
