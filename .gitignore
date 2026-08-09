@@ -10,3 +10,6 @@ ios/App/Pods/
 ios/App/build/
 ios/DerivedData/
 .env.native
+
+.vercel/
+native/dist/
