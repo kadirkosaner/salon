@@ -20,13 +20,13 @@ if ((await pws.count()) > 1) await pws.nth(1).fill("testpass123");
 await page.locator('button[type="submit"]').click();
 await page.waitForTimeout(3500);
 
-await go("/kesfet");
+await go("/discover");
 await page.getByRole("button", { name: /^Seç$/i }).first().click();
 await page.waitForTimeout(800);
 await page.getByRole("button", { name: /Başlat|Start/i }).last().click();
 await page.waitForTimeout(2500);
 
-await go("/antrenman?date=2026-08-10");
+await go("/workout?date=2026-08-10");
 await page.waitForTimeout(2000);
 
 // Scroll to PUSH content

@@ -42,7 +42,7 @@ import { cn, todayISO } from "@/lib/utils";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { LOCALES, type Locale } from "@/lib/i18n/messages";
 
-export const Route = createFileRoute("/hosgeldin")({
+export const Route = createFileRoute("/welcome")({
   component: OnboardingPage,
 });
 
@@ -101,9 +101,9 @@ function OnboardingPage() {
     await qc.invalidateQueries({ queryKey: ["onboarding"] });
     // Hard navigation avoids a race with <Navigate to="/"> after status flips.
     if (dest === "workout") {
-      window.location.assign(`/antrenman?date=${todayISO()}`);
+      window.location.assign(`/workout?date=${todayISO()}`);
     } else if (dest === "discover") {
-      window.location.assign("/kesfet");
+      window.location.assign("/discover");
     } else {
       window.location.assign("/");
     }

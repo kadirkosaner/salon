@@ -9,15 +9,15 @@ import { ProfileView } from "@/components/profile/profile-view";
 import { useI18n } from "@/lib/i18n/provider";
 import { getMyProfileHub, type ProfileHub } from "@/lib/server/social";
 
-export const Route = createFileRoute("/profil")({ component: ProfileRoute });
+export const Route = createFileRoute("/profile")({ component: ProfileRoute });
 
 /**
- * `/profil/duzenle` is a child route (file: profil.duzenle.tsx). Without an
+ * `/profile/edit` is a child route (file: profile.edit.tsx). Without an
  * Outlet the parent keeps rendering ProfileView and Edit appears broken.
  */
 function ProfileRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname.startsWith("/profil/") && pathname !== "/profil") {
+  if (pathname.startsWith("/profile/") && pathname !== "/profile") {
     return <Outlet />;
   }
   return <ProfilePage />;

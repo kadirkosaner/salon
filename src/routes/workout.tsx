@@ -8,7 +8,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { LoadTagBadge } from "@/components/load-tag";
 import { MuscleBadge, muscleLabel } from "@/components/muscle-badge";
-import { RestTimerBar, type RestTimerState } from "@/components/rest-timer";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import {
   clearFutureWorkouts,
@@ -47,7 +46,7 @@ const searchSchema = z.object({
   date: z.string().optional(),
 });
 
-export const Route = createFileRoute("/antrenman")({
+export const Route = createFileRoute("/workout")({
   validateSearch: searchSchema,
   component: WorkoutPage,
 });
@@ -57,7 +56,7 @@ function WorkoutPage() {
   const userId = user?.id;
   const { t, locale } = useI18n();
   const qc = useQueryClient();
-  const navigate = useNavigate({ from: "/antrenman" });
+  const navigate = useNavigate({ from: "/workout" });
   const search = Route.useSearch();
   const date = search.date || todayISO();
   const today = todayISO();
@@ -72,7 +71,6 @@ function WorkoutPage() {
   const [programDays, setProgramDays] = useState<
     { id: number; name: string; dow: number }[]
   >([]);
-  const [rest, setRest] = useState<RestTimerState>(null);
   const [skipOpen, setSkipOpen] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [swapFor, setSwapFor] = useState<WorkoutExerciseRow | null>(null);
@@ -334,17 +332,14 @@ function WorkoutPage() {
     scheduleSetSave(setId, { completed: done });
     if (done) {
       haptic.setComplete();
-      setRest({
-        seconds: exercise.rest_sec || 90,
-        exerciseName: exercise.exercise_name,
-      });
-      // Quiet tip when cache says you're above median (PR overlay still wins visually)
+      // Fun tip when cache says you're above the pack
       try {
         const all = qc.getQueriesData<{
           slices: {
             exerciseId: number;
             myPercentile: number | null;
             enough: boolean;
+            best: number | null;
           }[];
         }>({ queryKey: ["bench", exercise.exercise_id] });
         let pct: number | null = null;
@@ -378,7 +373,6 @@ function WorkoutPage() {
     <AppShell
       title={t("workout.title")}
       subtitle={programName ?? formatDate(date, locale)}
-      restTimerActive={!!rest}
       actions={
         <span className="text-[11px] text-text-2">
           {saveState === "saving"
@@ -407,7 +401,7 @@ function WorkoutPage() {
             </p>
             <p className="mt-1 text-sm text-text-2">{t("workout.noProgramHint")}</p>
             <Link
-              to="/kesfet"
+              to="/discover"
               className={btnClass("primary", "mt-3 w-full")}
             >
               <Search className="size-4" />
@@ -432,7 +426,6 @@ function WorkoutPage() {
             onFinish={() => void finishWorkout()}
             onSkip={() => setSkipOpen(true)}
             onUnskip={() => void unskipWorkout()}
-            onRest={setRest}
             onSetSave={scheduleSetSave}
             onSetComplete={onSetComplete}
             onSwap={(ex) => setSwapFor(ex)}
@@ -459,8 +452,6 @@ function WorkoutPage() {
           />
         )}
       </div>
-
-      {rest && <RestTimerBar state={rest} onClose={() => setRest(null)} />}
 
       {prMoment ? (
         <PrCelebration
@@ -837,7 +828,6 @@ function WorkoutBody({
   onFinish,
   onSkip,
   onUnskip,
-  onRest,
   onSetSave,
   onSetComplete,
   onSwap,
@@ -853,7 +843,6 @@ function WorkoutBody({
   onFinish: () => void;
   onSkip: () => void;
   onUnskip: () => void;
-  onRest: (s: RestTimerState) => void;
   onSetSave: (
     id: number,
     p: { weight?: number | null; reps?: number | null; completed?: boolean },
@@ -1020,7 +1009,6 @@ function WorkoutBody({
           onSetComplete={onSetComplete}
           onSwap={onSwap}
           onRemove={onRemove}
-          onRest={onRest}
         />
       )}
 
@@ -1099,7 +1087,6 @@ function ExerciseList({
   onSetComplete,
   onSwap,
   onRemove,
-  onRest,
 }: {
   exercises: WorkoutExerciseRow[];
   t: (k: string, vars?: Record<string, string | number>) => string;
@@ -1110,7 +1097,6 @@ function ExerciseList({
   onSetComplete: (ex: WorkoutExerciseRow, setId: number, done: boolean) => void;
   onSwap: (ex: WorkoutExerciseRow) => void;
   onRemove: (ex: WorkoutExerciseRow) => void;
-  onRest: (s: RestTimerState) => void;
 }) {
   const defaultOpen = useMemo(() => {
     const firstOpen = exercises.find((e) => !e.sets.every((s) => s.completed));
@@ -1162,12 +1148,6 @@ function ExerciseList({
           onSetComplete={handleSetComplete}
           onSwap={() => onSwap(ex)}
           onRemove={() => onRemove(ex)}
-          onRestStart={() =>
-            onRest({
-              seconds: ex.rest_sec || 90,
-              exerciseName: ex.exercise_name,
-            })
-          }
         />
       ))}
     </ul>
@@ -1283,7 +1263,6 @@ function ExerciseCard({
   onSetComplete,
   onSwap,
   onRemove,
-  onRestStart,
 }: {
   index: number;
   exercise: WorkoutExerciseRow;
@@ -1297,7 +1276,6 @@ function ExerciseCard({
   onSetComplete: (ex: WorkoutExerciseRow, setId: number, done: boolean) => void;
   onSwap: () => void;
   onRemove: () => void;
-  onRestStart: () => void;
 }) {
   const [noteOpen, setNoteOpen] = useState(false);
   const [highlightSet, setHighlightSet] = useState<number | null>(null);
@@ -1478,7 +1456,6 @@ function ExerciseCard({
                       return;
                     }
                     onSetComplete(exercise, s.id, true);
-                    onRestStart();
                     setHighlightSet(null);
                   }}
                   className={cn(

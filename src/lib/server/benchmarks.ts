@@ -30,6 +30,8 @@ export type BenchmarkSlice = {
   p10: number | null;
   p50: number | null;
   p90: number | null;
+  /** Max value in the pool (absolute kg by default). */
+  best: number | null;
   myValue: number | null;
   myPercentile: number | null;
   measure: "relative" | "absolute";
@@ -71,7 +73,7 @@ export const getExerciseBenchmarks = createServerFn({ method: "GET" })
   .handler(async ({ context, data }): Promise<BenchmarksResult> => {
     const sql = await getSql();
     const me = context.userId;
-    const measure = data.filters?.measure ?? "relative";
+    const measure = data.filters?.measure ?? "absolute";
     let weightBand = data.filters?.weightBand;
     let ageMin = data.filters?.ageMin;
     let ageMax = data.filters?.ageMax;
@@ -144,9 +146,10 @@ export const getExerciseBenchmarks = createServerFn({ method: "GET" })
           p10: null,
           p50: null,
           p90: null,
+          best: null,
           myValue: null,
           myPercentile: null,
-          measure: "relative",
+          measure: "relative" as const,
           widened: null,
           enough: false,
         })),
@@ -328,6 +331,7 @@ export const getExerciseBenchmarks = createServerFn({ method: "GET" })
         p10: enough ? percentile(vals, 10) : null,
         p50: enough ? percentile(vals, 50) : null,
         p90: enough ? percentile(vals, 90) : null,
+        best: vals.length ? vals[vals.length - 1]! : null,
         myValue: mine,
         myPercentile: enough && mine != null ? myPercentile(vals, mine) : null,
         measure,

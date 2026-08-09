@@ -15,7 +15,7 @@ await page.request.post(BASE+"/api/auth/sign-in/email",{
 
 page.on("dialog", async d => { console.log("DIALOG:", d.message()); await d.accept(); });
 
-await page.goto(BASE+"/kesfet",{waitUntil:"networkidle"});
+await page.goto(BASE+"/discover",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 console.log("body snippet", (await page.locator("body").innerText()).slice(0,400));
 

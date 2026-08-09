@@ -56,7 +56,7 @@ const tabSchema = z.object({
   tab: z.enum(["forYou", "programs", "people", "exercises"]).optional(),
 });
 
-export const Route = createFileRoute("/kesfet")({
+export const Route = createFileRoute("/discover")({
   validateSearch: tabSchema,
   component: DiscoverPage,
 });
@@ -119,7 +119,7 @@ function DiscoverPage() {
 
   function setTab(next: "forYou" | "programs" | "people" | "exercises") {
     void navigate({
-      to: "/kesfet",
+      to: "/discover",
       search: next === "forYou" ? {} : { tab: next },
       replace: true,
     });

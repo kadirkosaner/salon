@@ -29,7 +29,7 @@ if ((await pws.count()) > 1) await pws.nth(1).fill(password);
 await page.locator('button[type="submit"]').click();
 await page.waitForTimeout(4000);
 
-await go("/kesfet");
+await go("/discover");
 const startBtns = page.getByRole("button", { name: /Başla|Start|Seç|Al|Kopyala/i });
 if (await startBtns.count()) {
   await startBtns.first().click();
@@ -54,7 +54,7 @@ if (m) {
 }
 console.log("next_date", dateIso);
 
-const wpath = dateIso ? `/antrenman?date=${dateIso}` : "/antrenman";
+const wpath = dateIso ? `/workout?date=${dateIso}` : "/workout";
 await go(wpath);
 await page.waitForTimeout(2000);
 await page.screenshot({ path: "/workspace/screenshots/phase3-day.png", fullPage: true });

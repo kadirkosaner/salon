@@ -16,7 +16,7 @@ import {
 import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { Spinner } from "@/components/ui/spinner";
 
-export const Route = createFileRoute("/profil/duzenle")({
+export const Route = createFileRoute("/profile/edit")({
   component: EditProfilePage,
 });
 
@@ -167,14 +167,14 @@ function EditProfilePage() {
         },
       });
       toast.success(t("common.saved"));
-      void navigate({ to: "/profil" });
+      void navigate({ to: "/profile" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("common.error");
-      if (/kullanıcı|username|alınmış|taken|reserved/i.test(msg)) {
+      if (/username|taken|reserved/i.test(msg)) {
         setErrors({ username: msg });
-      } else if (/birth|yaş|age|date/i.test(msg)) {
+      } else if (/birth|age|date/i.test(msg)) {
         setErrors({ birth_date: msg });
-      } else if (/height|boy/i.test(msg)) {
+      } else if (/height/i.test(msg)) {
         setErrors({ height_cm: msg });
       } else {
         toast.error(msg);
@@ -192,7 +192,7 @@ function EditProfilePage() {
       <div className="mb-3">
         <button
           type="button"
-          onClick={() => void navigate({ to: "/profil" })}
+          onClick={() => void navigate({ to: "/profile" })}
           className="inline-flex h-10 items-center gap-1 text-sm font-medium text-text-2"
         >
           <ChevronLeft className="size-4" />

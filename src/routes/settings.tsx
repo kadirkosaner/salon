@@ -47,7 +47,7 @@ import {
   type ThemeId,
 } from "@/lib/theme/tokens";
 
-export const Route = createFileRoute("/ayarlar")({ component: SettingsPage });
+export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 type Panel =
   | "menu"
@@ -318,7 +318,7 @@ function SettingsPage() {
                 icon={AtSign}
                 label={t("profile.editProfile")}
                 value={hub ? `@${hub.username}` : undefined}
-                onClick={() => void navigate({ to: "/profil/duzenle" })}
+                onClick={() => void navigate({ to: "/profile/edit" })}
               />
               <SettingsRow
                 icon={KeyRound}

@@ -40,7 +40,7 @@ if (page.url().includes("login") || page.url().includes("register")) {
   await page.waitForTimeout(3000);
 }
 
-await go("/profil");
+await go("/profile");
 await shot("phase2-claim.png");
 let body = await page.locator("body").innerText();
 console.log("CLAIM?", /kullanıcı adını|choose your username|claim/i.test(body), body.slice(0, 180).replace(/\n/g," | "));
@@ -58,7 +58,7 @@ await shot("phase2-profil.png");
 body = await page.locator("body").innerText();
 console.log("PROFIL", body.slice(0, 220).replace(/\n/g," | "));
 
-await go("/ayarlar");
+await go("/settings");
 await shot("phase2-ayarlar.png");
 const edit = page.getByText(/Profil düzenle|Edit profile/i).first();
 if (await edit.count()) {
@@ -71,13 +71,13 @@ if (await edit.count()) {
   await page.waitForTimeout(1200);
 }
 
-await go("/kesfet");
+await go("/discover");
 const people = page.getByRole("button", { name: /Sporcular|Athletes/i }).first();
 if (await people.count()) await people.click();
 await page.waitForTimeout(500);
 await shot("phase2-kesfet-people.png");
 
-await go("/profil");
+await go("/profile");
 await shot("phase2-profil-final.png");
 const final = await page.locator("body").innerText();
 console.log("FINAL", final.slice(0, 280).replace(/\n/g," | "));

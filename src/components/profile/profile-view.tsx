@@ -23,6 +23,7 @@ import {
 import { cloneProgram } from "@/lib/server/share";
 import { DetailModal } from "@/components/discover-panel";
 import { cn, formatDate } from "@/lib/utils";
+import { bmiBand, calcBmi } from "@/lib/bmi";
 
 type Tab = "activity" | "programs" | "stats";
 
@@ -131,12 +132,23 @@ export function ProfileView({
   const heatHasData = hub.heatmap.some((d) => d.count > 0);
   const age = ageFromBirth(hub.birth_date);
   const heightLabel = formatHeight(hub.height_cm, hub.unit_system);
+  const bmi = calcBmi(hub.measurement?.body_weight, hub.height_cm);
+  const bmiLabel =
+    bmi == null
+      ? null
+      : bmiBand(bmi) === "under"
+        ? t("profile.bmiUnder")
+        : bmiBand(bmi) === "normal"
+          ? t("profile.bmiNormal")
+          : bmiBand(bmi) === "over"
+            ? t("profile.bmiOver")
+            : t("profile.bmiObese");
 
   return (
     <div className="stagger-in w-full min-w-0 space-y-0 pb-2">
       {hub.is_self && !hub.username_confirmed && !dismissPick ? (
         <div className="mb-3 flex items-center gap-2 border border-accent/25 bg-accent/10 px-3 py-2.5 text-xs text-text">
-          <Link to="/profil/duzenle" className="min-w-0 flex-1 font-medium text-accent">
+          <Link to="/profile/edit" className="min-w-0 flex-1 font-medium text-accent">
             {t("profile.pickUsername")}
           </Link>
           <button
@@ -160,7 +172,7 @@ export function ProfileView({
         onFollow={() => void toggleFollow()}
       />
 
-      {(age != null || hub.sex || heightLabel) && (
+      {(age != null || hub.sex || heightLabel || bmi != null) && (
         <p className="border-b border-rule px-0 py-2 text-xs text-text-2">
           {[
             age != null ? t("profile.ageYears", { n: age }) : null,
@@ -168,6 +180,7 @@ export function ProfileView({
               ? t(`profile.sex.${hub.sex}`)
               : null,
             heightLabel,
+            bmi != null ? t("profile.bmiValue", { n: bmi }) : null,
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -225,7 +238,7 @@ export function ProfileView({
                     : t("profile.activityEmptyOther")
                 }
                 actionLabel={hub.is_self ? t("nav.workout") : undefined}
-                actionTo={hub.is_self ? "/antrenman" : undefined}
+                actionTo={hub.is_self ? "/workout" : undefined}
                 className="py-4"
               />
             </div>
@@ -384,7 +397,7 @@ export function ProfileView({
               </p>
               {hub.is_self ? (
                 <Link
-                  to="/olculer"
+                  to="/measurements"
                   className="flex items-center gap-1 text-xs font-medium text-accent"
                 >
                   <Ruler className="size-3.5" /> {t("common.edit")}
@@ -406,6 +419,18 @@ export function ProfileView({
                       {hub.measurement.body_weight} kg
                     </span>
                   )}
+                  {bmi != null ? (
+                    <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-sm text-accent">
+                      {t("profile.bmiValue", { n: bmi })}
+                      {bmiLabel ? (
+                        <span className="ms-1.5 text-[11px] font-medium text-text-2">
+                          · {bmiLabel}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : hub.is_self && hub.measurement.body_weight != null && hub.height_cm == null ? (
+                    <span className="text-xs text-text-3">{t("profile.bmiNeedData")}</span>
+                  ) : null}
                   {hub.measurement.waist != null && (
                     <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
                       {t("measure.waist")} {hub.measurement.waist}
@@ -427,6 +452,11 @@ export function ProfileView({
                     </span>
                   )}
                 </div>
+                {bmi != null ? (
+                  <p className="mt-2 text-[11px] leading-relaxed text-text-3">
+                    {t("profile.bmiHint")}
+                  </p>
+                ) : null}
               </div>
             )}
           </div>
@@ -481,7 +511,7 @@ function IdentityRow({
             </div>
             {hub.is_self ? (
               <Link
-                to="/profil/duzenle"
+                to="/profile/edit"
                 className="inline-flex h-11 shrink-0 items-center rounded-full border border-rule px-3 text-xs font-semibold text-text-2"
               >
                 {t("profile.edit")}

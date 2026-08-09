@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
 
-export const Route = createFileRoute("/bildirimler")({
+export const Route = createFileRoute("/notifications")({
   component: NotificationsPage,
 });
 

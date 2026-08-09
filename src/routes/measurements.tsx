@@ -25,7 +25,7 @@ import { qk } from "@/lib/query-keys";
 import { useI18n, useT } from "@/lib/i18n/provider";
 import { Spinner } from "@/components/ui/spinner";
 
-export const Route = createFileRoute("/olculer")({ component: MeasurementsPage });
+export const Route = createFileRoute("/measurements")({ component: MeasurementsPage });
 
 type Tab = "today" | "charts" | "history";
 

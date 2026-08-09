@@ -10,14 +10,14 @@ await page.request.post(BASE+"/api/auth/sign-up/email",{data:{email,password:"te
 await page.request.post(BASE+"/api/auth/sign-in/email",{data:{email,password:"testpass99"},headers:{Origin:BASE,"Content-Type":"application/json"}});
 
 const ok = {};
-await page.goto(BASE+"/kesfet",{waitUntil:"networkidle"});
+await page.goto(BASE+"/discover",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 await page.getByRole("button",{name:/^Seç$/}).first().click();
 await page.waitForTimeout(400);
 await page.getByRole("button",{name:/Seç ve ekle/i}).click();
 await page.waitForTimeout(4000);
 
-await page.goto(BASE+"/antrenman",{waitUntil:"networkidle"});
+await page.goto(BASE+"/workout",{waitUntil:"networkidle"});
 await page.waitForTimeout(2000);
 // go past week
 await page.getByLabel("Prev week").click();
@@ -67,7 +67,7 @@ if (ok.hasEdit) {
 }
 
 // preview gif - open preview
-await page.goto(BASE+"/antrenman",{waitUntil:"networkidle"});
+await page.goto(BASE+"/workout",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 const prev = page.getByRole("button",{name:/önizleme|Önizle/i}).first();
 if (await prev.count()) {

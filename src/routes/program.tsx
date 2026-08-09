@@ -204,7 +204,7 @@ function ProgramPage() {
               {t("program.create")}
             </button>
             <Link
-              to="/kesfet"
+              to="/discover"
               className={btnClass("secondary", "mt-2 w-full")}
             >
               <Search className="size-4" />

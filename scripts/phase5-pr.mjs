@@ -23,7 +23,7 @@ if ((await pws.count()) > 1) await pws.nth(1).fill("testpass123");
 await page.locator('button[type="submit"]').click();
 await page.waitForTimeout(4000);
 
-await go("/kesfet");
+await go("/discover");
 // click Seç on first featured card
 const sec = page.getByRole("button", { name: /^Seç$|^Select$|^Start$|^Use$/i });
 console.log("sec", await sec.count());
@@ -54,7 +54,7 @@ const m = home.match(/(\d{2})\.(\d{2})\.(\d{4})/);
 const dateIso = m ? `${m[3]}-${m[2]}-${m[1]}` : null;
 console.log("date", dateIso);
 
-await go(dateIso ? `/antrenman?date=${dateIso}` : "/antrenman");
+await go(dateIso ? `/workout?date=${dateIso}` : "/workout");
 await page.waitForTimeout(2200);
 await page.screenshot({ path: "/workspace/screenshots/phase5-workout.png", fullPage: true });
 let body = await page.locator("body").innerText();

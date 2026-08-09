@@ -10,18 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AntrenmanRouteImport } from './routes/antrenman'
-import { Route as AyarlarRouteImport } from './routes/ayarlar'
-import { Route as BildirimlerRouteImport } from './routes/bildirimler'
-import { Route as HosgeldinRouteImport } from './routes/hosgeldin'
-import { Route as KesfetRouteImport } from './routes/kesfet'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as OlculerRouteImport } from './routes/olculer'
-import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as MeasurementsRouteImport } from './routes/measurements'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProgramRouteImport } from './routes/program'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as WorkoutRouteImport } from './routes/workout'
 import { Route as ApiExMediaRouteImport } from './routes/api/ex-media'
-import { Route as ProfilDuzenleRouteImport } from './routes/profil.duzenle'
+import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -30,29 +30,9 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AntrenmanRoute = AntrenmanRouteImport.update({
-  id: '/antrenman',
-  path: '/antrenman',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AyarlarRoute = AyarlarRouteImport.update({
-  id: '/ayarlar',
-  path: '/ayarlar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BildirimlerRoute = BildirimlerRouteImport.update({
-  id: '/bildirimler',
-  path: '/bildirimler',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HosgeldinRoute = HosgeldinRouteImport.update({
-  id: '/hosgeldin',
-  path: '/hosgeldin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KesfetRoute = KesfetRouteImport.update({
-  id: '/kesfet',
-  path: '/kesfet',
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -60,14 +40,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OlculerRoute = OlculerRouteImport.update({
-  id: '/olculer',
-  path: '/olculer',
+const MeasurementsRoute = MeasurementsRouteImport.update({
+  id: '/measurements',
+  path: '/measurements',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfilRoute = ProfilRouteImport.update({
-  id: '/profil',
-  path: '/profil',
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgramRoute = ProgramRouteImport.update({
@@ -80,15 +65,30 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkoutRoute = WorkoutRouteImport.update({
+  id: '/workout',
+  path: '/workout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiExMediaRoute = ApiExMediaRouteImport.update({
   id: '/api/ex-media',
   path: '/api/ex-media',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProfilDuzenleRoute = ProfilDuzenleRouteImport.update({
-  id: '/duzenle',
-  path: '/duzenle',
-  getParentRoute: () => ProfilRoute,
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProfileRoute,
 } as any)
 const UUsernameRoute = UUsernameRouteImport.update({
   id: '/u/$username',
@@ -103,53 +103,53 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/antrenman': typeof AntrenmanRoute
-  '/ayarlar': typeof AyarlarRoute
-  '/bildirimler': typeof BildirimlerRoute
-  '/hosgeldin': typeof HosgeldinRoute
-  '/kesfet': typeof KesfetRoute
+  '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
-  '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRouteWithChildren
+  '/measurements': typeof MeasurementsRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/welcome': typeof WelcomeRoute
+  '/workout': typeof WorkoutRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/profil/duzenle': typeof ProfilDuzenleRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/antrenman': typeof AntrenmanRoute
-  '/ayarlar': typeof AyarlarRoute
-  '/bildirimler': typeof BildirimlerRoute
-  '/hosgeldin': typeof HosgeldinRoute
-  '/kesfet': typeof KesfetRoute
+  '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
-  '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRouteWithChildren
+  '/measurements': typeof MeasurementsRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/welcome': typeof WelcomeRoute
+  '/workout': typeof WorkoutRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/profil/duzenle': typeof ProfilDuzenleRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/antrenman': typeof AntrenmanRoute
-  '/ayarlar': typeof AyarlarRoute
-  '/bildirimler': typeof BildirimlerRoute
-  '/hosgeldin': typeof HosgeldinRoute
-  '/kesfet': typeof KesfetRoute
+  '/discover': typeof DiscoverRoute
   '/login': typeof LoginRoute
-  '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRouteWithChildren
+  '/measurements': typeof MeasurementsRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/welcome': typeof WelcomeRoute
+  '/workout': typeof WorkoutRoute
   '/api/ex-media': typeof ApiExMediaRoute
-  '/profil/duzenle': typeof ProfilDuzenleRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -157,68 +157,68 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/antrenman'
-    | '/ayarlar'
-    | '/bildirimler'
-    | '/hosgeldin'
-    | '/kesfet'
+    | '/discover'
     | '/login'
-    | '/olculer'
-    | '/profil'
+    | '/measurements'
+    | '/notifications'
+    | '/profile'
     | '/program'
     | '/register'
+    | '/settings'
+    | '/welcome'
+    | '/workout'
     | '/api/ex-media'
-    | '/profil/duzenle'
+    | '/profile/edit'
     | '/u/$username'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/antrenman'
-    | '/ayarlar'
-    | '/bildirimler'
-    | '/hosgeldin'
-    | '/kesfet'
+    | '/discover'
     | '/login'
-    | '/olculer'
-    | '/profil'
+    | '/measurements'
+    | '/notifications'
+    | '/profile'
     | '/program'
     | '/register'
+    | '/settings'
+    | '/welcome'
+    | '/workout'
     | '/api/ex-media'
-    | '/profil/duzenle'
+    | '/profile/edit'
     | '/u/$username'
     | '/api/auth/$'
   id:
     | '__root__'
     | '/'
-    | '/antrenman'
-    | '/ayarlar'
-    | '/bildirimler'
-    | '/hosgeldin'
-    | '/kesfet'
+    | '/discover'
     | '/login'
-    | '/olculer'
-    | '/profil'
+    | '/measurements'
+    | '/notifications'
+    | '/profile'
     | '/program'
     | '/register'
+    | '/settings'
+    | '/welcome'
+    | '/workout'
     | '/api/ex-media'
-    | '/profil/duzenle'
+    | '/profile/edit'
     | '/u/$username'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AntrenmanRoute: typeof AntrenmanRoute
-  AyarlarRoute: typeof AyarlarRoute
-  BildirimlerRoute: typeof BildirimlerRoute
-  HosgeldinRoute: typeof HosgeldinRoute
-  KesfetRoute: typeof KesfetRoute
+  DiscoverRoute: typeof DiscoverRoute
   LoginRoute: typeof LoginRoute
-  OlculerRoute: typeof OlculerRoute
-  ProfilRoute: typeof ProfilRouteWithChildren
+  MeasurementsRoute: typeof MeasurementsRoute
+  NotificationsRoute: typeof NotificationsRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   ProgramRoute: typeof ProgramRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
+  WelcomeRoute: typeof WelcomeRoute
+  WorkoutRoute: typeof WorkoutRoute
   ApiExMediaRoute: typeof ApiExMediaRoute
   UUsernameRoute: typeof UUsernameRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -233,39 +233,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/antrenman': {
-      id: '/antrenman'
-      path: '/antrenman'
-      fullPath: '/antrenman'
-      preLoaderRoute: typeof AntrenmanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ayarlar': {
-      id: '/ayarlar'
-      path: '/ayarlar'
-      fullPath: '/ayarlar'
-      preLoaderRoute: typeof AyarlarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bildirimler': {
-      id: '/bildirimler'
-      path: '/bildirimler'
-      fullPath: '/bildirimler'
-      preLoaderRoute: typeof BildirimlerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hosgeldin': {
-      id: '/hosgeldin'
-      path: '/hosgeldin'
-      fullPath: '/hosgeldin'
-      preLoaderRoute: typeof HosgeldinRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kesfet': {
-      id: '/kesfet'
-      path: '/kesfet'
-      fullPath: '/kesfet'
-      preLoaderRoute: typeof KesfetRouteImport
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -275,18 +247,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/olculer': {
-      id: '/olculer'
-      path: '/olculer'
-      fullPath: '/olculer'
-      preLoaderRoute: typeof OlculerRouteImport
+    '/measurements': {
+      id: '/measurements'
+      path: '/measurements'
+      fullPath: '/measurements'
+      preLoaderRoute: typeof MeasurementsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profil': {
-      id: '/profil'
-      path: '/profil'
-      fullPath: '/profil'
-      preLoaderRoute: typeof ProfilRouteImport
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/program': {
@@ -303,6 +282,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workout': {
+      id: '/workout'
+      path: '/workout'
+      fullPath: '/workout'
+      preLoaderRoute: typeof WorkoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ex-media': {
       id: '/api/ex-media'
       path: '/api/ex-media'
@@ -310,12 +310,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiExMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/profil/duzenle': {
-      id: '/profil/duzenle'
-      path: '/duzenle'
-      fullPath: '/profil/duzenle'
-      preLoaderRoute: typeof ProfilDuzenleRouteImport
-      parentRoute: typeof ProfilRoute
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
     }
     '/u/$username': {
       id: '/u/$username'
@@ -334,29 +334,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface ProfilRouteChildren {
-  ProfilDuzenleRoute: typeof ProfilDuzenleRoute
+interface ProfileRouteChildren {
+  ProfileEditRoute: typeof ProfileEditRoute
 }
 
-const ProfilRouteChildren: ProfilRouteChildren = {
-  ProfilDuzenleRoute: ProfilDuzenleRoute,
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileEditRoute: ProfileEditRoute,
 }
 
-const ProfilRouteWithChildren =
-  ProfilRoute._addFileChildren(ProfilRouteChildren)
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AntrenmanRoute: AntrenmanRoute,
-  AyarlarRoute: AyarlarRoute,
-  BildirimlerRoute: BildirimlerRoute,
-  HosgeldinRoute: HosgeldinRoute,
-  KesfetRoute: KesfetRoute,
+  DiscoverRoute: DiscoverRoute,
   LoginRoute: LoginRoute,
-  OlculerRoute: OlculerRoute,
-  ProfilRoute: ProfilRouteWithChildren,
+  MeasurementsRoute: MeasurementsRoute,
+  NotificationsRoute: NotificationsRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   ProgramRoute: ProgramRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
+  WelcomeRoute: WelcomeRoute,
+  WorkoutRoute: WorkoutRoute,
   ApiExMediaRoute: ApiExMediaRoute,
   UUsernameRoute: UUsernameRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

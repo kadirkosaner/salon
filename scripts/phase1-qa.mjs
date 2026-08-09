@@ -42,12 +42,12 @@ const body = await page.locator("body").innerText();
 console.log("AFTER_AUTH", page.url(), "len", body.length, "snippet", body.slice(0, 120).replace(/\n/g, " | "));
 
 for (const [path, name] of [
-  ["/antrenman", "phase1-antrenman.png"],
+  ["/workout", "phase1-antrenman.png"],
   ["/program", "phase1-program.png"],
-  ["/kesfet", "phase1-kesfet.png"],
-  ["/profil", "phase1-profil.png"],
-  ["/ayarlar", "phase1-ayarlar.png"],
-  ["/olculer", "phase1-olculer.png"],
+  ["/discover", "phase1-kesfet.png"],
+  ["/profile", "phase1-profil.png"],
+  ["/settings", "phase1-ayarlar.png"],
+  ["/measurements", "phase1-olculer.png"],
 ]) {
   await page.goto(base + path, { waitUntil: "networkidle", timeout: 30000 });
   await page.waitForTimeout(900);

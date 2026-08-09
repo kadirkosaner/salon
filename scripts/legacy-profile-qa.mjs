@@ -36,7 +36,7 @@ page.on("response", async (res) => {
   } catch {}
 });
 
-await go("/profil");
+await go("/profile");
 await page.waitForTimeout(2500);
 // dismiss claim
 for (const name of [/Bu kullanıcı adını tut/i, /Keep/i, /Onayla/i, /Tamam/i, /Kaydet/i]) {
@@ -68,10 +68,10 @@ console.log("storage_keys", Object.keys(storage));
 
 // Call getMyProfileHub via tanstack server fn if possible - use page context
 // Fallback: open kesfet follow and inspect link hrefs
-await go("/kesfet");
+await go("/discover");
 await page.waitForTimeout(1500);
 // Follow someone then check their link - for self use profile settings
-await go("/ayarlar");
+await go("/settings");
 await page.waitForTimeout(1500);
 const abody = await page.locator("body").innerText();
 console.log("settings", abody.slice(0, 200).replace(/\n/g, " | "));

@@ -31,7 +31,7 @@ await page.waitForTimeout(3500);
 // Login forgot link
 await go("/login");
 // may redirect if still logged in - sign out via ayarlar
-await go("/ayarlar");
+await go("/settings");
 await page.waitForTimeout(1500);
 let body = await page.locator("body").innerText();
 console.log("SETTINGS", body.slice(0, 500).replace(/\n/g, " | "));
@@ -42,7 +42,7 @@ console.log("HAS_DELETE", /Hesabı sil|Delete account/i.test(body));
 await page.screenshot({ path: "/workspace/screenshots/phase5-settings.png" });
 
 // clone program and PR flow
-await go("/kesfet");
+await go("/discover");
 const startBtns = page.getByRole("button", { name: /Başla|Start|Seç|Al|Kopyala/i });
 if (await startBtns.count()) {
   await startBtns.first().click();
@@ -60,7 +60,7 @@ const m = home.match(/(\d{2})\.(\d{2})\.(\d{4})/);
 const dateIso = m ? `${m[3]}-${m[2]}-${m[1]}` : null;
 console.log("next", dateIso);
 
-await go(dateIso ? `/antrenman?date=${dateIso}` : "/antrenman");
+await go(dateIso ? `/workout?date=${dateIso}` : "/workout");
 await page.waitForTimeout(2000);
 // open first exercise if collapsed
 const exHeaders = page.locator("li button").filter({ hasText: /kg|set|×|rep/i });
@@ -105,7 +105,7 @@ console.log("TARGET_REPS", /Hedef|Target/i.test(body));
 
 // logout and check forgot
 const logout = page.getByRole("button", { name: /Çıkış|Log out|Sign out/i });
-await go("/ayarlar");
+await go("/settings");
 await page.waitForTimeout(800);
 const lo = page.getByRole("button", { name: /Çıkış|Log out|Sign out|logout/i });
 if (await lo.count()) {

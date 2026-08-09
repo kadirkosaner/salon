@@ -102,7 +102,7 @@ export function WorkoutDetailSheet({
 
           {data.is_owner ? (
             <Link
-              to="/antrenman"
+              to="/workout"
               search={{ date: data.date }}
               className="flex h-11 items-center justify-center rounded-xl border border-edge text-sm font-semibold"
               onClick={onClose}

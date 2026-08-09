@@ -54,7 +54,7 @@ if (await keep.count()) {
 }
 
 // try complete a workout via antrenman
-await go("/antrenman");
+await go("/workout");
 await shot("phase3-antrenman.png");
 body = await page.locator("body").innerText();
 console.log("ANTRENMAN", body.slice(0, 200).replace(/\n/g, " | "));

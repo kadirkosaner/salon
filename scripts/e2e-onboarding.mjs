@@ -130,7 +130,7 @@ try {
   await shotNamed("11-after-done");
 
   // Revisit hosgeldin — should bounce home
-  await page.goto(`${BASE}/hosgeldin`, { waitUntil: "networkidle" });
+  await page.goto(`${BASE}/welcome`, { waitUntil: "networkidle" });
   await page.waitForTimeout(2000);
   log(`revisit hosgeldin → ${page.url()}`);
   await shotNamed("12-revisit");

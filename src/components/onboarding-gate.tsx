@@ -7,11 +7,11 @@ import { Spinner } from "@/components/ui/spinner";
 const PUBLIC = new Set([
   "/login",
   "/register",
-  "/hosgeldin",
+  "/welcome",
 ]);
 
 /**
- * Redirects signed-in users with null onboarded_at to /hosgeldin.
+ * Redirects signed-in users with null onboarded_at to /welcome.
  * Skips public routes and the onboarding route itself.
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
@@ -39,8 +39,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (q.data && !q.data.onboarded && pathname !== "/hosgeldin") {
-    return <Navigate to="/hosgeldin" />;
+  if (q.data && !q.data.onboarded && pathname !== "/welcome") {
+    return <Navigate to="/welcome" />;
   }
   return <>{children}</>;
 }

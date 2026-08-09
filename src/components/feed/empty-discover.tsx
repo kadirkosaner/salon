@@ -120,7 +120,7 @@ export function FeedEmptyDiscover({
               <button
                 key={p.id}
                 type="button"
-                onClick={() => navigate({ to: "/kesfet" })}
+                onClick={() => navigate({ to: "/discover" })}
                 className="w-40 shrink-0 rounded-xl border border-rule bg-raised/50 p-3 text-left"
               >
                 <p className="truncate text-sm font-semibold">{p.name}</p>

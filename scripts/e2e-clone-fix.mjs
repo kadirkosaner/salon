@@ -10,7 +10,7 @@ await page.request.post(BASE+"/api/auth/sign-up/email",{data:{email,password:"te
 await page.request.post(BASE+"/api/auth/sign-in/email",{data:{email,password:"testpass99"},headers:{Origin:BASE,"Content-Type":"application/json"}});
 
 const ok = {};
-await page.goto(BASE+"/kesfet",{waitUntil:"networkidle"});
+await page.goto(BASE+"/discover",{waitUntil:"networkidle"});
 await page.waitForTimeout(1200);
 
 // Click Seç - should open in-app confirm not window.confirm
@@ -27,13 +27,13 @@ t = await page.locator("body").innerText();
 ok.hasProgram = /FULL SPLIT|Full Body|Upper|PUSH|PULL/i.test(t);
 
 // antrenman should have planned days
-await page.goto(BASE+"/antrenman",{waitUntil:"networkidle"});
+await page.goto(BASE+"/workout",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 t = await page.locator("body").innerText();
 ok.calendarFilled = /PUSH|PULL|BACAK|CORE|FULL|Upper|Lower/i.test(t) || /Planlandı|planned|hareket/i.test(t);
 
 // copy code button
-await page.goto(BASE+"/kesfet",{waitUntil:"networkidle"});
+await page.goto(BASE+"/discover",{waitUntil:"networkidle"});
 await page.waitForTimeout(1000);
 const codeBtn = page.getByRole("button",{name:/Kodu kopyala/i}).first();
 ok.codeBtn = (await codeBtn.count()) > 0;
@@ -45,7 +45,7 @@ if (ok.codeBtn) {
 }
 
 // clear future
-await page.goto(BASE+"/antrenman",{waitUntil:"networkidle"});
+await page.goto(BASE+"/workout",{waitUntil:"networkidle"});
 await page.waitForTimeout(800);
 page.once("dialog", d => d.accept());
 const eraser = page.getByLabel(/Gelecek seansları temizle/i);

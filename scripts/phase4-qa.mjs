@@ -28,7 +28,7 @@ if ((await pws.count()) > 1) await pws.nth(1).fill(password);
 await page.locator('button[type="submit"]').click();
 await page.waitForTimeout(3500);
 
-await go("/kesfet");
+await go("/discover");
 await page.waitForTimeout(2000);
 await page.screenshot({ path: "/workspace/screenshots/phase4-shelves.png", fullPage: false });
 let body = await page.locator("body").innerText();

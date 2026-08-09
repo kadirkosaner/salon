@@ -1,5 +1,5 @@
 /**
- * Regression: /bildirimler must not spam listNotifications.
+ * Regression: /notifications must not spam listNotifications.
  *   node scripts/notif-loop-qa.mjs
  */
 import { chromium } from "playwright";
@@ -51,7 +51,7 @@ await page.waitForTimeout(1000);
 
 listCalls = 0;
 anyNotif = 0;
-await page.goto(`${BASE}/bildirimler`, {
+await page.goto(`${BASE}/notifications`, {
   waitUntil: "domcontentloaded",
   timeout: 30000,
 });
@@ -61,7 +61,7 @@ const bildirimlerAny = anyNotif;
 
 listCalls = 0;
 anyNotif = 0;
-await page.goto(`${BASE}/ayarlar`, {
+await page.goto(`${BASE}/settings`, {
   waitUntil: "domcontentloaded",
   timeout: 30000,
 });

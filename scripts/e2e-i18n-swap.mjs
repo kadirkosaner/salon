@@ -12,7 +12,7 @@ await page.request.post(BASE+"/api/auth/sign-in/email",{data:{email,password:"te
 const ok = {};
 
 // Language switch
-await page.goto(BASE+"/ayarlar",{waitUntil:"networkidle"});
+await page.goto(BASE+"/settings",{waitUntil:"networkidle"});
 await page.waitForTimeout(1000);
 await page.getByRole("button",{name:"English"}).click();
 await page.waitForTimeout(500);
@@ -27,12 +27,12 @@ ok.trNav = /Panel|Antrenman|Ara|Program|Profil/.test(t);
 
 // Pick program + create workout + swap
 page.once("dialog", d => d.accept());
-await page.goto(BASE+"/kesfet",{waitUntil:"networkidle"});
+await page.goto(BASE+"/discover",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 await page.getByRole("button",{name:/^Seç$/}).first().click();
 await page.waitForTimeout(2000);
 
-await page.goto(BASE+"/antrenman",{waitUntil:"networkidle"});
+await page.goto(BASE+"/workout",{waitUntil:"networkidle"});
 await page.waitForTimeout(1500);
 const dayBtn = page.locator("button").filter({hasText:/PUSH|PULL|BACAK|CORE|FULL|Upper/i}).first();
 if (await dayBtn.count()) await dayBtn.click();

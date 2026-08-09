@@ -41,14 +41,14 @@ await login();
 
 // 1) notifications loop
 listNotif = 0;
-await page.goto(`${BASE}/bildirimler`, { waitUntil: "domcontentloaded" });
+await page.goto(`${BASE}/notifications`, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(5000);
 report.listNotifications5s = listNotif;
 await page.screenshot({ path: "/workspace/screenshots/qa-bildirimler.png", fullPage: true });
 
 // settings calm
 listNotif = 0;
-await page.goto(`${BASE}/ayarlar`, { waitUntil: "domcontentloaded" });
+await page.goto(`${BASE}/settings`, { waitUntil: "domcontentloaded" });
 await page.waitForTimeout(2500);
 report.listNotificationsOnAyarlar = listNotif;
 await page.screenshot({ path: "/workspace/screenshots/qa-ayarlar.png", fullPage: true });
@@ -70,7 +70,7 @@ if (await more.count()) {
   }
 }
 
-await page.goto(`${BASE}/antrenman`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/workout`, { waitUntil: "networkidle" });
 await page.waitForTimeout(1000);
 const primaryBtns = await page.locator('a,button').evaluateAll((els) => {
   return els
@@ -92,7 +92,7 @@ report.hasCreateFromProgram = /Create from today's program|Bugünkü programdan/
 await page.screenshot({ path: "/workspace/screenshots/qa-antrenman.png", fullPage: true });
 
 // 3) discover filters wrap (no overflow rail for filters)
-await page.goto(`${BASE}/kesfet`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
 await page.waitForTimeout(800);
 const filterOverflow = await page.evaluate(() => {
   const rails = [...document.querySelectorAll(".scroll-rail")];
@@ -112,7 +112,7 @@ await page.screenshot({ path: "/workspace/screenshots/qa-kesfet-filters.png", fu
 
 // desktop carousel scrollbar
 await page.setViewportSize({ width: 1280, height: 800 });
-await page.goto(`${BASE}/kesfet`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
 await page.waitForTimeout(600);
 const railScroll = await page.evaluate(() => {
   const rail = document.querySelector(".scroll-rail");
@@ -133,7 +133,7 @@ await page.screenshot({ path: "/workspace/screenshots/qa-kesfet-desktop.png", fu
 
 // 4) share code search
 await page.setViewportSize({ width: 390, height: 844 });
-await page.goto(`${BASE}/kesfet`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
 const search = page.locator('input[placeholder*="Search"], input[placeholder*="ara"], input[placeholder*="code"]').first();
 await search.fill("FULL6X");
 await page.waitForTimeout(800);

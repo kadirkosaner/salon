@@ -203,8 +203,8 @@ function FeedPage() {
         <button
           type="button"
           onClick={() => {
-            if (next) navigate({ to: "/antrenman", search: { date: next.date } });
-            else navigate({ to: "/antrenman" });
+            if (next) navigate({ to: "/workout", search: { date: next.date } });
+            else navigate({ to: "/workout" });
           }}
           className="flex w-full items-center gap-3 border-y border-rule py-3 text-left transition active:bg-raised/40"
         >
@@ -252,7 +252,7 @@ function FeedPage() {
               title={t("feed.emptyTitle")}
               hint={t("feed.emptyHint")}
               actionLabel={t("nav.discover")}
-              actionTo="/kesfet"
+              actionTo="/discover"
               actionVariant="soft"
               className="py-5"
             />

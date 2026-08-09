@@ -28,13 +28,11 @@ export function AppShell({
   title,
   subtitle,
   actions,
-  restTimerActive,
 }: {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
   actions?: React.ReactNode;
-  restTimerActive?: boolean;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = useCurrentUser();
@@ -55,7 +53,7 @@ export function AppShell({
       iconSolid: LayoutDashboardSolid,
     },
     {
-      to: "/antrenman",
+      to: "/workout",
       label: t("nav.workout"),
       icon: CalendarDays,
       iconSolid: CalendarDaysSolid,
@@ -78,10 +76,10 @@ export function AppShell({
     .slice(0, 2)
     .toUpperCase();
 
-  const onSettings = pathname === "/ayarlar";
-  const searchActive = pathname === "/kesfet";
-  const onProfile = pathname === "/profil" || pathname.startsWith("/u/");
-  const onNotif = pathname === "/bildirimler";
+  const onSettings = pathname === "/settings";
+  const searchActive = pathname === "/discover";
+  const onProfile = pathname === "/profile" || pathname.startsWith("/u/");
+  const onNotif = pathname === "/notifications";
 
   function navOn(to: string) {
     if (to === "/") return pathname === "/";
@@ -116,7 +114,7 @@ export function AppShell({
             <div className="flex shrink-0 items-center gap-2">
               {actions}
               <Link
-                to="/bildirimler"
+                to="/notifications"
                 className={cn(
                   "relative grid size-12 place-items-center rounded-2xl transition active:scale-95",
                   onNotif
@@ -137,7 +135,7 @@ export function AppShell({
                 ) : null}
               </Link>
               <Link
-                to="/ayarlar"
+                to="/settings"
                 className={cn(
                   "grid size-12 place-items-center rounded-2xl transition active:scale-95",
                   onSettings
@@ -159,7 +157,7 @@ export function AppShell({
         <main
           className={cn(
             "min-w-0 w-full flex-1 overflow-x-clip px-3 pt-3",
-            restTimerActive ? "rest-timer-pad" : "app-pad-bottom",
+            "app-pad-bottom",
           )}
         >
           {children}
@@ -181,7 +179,7 @@ export function AppShell({
                 <Link
                   key={item.to}
                   to={item.to}
-                  {...(item.to === "/antrenman"
+                  {...(item.to === "/workout"
                     ? { search: { date: todayISO() } }
                     : {})}
                   className={cn(
@@ -200,7 +198,7 @@ export function AppShell({
 
             <div className="relative flex min-h-16 items-center justify-center">
               <Link
-                to="/kesfet"
+                to="/discover"
                 aria-label={t("nav.discover")}
                 className={cn(
                   "grid size-14 place-items-center rounded-full shadow-lg shadow-black/40 ring-4 ring-canvas transition -translate-y-3",
@@ -239,7 +237,7 @@ export function AppShell({
             })}
 
             <Link
-              to="/profil"
+              to="/profile"
               aria-label={t("nav.profile")}
               className={cn(
                 "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium transition-colors sm:min-h-16 sm:text-[11px]",

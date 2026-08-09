@@ -33,7 +33,7 @@ await page.locator('button[type="submit"]').click();
 await page.waitForTimeout(4000);
 
 // Discover clone
-await go("/kesfet");
+await go("/discover");
 await page.waitForTimeout(1000);
 // click start/clone on first program
 const startBtns = page.getByRole("button", { name: /Başla|Start|Seç|Al|Kopyala|Clone|Use/i });
@@ -52,7 +52,7 @@ await shot("phase3-cloned.png");
 console.log("URL_after_clone", page.url());
 
 // Workout page
-await go("/antrenman");
+await go("/workout");
 await page.waitForTimeout(2000);
 await shot("phase3-workout-loaded.png");
 let body = await page.locator("body").innerText();
