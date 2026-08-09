@@ -401,6 +401,7 @@ export const en = {
   "workout.targetReps": "Target",
   "workout.title": "Workout",
   "workout.today": "Today",
+  "workout.todayShort": "Today",
   "workout.unskip": "Undo skip",
   "workout.unskipped": "Session planned again",
   "app.description": "Workout tracker — programs, set logging, measurements and progress.",

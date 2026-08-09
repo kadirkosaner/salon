@@ -547,6 +547,7 @@ export const zhTW = {
   "workout.targetReps": "目標",
   "workout.title": "訓練",
   "workout.today": "今天",
+  "workout.todayShort": "今天",
   "workout.unskip": "復原略過",
   "workout.unskipped": "課次已重新安排",
   "discover.panelHint": "從目錄選擇或輸入分享碼。由你決定 {startDay} 以及先做哪一課。",

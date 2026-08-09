@@ -547,6 +547,7 @@ export const ar = {
   "workout.targetReps": "الهدف",
   "workout.title": "التمرين",
   "workout.today": "اليوم",
+  "workout.todayShort": "اليوم",
   "workout.unskip": "التراجع عن التجاوز",
   "workout.unskipped": "أُعيد تخطيط الجلسة",
   "discover.panelHint": "اختر من الكتالوج أو أدخل رمز المشاركة. أنت تحدد {startDay} وأي جلسة أولًا.",

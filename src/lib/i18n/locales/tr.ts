@@ -401,6 +401,7 @@ export const tr = {
   "workout.targetReps": "Hedef",
   "workout.title": "Antrenman",
   "workout.today": "Bugün",
+  "workout.todayShort": "Bugün",
   "workout.unskip": "Atlamayı geri al",
   "workout.unskipped": "Seans tekrar planlandı",
   "app.description": "Antrenman takip uygulaması — program, set kaydı, ölçüler ve ilerleme.",

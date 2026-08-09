@@ -547,6 +547,7 @@ export const ja = {
   "workout.targetReps": "目標",
   "workout.title": "ワークアウト",
   "workout.today": "今日",
+  "workout.todayShort": "今日",
   "workout.unskip": "スキップを取消",
   "workout.unskipped": "セッションを再予定",
   "discover.panelHint": "カタログから選ぶか共有コードを入力。{startDay} と最初のセッションはあなたが決めます。",

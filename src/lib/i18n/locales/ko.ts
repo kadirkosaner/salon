@@ -547,6 +547,7 @@ export const ko = {
   "workout.targetReps": "목표",
   "workout.title": "운동",
   "workout.today": "오늘",
+  "workout.todayShort": "오늘",
   "workout.unskip": "건너뛰기 취소",
   "workout.unskipped": "세션이 다시 예정됨",
   "discover.panelHint": "카탈로그에서 고르거나 공유 코드를 입력하세요. {startDay}와 첫 세션은 직접 정합니다.",

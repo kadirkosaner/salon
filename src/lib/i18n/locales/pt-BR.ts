@@ -547,6 +547,7 @@ export const ptBR = {
   "workout.targetReps": "Meta",
   "workout.title": "Treino",
   "workout.today": "Hoje",
+  "workout.todayShort": "Hoje",
   "workout.unskip": "Desfazer pulo",
   "workout.unskipped": "Sessão planejada de novo",
   "discover.panelHint": "Escolha do catálogo ou digite um código. Você define {startDay} e qual sessão vem primeiro.",

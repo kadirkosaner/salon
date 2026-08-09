@@ -547,6 +547,7 @@ export const zhCN = {
   "workout.targetReps": "目标",
   "workout.title": "训练",
   "workout.today": "今天",
+  "workout.todayShort": "今天",
   "workout.unskip": "撤销跳过",
   "workout.unskipped": "课次已重新安排",
   "discover.panelHint": "从目录选择或输入分享码。由你决定 {startDay} 以及先做哪一课。",

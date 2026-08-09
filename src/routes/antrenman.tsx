@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Plus, Save, Search, SkipForward, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -490,45 +490,53 @@ function ContinuousCalendar({
   onSelect: (d: string) => void;
   onGoToday: () => void;
 }) {
-  const center = selected;
   const days = useMemo(() => {
     const arr: string[] = [];
-    for (let i = -10; i <= 21; i++) arr.push(addDaysISO(center, i));
+    for (let i = -10; i <= 21; i++) arr.push(addDaysISO(selected, i));
     return arr;
-  }, [center]);
+  }, [selected]);
 
   const scroller = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    selectedRef.current?.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
-  }, [selected]);
+  /** Center selected cell inside the strip only — never scroll the page. */
+  const centerSelected = useCallback(() => {
+    const root = scroller.current;
+    const el = selectedRef.current;
+    if (!root || !el) return;
+    const rootRect = root.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const delta =
+      elRect.left + elRect.width / 2 - (rootRect.left + rootRect.width / 2);
+    root.scrollLeft += delta;
+  }, []);
+
+  useLayoutEffect(() => {
+    centerSelected();
+    const id = window.requestAnimationFrame(() => centerSelected());
+    return () => window.cancelAnimationFrame(id);
+  }, [selected, days, centerSelected]);
 
   function tone(d: string): "done" | "missed" | "planned" | "empty" {
     const info = statusMap.get(d);
-    if (!info) {
-      if (d < today) return "empty";
-      return "empty";
-    }
+    if (!info) return "empty";
     if (info.status === "completed") return "done";
     if (info.status === "skipped") return "missed";
     if (d < today && info.status === "planned") return "missed";
     return "planned";
   }
 
+  const selectedFocus = statusMap.get(selected)?.day_name;
+
   return (
     <div className="rounded-2xl border border-rule bg-sunken p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="font-display text-lg tracking-wide">
             {formatDate(selected, locale)}
           </p>
-          <p className="text-[10px] text-text-3">
-            {t("workout.dayByDay")}
+          <p className="truncate text-[10px] text-text-3">
+            {selectedFocus ?? t("workout.dayByDay")}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -562,7 +570,7 @@ function ContinuousCalendar({
 
       <div
         ref={scroller}
-        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {days.map((d) => {
           const tn = tone(d);
@@ -574,6 +582,9 @@ function ContinuousCalendar({
             weekday: "short",
           });
           const dayNum = d.slice(8);
+          const label = info?.day_name
+            ? info.day_name.replace(/\s+/g, " ").slice(0, 8)
+            : null;
           return (
             <button
               key={d}
@@ -581,20 +592,38 @@ function ContinuousCalendar({
               type="button"
               onClick={() => onSelect(d)}
               title={info?.day_name ?? d}
+              aria-current={isToday ? "date" : undefined}
+              aria-pressed={isSel}
               className={cn(
-                "flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-2xl border px-1 py-2.5 transition active:scale-95",
-                isSel && "ring-2 ring-accent ring-offset-2 ring-offset-sunken",
-                tn === "done" && "border-success/40 bg-success/20 text-success",
-                tn === "missed" && "border-danger/40 bg-danger/15 text-danger",
-                tn === "planned" && "border-accent/30 bg-accent/10 text-accent",
-                tn === "empty" && "border-rule bg-raised/40 text-text-2",
-                isToday && tn === "empty" && "border-accent/50",
+                "relative flex w-[3.4rem] shrink-0 flex-col items-center gap-0.5 rounded-2xl border px-1 py-2 transition active:scale-95",
+                isSel &&
+                  "z-[1] border-accent bg-accent/15 text-accent shadow-[0_0_0_2px_color-mix(in_oklab,var(--color-accent)_55%,transparent)]",
+                !isSel && tn === "done" && "border-success/40 bg-success/20 text-success",
+                !isSel && tn === "missed" && "border-danger/40 bg-danger/15 text-danger",
+                !isSel && tn === "planned" && "border-accent/30 bg-accent/10 text-accent",
+                !isSel && tn === "empty" && "border-rule bg-raised/40 text-text-2",
+                isToday && !isSel && "border-accent/60",
               )}
             >
               <span className="text-[10px] font-medium uppercase opacity-80">
-                {dow}
+                {isToday ? t("workout.todayShort") : dow}
               </span>
               <span className="num text-base leading-none">{Number(dayNum)}</span>
+              {label ? (
+                <span className="max-w-full truncate text-[8px] font-semibold leading-tight opacity-80">
+                  {label}
+                </span>
+              ) : (
+                <span className="h-2.5" />
+              )}
+              {isToday ? (
+                <span
+                  className={cn(
+                    "absolute bottom-1 size-1 rounded-full",
+                    isSel ? "bg-accent" : "bg-accent/80",
+                  )}
+                />
+              ) : null}
             </button>
           );
         })}

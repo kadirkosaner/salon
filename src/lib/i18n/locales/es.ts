@@ -547,6 +547,7 @@ export const es = {
   "workout.targetReps": "Objetivo",
   "workout.title": "Entreno",
   "workout.today": "Hoy",
+  "workout.todayShort": "Hoy",
   "workout.unskip": "Deshacer salto",
   "workout.unskipped": "Sesión planificada de nuevo",
   "discover.panelHint": "Elige del catálogo o introduce un código. Tú decides {startDay} y qué sesión va primero.",

@@ -547,6 +547,7 @@ export const vi = {
   "workout.targetReps": "Mục tiêu",
   "workout.title": "Tập",
   "workout.today": "Hôm nay",
+  "workout.todayShort": "Hôm nay",
   "workout.unskip": "Hoàn tác bỏ qua",
   "workout.unskipped": "Buổi được lên lịch lại",
   "discover.panelHint": "Chọn từ catalogue hoặc nhập mã chia sẻ. Bạn chọn {startDay} và buổi nào trước.",

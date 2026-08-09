@@ -547,6 +547,7 @@ export const de = {
   "workout.targetReps": "Ziel",
   "workout.title": "Workout",
   "workout.today": "Heute",
+  "workout.todayShort": "Heute",
   "workout.unskip": "Überspringen rückgängig",
   "workout.unskipped": "Sitzung wieder geplant",
   "discover.panelHint": "Aus dem Katalog wählen oder Share-Code eingeben. Du legst {startDay} und die erste Sitzung fest.",

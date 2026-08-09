@@ -18,7 +18,7 @@ import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/i18n/provider";
 import { getUnreadNotificationCount } from "@/lib/server/notifications";
 import { qk } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
+import { cn, todayISO } from "@/lib/utils";
 
 /** Phone-frame column width — desktop stays a centered mobile shell. */
 const SHELL_MAX = "max-w-[480px]";
@@ -181,6 +181,9 @@ export function AppShell({
                 <Link
                   key={item.to}
                   to={item.to}
+                  {...(item.to === "/antrenman"
+                    ? { search: { date: todayISO() } }
+                    : {})}
                   className={cn(
                     "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
                     isOn ? "text-accent" : "text-text-2 hover:text-text",

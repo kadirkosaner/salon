@@ -547,6 +547,7 @@ export const id = {
   "workout.targetReps": "Target",
   "workout.title": "Latihan",
   "workout.today": "Hari ini",
+  "workout.todayShort": "Hari",
   "workout.unskip": "Batalkan lewati",
   "workout.unskipped": "Sesi direncanakan lagi",
   "discover.panelHint": "Pilih dari katalog atau masukkan kode berbagi. Kamu atur {startDay} dan sesi mana dulu.",
