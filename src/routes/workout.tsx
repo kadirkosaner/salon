@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Info, MoreHorizontal, Plus, Save, Search, SkipForward, Trash2 } from "@/components/icons";
+import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Info, MoreHorizontal, Plus, Save, Search, SkipForward, Trash2, Clock } from "@/components/icons";
 import { toast } from "sonner";
 import { z } from "zod";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -1015,10 +1015,10 @@ function WorkoutBody({
       {/* Sticky finish bar — sits flush above nav (no overlap) */}
       {workout.status !== "completed" && workout.status !== "skipped" ? (
         <div
-          className="fixed inset-x-0 z-[45] mx-auto flex w-full max-w-[480px] items-center gap-3 border-t border-rule bg-sunken/95 px-3 py-2.5 backdrop-blur-md"
+          className="fixed inset-x-0 z-[35] mx-auto flex w-full max-w-[480px] items-center gap-3 border-t border-rule bg-sunken/95 px-3 py-2.5 backdrop-blur-md"
           style={{
-            /* nav min-h-16 (4rem) + 1px rule gap — no overlap */
-            bottom: "calc(4rem + 1px + env(safe-area-inset-bottom, 0px))",
+            /* Clear bottom nav (4rem) + raised Discover FAB (~1.25rem) */
+            bottom: "calc(5.25rem + env(safe-area-inset-bottom, 0px))",
           }}
         >
           <div className="min-w-0 shrink-0">
@@ -1332,6 +1332,11 @@ function ExerciseCard({
         <span className="num shrink-0 text-[11px] text-text-2">
           {exercise.target_sets}×{exercise.target_rep_lo}–{exercise.target_rep_hi}
         </span>
+        {exercise.rest_sec != null && exercise.rest_sec > 0 ? (
+          <span className="num shrink-0 text-[10px] tabular-nums text-text-3">
+            {exercise.rest_sec}s
+          </span>
+        ) : null}
         <span className="num shrink-0 text-[11px] tabular-nums text-text-3">
           {doneCount}/{exercise.sets.length}
         </span>
@@ -1349,6 +1354,12 @@ function ExerciseCard({
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
               <MuscleBadge group={exercise.muscle_group} size="xs" />
               {exercise.load_tag ? <LoadTagBadge tag={exercise.load_tag} /> : null}
+              {exercise.rest_sec != null && exercise.rest_sec > 0 ? (
+                <span className="inline-flex items-center gap-0.5 rounded-full border border-rule bg-raised px-2 py-0.5 text-[10px] font-semibold tabular-nums text-text-2">
+                  <Clock className="size-3" />
+                  {t("workout.restSec", { n: exercise.rest_sec })}
+                </span>
+              ) : null}
             </div>
             <ExercisePreviewButton
               name={exercise.exercise_name}

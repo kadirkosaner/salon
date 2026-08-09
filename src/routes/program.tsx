@@ -445,7 +445,11 @@ function ProgramPage() {
                           <span className="num text-lg text-accent">
                             {ex.sets}×{ex.rep_lo}-{ex.rep_hi}
                           </span>
-                          <span className="text-xs text-text-2">{ex.rest_sec}s</span>
+                          {ex.rest_sec != null && ex.rest_sec > 0 ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-full border border-rule bg-raised px-2 py-0.5 text-[11px] font-semibold tabular-nums text-text-2">
+                              {ex.rest_sec}s
+                            </span>
+                          ) : null}
                           <LoadTagBadge tag={ex.load_tag} />
                           <ExercisePreviewButton
                             name={ex.exercise_name}

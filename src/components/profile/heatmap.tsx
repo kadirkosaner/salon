@@ -3,10 +3,34 @@ import { cn, formatDate } from "@/lib/utils";
 
 export type HeatDay = { date: string; count: number };
 
-/** Weeks of history shown (GitHub-style day grid — compact, not half a year). */
+/** Number of week columns (one cell per week — not per day). */
 const HEAT_WEEKS = 12;
 
-/** GitHub-style contribution grid for the last ~12 weeks of workouts. */
+type HeatWeek = {
+  /** Monday ISO of the week */
+  start: string;
+  end: string;
+  count: number;
+  /** future / incomplete trailing week */
+  partial: boolean;
+};
+
+function isoOf(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function startOfWeekMonday(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(12, 0, 0, 0);
+  const dow = (x.getDay() + 6) % 7; // Mon=0
+  x.setDate(x.getDate() - dow);
+  return x;
+}
+
+/** Weekly contribution strip — one cell per week for the last ~12 weeks. */
 export function WorkoutHeatmap({
   days,
   label,
@@ -18,36 +42,39 @@ export function WorkoutHeatmap({
   const { locale } = useI18n();
   const title = label ?? t("heatmap.last6mo");
   const byDate = new Map(days.map((d) => [d.date, d.count]));
+
   const today = new Date();
   today.setHours(12, 0, 0, 0);
+  const thisWeekStart = startOfWeekMonday(today);
 
-  const start = new Date(today);
-  start.setDate(start.getDate() - 7 * (HEAT_WEEKS - 1));
-  const dow = (start.getDay() + 6) % 7; // Monday-first
-  start.setDate(start.getDate() - dow);
-
-  const weeks: HeatDay[][] = [];
-  const cursor = new Date(start);
-  while (cursor <= today) {
-    const week: HeatDay[] = [];
-    for (let i = 0; i < 7; i++) {
-      const y = cursor.getFullYear();
-      const m = String(cursor.getMonth() + 1).padStart(2, "0");
-      const d = String(cursor.getDate()).padStart(2, "0");
-      const iso = `${y}-${m}-${d}`;
-      const future = cursor > today;
-      week.push({ date: iso, count: future ? -1 : (byDate.get(iso) ?? 0) });
+  const weeks: HeatWeek[] = [];
+  for (let i = HEAT_WEEKS - 1; i >= 0; i--) {
+    const start = new Date(thisWeekStart);
+    start.setDate(start.getDate() - 7 * i);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    let count = 0;
+    const cursor = new Date(start);
+    for (let d = 0; d < 7; d++) {
+      if (cursor <= today) {
+        count += byDate.get(isoOf(cursor)) ?? 0;
+      }
       cursor.setDate(cursor.getDate() + 1);
     }
-    weeks.push(week);
+    weeks.push({
+      start: isoOf(start),
+      end: isoOf(end),
+      count,
+      partial: end > today,
+    });
   }
 
   function cellClass(count: number) {
-    if (count < 0) return "bg-transparent";
     if (count === 0) return "bg-raised";
     if (count === 1) return "bg-accent/25";
-    if (count === 2) return "bg-accent/45";
-    if (count >= 3) return "bg-accent/75";
+    if (count === 2) return "bg-accent/40";
+    if (count === 3) return "bg-accent/55";
+    if (count >= 4) return "bg-accent/75";
     return "bg-raised";
   }
 
@@ -61,35 +88,31 @@ export function WorkoutHeatmap({
           <span>{t("heatmap.low")}</span>
           <span className="size-2.5 rounded-sm bg-raised" />
           <span className="size-2.5 rounded-sm bg-accent/25" />
-          <span className="size-2.5 rounded-sm bg-accent/45" />
+          <span className="size-2.5 rounded-sm bg-accent/55" />
           <span className="size-2.5 rounded-sm bg-accent/75" />
           <span>{t("heatmap.high")}</span>
         </div>
       </div>
-      <div className="overflow-x-auto pb-1">
-        <div className="inline-flex gap-1">
-          {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-1">
-              {week.map((day) => (
-                <div
-                  key={day.date}
-                  title={
-                    day.count < 0
-                      ? undefined
-                      : t("heatmap.sessionTitle", {
-                          date: formatDate(day.date, locale),
-                          count: day.count,
-                        })
-                  }
-                  className={cn(
-                    "size-3 rounded-[3px] sm:size-3.5",
-                    cellClass(day.count),
-                  )}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+      <div className="flex gap-1.5">
+        {weeks.map((w) => (
+          <div key={w.start} className="min-w-0 flex-1">
+            <div
+              title={t("heatmap.weekTitle", {
+                date: formatDate(w.start, locale),
+                count: w.count,
+              })}
+              className={cn(
+                "mx-auto aspect-square w-full max-w-8 rounded-md",
+                cellClass(w.count),
+                w.partial && w.count === 0 && "opacity-70",
+              )}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 flex justify-between text-[10px] text-text-3">
+        <span>{formatDate(weeks[0]!.start, locale)}</span>
+        <span>{t("heatmap.thisWeek")}</span>
       </div>
     </div>
   );

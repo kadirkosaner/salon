@@ -344,8 +344,8 @@ html[data-theme="carbon"][data-accent="ufuk"] {
 }
 
 .workout-finish-pad {
-  /* nav (4rem) + finish bar (~3.25rem) + gap */
-  padding-bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
+  /* nav+FAB (~5.25rem) + finish bar (~3.25rem) + gap */
+  padding-bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-sheet {
