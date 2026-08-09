@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   AtSign,
+  Eye,
   Bell,
   Check,
   ChevronLeft,
@@ -36,6 +37,7 @@ import {
   getMyProfileHub,
   type ProfileHub,
 } from "@/lib/server/social";
+import { setComparisonOptIn } from "@/lib/server/benchmarks";
 import { Spinner } from "@/components/ui/spinner";
 import { useTheme } from "@/lib/theme/provider";
 import {
@@ -68,6 +70,7 @@ function SettingsPage() {
   const [savingPw, setSavingPw] = useState(false);
   const [timeZone, setTimeZone] = useState("Europe/Istanbul");
   const [savingTz, setSavingTz] = useState(false);
+  const [compareOpt, setCompareOpt] = useState(true);
   const [hub, setHub] = useState<ProfileHub | null>(null);
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [hapticOn, setHapticOn] = useState(true);
@@ -323,6 +326,28 @@ function SettingsPage() {
                 onClick={() => setPanel("password")}
                 last
               />
+            </SettingsGroup>
+
+            <SettingsGroup label={t("settings.privacy")}>
+              <SettingsRow
+                icon={Eye}
+                label={t("compare.optIn")}
+                value={compareOpt ? t("common.yes") : t("common.no")}
+                onClick={() => {
+                  const next = !compareOpt;
+                  setCompareOpt(next);
+                  void setComparisonOptIn({ data: { optIn: next } })
+                    .then(() => toast.success(t("common.saved")))
+                    .catch(() => {
+                      setCompareOpt(!next);
+                      toast.error(t("common.error"));
+                    });
+                }}
+                last
+              />
+              <p className="px-4 pb-3 text-[11px] leading-relaxed text-text-3">
+                {t("compare.optInHint")}
+              </p>
             </SettingsGroup>
 
             <SettingsGroup label={t("settings.preferences")}>

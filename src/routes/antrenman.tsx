@@ -38,6 +38,9 @@ import { Sheet } from "@/components/ui/sheet";
 import { WorkoutSkeleton } from "@/components/ui/skeleton";
 import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
 import { haptic } from "@/lib/haptics";
+import { ComparisonStrip } from "@/components/workout/comparison-strip";
+import { getProgramSocial } from "@/lib/server/benchmarks";
+import { useQuery } from "@tanstack/react-query";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -472,6 +475,47 @@ function WorkoutPage() {
 
 /* ─── Continuous day strip ─── */
 
+
+function ProgramSocialLine({
+  t,
+}: {
+  t: (k: string, vars?: Record<string, string | number>) => string;
+}) {
+  const q = useQuery({
+    queryKey: ["program-social"] as const,
+    queryFn: () => getProgramSocial(),
+    staleTime: 5 * 60_000,
+  });
+  if (!q.data || (q.data.count === 0 && q.data.todayDone === 0)) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-3">
+      {q.data.count > 0 ? (
+        <span className="inline-flex items-center gap-1.5">
+          <span className="flex -space-x-1.5">
+            {q.data.following.slice(0, 4).map((f) => (
+              <span
+                key={f.id}
+                className="grid size-5 place-items-center overflow-hidden rounded-full border border-sunken bg-accent/20 text-[8px] font-semibold text-accent"
+                title={f.name}
+              >
+                {f.image ? (
+                  <img src={f.image} alt="" className="size-full object-cover" />
+                ) : (
+                  (f.name[0] ?? "?").toUpperCase()
+                )}
+              </span>
+            ))}
+          </span>
+          {t("compare.programCount", { n: q.data.count })}
+        </span>
+      ) : null}
+      {q.data.todayDone > 0 ? (
+        <span>{t("compare.todayDone", { n: q.data.todayDone })}</span>
+      ) : null}
+    </div>
+  );
+}
+
 function ContinuousCalendar({
   selected,
   today,
@@ -853,6 +897,8 @@ function WorkoutBody({
         <p className="text-[11px] text-text-3">{t("workout.skippedHint")}</p>
       ) : null}
 
+      <ProgramSocialLine t={t} />
+
       {workout.exercises.length === 0 ? (
         <p className="rounded-lg border border-rule bg-raised/40 p-4 text-sm text-text-2">
           {t("workout.emptyShell")}
@@ -1208,6 +1254,7 @@ function ExerciseCard({
               </div>
             );
           })}
+          <ComparisonStrip exerciseId={exercise.exercise_id} />
         </div>
       ) : null}
     </li>
