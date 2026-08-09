@@ -95,8 +95,14 @@ export function AppShell({
           "border-x border-rule/70 bg-canvas shadow-[0_0_40px_rgba(0,0,0,0.35)]",
         )}
       >
-        <header className="sticky top-[var(--grok-banner-h,0px)] z-30 border-b border-rule/80 bg-canvas/95 backdrop-blur-md">
+        <header
+          className="sticky top-[var(--grok-banner-h,0px)] z-30 border-b border-rule/80 bg-canvas/95 backdrop-blur-md"
+          style={{
+            paddingTop: "env(safe-area-inset-top, 0px)",
+          }}
+        >
           <div className="flex w-full items-center gap-2 px-3 py-2.5">
+
             <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/15 text-accent ring-1 ring-accent/15">
                 <ActivitySolid className="size-5" />

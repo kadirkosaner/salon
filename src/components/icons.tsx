@@ -55,6 +55,7 @@ import {
   Settings2,
   Share2,
   SkipForward,
+  Smartphone,
   Sparkles,
   Trash2,
   TrendingDown,
@@ -69,6 +70,8 @@ import {
   Weight,
   X,
 } from "lucide-react";
+
+
 
 export type IconProps = LucideProps;
 export type AppIcon = LucideIcon;
@@ -125,6 +128,7 @@ export {
   Settings2,
   Share2,
   SkipForward,
+  Smartphone,
   Sparkles,
   Trash2,
   TrendingDown,
@@ -139,6 +143,8 @@ export {
   Weight,
   X,
 };
+
+
 
 /** Filled glyph for active nav / liked / selected states. */
 function solid(Icon: LucideIcon): LucideIcon {

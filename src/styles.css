@@ -348,6 +348,39 @@ html[data-theme="carbon"][data-accent="ufuk"] {
   padding-bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* ── PWA / installed app shell ── */
+html {
+  /* Fill notch + home indicator when installed */
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+body {
+  min-height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  /* iOS long-press callout off on chrome */
+  -webkit-touch-callout: none;
+}
+
+/* Installed (standalone) — feel more like a native shell */
+@media (display-mode: standalone) {
+  body {
+    /* Grok banner is web-preview only; hide if still present */
+    --grok-banner-h: 0px;
+  }
+}
+
+
+/* Prevent iOS auto-zoom on focus for non-set inputs still under 16px */
+input,
+select,
+textarea {
+  font-size: max(1rem, 16px);
+}
+
+
 .mobile-sheet {
   max-height: 94dvh;
   border-top-left-radius: 1.25rem;

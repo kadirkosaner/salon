@@ -43,6 +43,8 @@ import {
 import { setComparisonOptIn, getComparisonOptIn } from "@/lib/server/benchmarks";
 import { Spinner } from "@/components/ui/spinner";
 import { useTheme } from "@/lib/theme/provider";
+import { InstallCard } from "@/components/pwa/install-card";
+
 import {
   accentsFor,
   type AccentId,
@@ -323,7 +325,10 @@ function SettingsPage() {
               </div>
             </div>
 
+            <InstallCard />
+
             <SettingsGroup label={t("settings.account")}>
+
               <SettingsRow
                 icon={AtSign}
                 label={t("profile.editProfile")}
