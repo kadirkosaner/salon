@@ -1,4 +1,6 @@
-import { MUSCLE_LABELS, type MuscleGroup } from "@/data/library";
+import { MUSCLE_KEYS, type MuscleGroup } from "@/data/library";
+import { useT } from "@/lib/i18n/provider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
 const TONE: Partial<Record<string, string>> = {
@@ -12,9 +14,13 @@ const TONE: Partial<Record<string, string>> = {
   diger: "border-line bg-surface2 text-dim",
 };
 
-export function muscleLabel(group: string | null | undefined): string {
-  if (!group) return MUSCLE_LABELS.diger;
-  return MUSCLE_LABELS[group as MuscleGroup] ?? group;
+export function muscleLabel(
+  group: string | null | undefined,
+  t: (k: MessageKey) => string,
+): string {
+  if (!group) return t("muscle.diger");
+  const key = MUSCLE_KEYS[group as MuscleGroup];
+  return key ? t(key) : group;
 }
 
 export function MuscleBadge({
@@ -26,14 +32,15 @@ export function MuscleBadge({
   className?: string;
   size?: "sm" | "xs";
 }) {
-  const key = group || "diger";
-  const label = muscleLabel(key);
+  const t = useT();
+  const slug = group || "diger";
+  const label = muscleLabel(slug, t);
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full border font-medium",
         size === "xs" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[11px]",
-        TONE[key] ?? TONE.diger,
+        TONE[slug] ?? TONE.diger,
         className,
       )}
     >

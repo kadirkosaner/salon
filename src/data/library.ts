@@ -500,43 +500,68 @@ export const MAIN_LIFTS = [
   "Barbell Shrug",
 ] as const;
 
+/** i18n keys: loadTag.{slug} — use t() at display time. */
+export const LOAD_TAG_KEYS: Record<LoadTag, `loadTag.${LoadTag}`> = {
+  agir: "loadTag.agir",
+  orta_agir: "loadTag.orta_agir",
+  orta: "loadTag.orta",
+  orta_hafif: "loadTag.orta_hafif",
+  hafif: "loadTag.hafif",
+};
+
+/** @deprecated use LOAD_TAG_KEYS + t() */
 export const LOAD_TAG_LABELS: Record<LoadTag, string> = {
-  agir: "Ağır",
-  orta_agir: "Orta-Ağır",
-  orta: "Orta",
-  orta_hafif: "Orta-Hafif",
-  hafif: "Hafif",
+  agir: "Heavy",
+  orta_agir: "Mod-Heavy",
+  orta: "Moderate",
+  orta_hafif: "Mod-Light",
+  hafif: "Light",
 };
 
+/** i18n keys: muscle.{slug} */
+export const MUSCLE_KEYS: Record<MuscleGroup, `muscle.${MuscleGroup}`> = {
+  gogus: "muscle.gogus",
+  sirt: "muscle.sirt",
+  omuz: "muscle.omuz",
+  kol: "muscle.kol",
+  bacak: "muscle.bacak",
+  trapez: "muscle.trapez",
+  core: "muscle.core",
+  diger: "muscle.diger",
+};
+
+/** @deprecated use MUSCLE_KEYS + t() */
 export const MUSCLE_LABELS: Record<MuscleGroup, string> = {
-  gogus: "Göğüs",
-  sirt: "Sırt",
-  omuz: "Omuz",
-  kol: "Kol",
-  bacak: "Bacak",
-  trapez: "Trapez",
+  gogus: "Chest",
+  sirt: "Back",
+  omuz: "Shoulders",
+  kol: "Arms",
+  bacak: "Legs",
+  trapez: "Traps",
   core: "Core",
-  diger: "Diğer",
+  diger: "Other",
 };
 
+/** Prefer dowLong(dow, locale) from @/lib/utils. Fallback English. */
 export const DOW_LABELS: Record<number, string> = {
-  1: "Pazartesi",
-  2: "Salı",
-  3: "Çarşamba",
-  4: "Perşembe",
-  5: "Cuma",
-  6: "Cumartesi",
-  7: "Pazar",
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+  6: "Saturday",
+  7: "Sunday",
 };
 
 
 /** Unique short weekday labels (ISO 1=Mon … 7=Sun). Avoids Pazartesi/Pazar and Cuma/Cumartesi clash. */
+/** Prefer dowShort(dow, locale) from @/lib/utils. */
 export const DOW_SHORT: Record<number, string> = {
-  1: "Pt",
-  2: "Sa",
-  3: "Ça",
-  4: "Pe",
-  5: "Cu",
-  6: "Ct",
-  7: "Pz",
+  1: "Mon",
+  2: "Tue",
+  3: "Wed",
+  4: "Thu",
+  5: "Fri",
+  6: "Sat",
+  7: "Sun",
 };

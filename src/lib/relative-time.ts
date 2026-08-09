@@ -1,12 +1,21 @@
-/** Compact relative time for feed cards (tr-friendly). */
-export function relativeTime(iso: string, now = Date.now()): string {
+/** Compact relative time via Intl (locale-aware). */
+export function relativeTime(
+  iso: string,
+  locale: string = "en",
+  now = Date.now(),
+): string {
   const t = Date.parse(iso.includes("T") ? iso : iso.replace(" ", "T") + "Z");
   if (Number.isNaN(t)) return "";
   const sec = Math.round((now - t) / 1000);
-  if (sec < 45) return "şimdi";
-  if (sec < 3600) return `${Math.floor(sec / 60)}dk`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}sa`;
-  if (sec < 86400 * 7) return `${Math.floor(sec / 86400)}g`;
-  if (sec < 86400 * 30) return `${Math.floor(sec / (86400 * 7))}hf`;
-  return `${Math.floor(sec / (86400 * 30))}ay`;
+  const rtf = new Intl.RelativeTimeFormat(locale === "pt-BR" ? "pt-BR" : locale, {
+    numeric: "auto",
+    style: "narrow",
+  });
+  const abs = Math.abs(sec);
+  if (abs < 45) return rtf.format(0, "second");
+  if (abs < 3600) return rtf.format(-Math.floor(sec / 60), "minute");
+  if (abs < 86400) return rtf.format(-Math.floor(sec / 3600), "hour");
+  if (abs < 86400 * 7) return rtf.format(-Math.floor(sec / 86400), "day");
+  if (abs < 86400 * 30) return rtf.format(-Math.floor(sec / (86400 * 7)), "week");
+  return rtf.format(-Math.floor(sec / (86400 * 30)), "month");
 }

@@ -1,4 +1,5 @@
-import { LOAD_TAG_LABELS, type LoadTag } from "@/data/library";
+import { LOAD_TAG_KEYS, type LoadTag } from "@/data/library";
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 const COLORS: Record<string, string> = {
@@ -10,7 +11,9 @@ const COLORS: Record<string, string> = {
 };
 
 export function LoadTagBadge({ tag, className }: { tag: string; className?: string }) {
-  const label = LOAD_TAG_LABELS[tag as LoadTag] ?? tag;
+  const t = useT();
+  const key = LOAD_TAG_KEYS[tag as LoadTag];
+  const label = key ? t(key) : tag;
   return (
     <span
       className={cn(

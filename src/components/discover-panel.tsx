@@ -12,10 +12,11 @@ import {
   type PublicProgramCard,
 } from "@/lib/server/share";
 import { generateWorkouts } from "@/lib/server/workouts";
-import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { todayISO, addDaysISO, cn, isoDow } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n, useT } from "@/lib/i18n/provider";
+import { dowLong, dowShort } from "@/lib/utils";
 import { AppSheet } from "@/components/ui/sheet";
 
 export type Pending = {
@@ -27,6 +28,8 @@ export type Pending = {
 
 /** Discover UI — catalog + share code. */
 export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
+  const t = useT();
+  const { locale } = useI18n();
   const [list, setList] = useState<PublicProgramCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -40,11 +43,11 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
     try {
       setList(await listDiscoverPrograms());
     } catch {
-      toast.error("Liste yüklenemedi");
+      toast.error(t("common.error"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void reload();
@@ -91,7 +94,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
       }
 
       const dayHint = r.startDayName
-        ? ` · ${r.startDayName} → ${DOW_LABELS[r.startDow] ?? ""}`
+        ? ` · ${r.startDayName} → ${dowLong(Number(r.startDow) || 1, locale)}`
         : "";
       toast.success(`“${r.name}” aktif${dayHint}`);
       onCloned();
@@ -104,7 +107,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
 
   async function copyCode(codeStr: string) {
     const ok = await copyText(codeStr);
-    if (ok) toast.success(`Kod kopyalandı: ${codeStr}`);
+    if (ok) toast.success(t("discover.codeCopied"));
     else
       toast.message(`Kod: ${codeStr}`, {
         description: "Manuel kopyala (ortam panoyu engelledi)",
@@ -124,7 +127,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
     <div className="w-full min-w-0 space-y-4">
       <div className="rounded-xl border border-line bg-surface p-3">
         <p className="text-xs leading-relaxed text-muted">
-          Katalogdan al veya arkadaş kodu gir. Başlangıç günü ve hangi seansla
+          Katalogdan al veya arkadaş kodu gir. {t("discover.startDay")} ve hangi seansla
           başlayacağını sen seçersin.
         </p>
         <div className="relative mt-3">
@@ -150,7 +153,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
             onClick={() => {
               const c = code.trim();
               if (c.length < 4) {
-                toast.error("Paylaşım kodunu gir");
+                toast.error(t("common.error"));
                 return;
               }
               const match = list.find(
@@ -272,6 +275,8 @@ export function StartProgramModal({
   onCancel: () => void;
   onConfirm: (opts: { startDate: string; startSourceDayId?: number }) => void;
 }) {
+  const t = useT();
+  const { locale } = useI18n();
   const [startDate, setStartDate] = useState(todayISO());
   const [startDayId, setStartDayId] = useState<number | null>(null);
   const [days, setDays] = useState<
@@ -313,14 +318,14 @@ export function StartProgramModal({
   const selected = days.find((d) => d.id === startDayId);
 
   return (
-    <AppSheet title="Programı başlat" onClose={onCancel}>
+    <AppSheet title={t("discover.startProgram")} onClose={onCancel}>
         <p className="-mt-1 mb-3 text-sm text-muted">
           <span className="font-medium text-text">“{pending.name}”</span>
         </p>
 
         <label className="mt-4 block space-y-1.5">
           <span className="text-xs font-semibold text-muted">
-            Başlangıç günü
+            {t("discover.startDay")}
           </span>
           <input
             type="date"
@@ -329,13 +334,13 @@ export function StartProgramModal({
             className="h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
           />
           <p className="text-[11px] text-dim">
-            {DOW_LABELS[previewDow]} · seanslar bu günden itibaren planlanır
+            {dowLong(previewDow, locale)} · {t("discover.schedFrom")}
           </p>
         </label>
 
         <div className="mt-4 space-y-1.5">
           <span className="text-xs font-semibold text-muted">
-            Hangi seansla başlansın?
+            {t("discover.whichSession")}
           </span>
           {loadingDays ? (
             <div className="space-y-2 py-2" aria-busy="true">
@@ -345,7 +350,7 @@ export function StartProgramModal({
             </div>
           ) : days.length === 0 ? (
             <p className="rounded-xl bg-surface2 px-3 py-3 text-xs text-muted">
-              Seans listesi yok — programın ilk günüyle başlar.
+              {t("discover.noSessionList")}
             </p>
           ) : (
             <ul className="max-h-52 space-y-1.5 overflow-y-auto">
@@ -372,7 +377,7 @@ export function StartProgramModal({
                         ) : null}
                       </span>
                       <span className="shrink-0 text-[11px] text-dim">
-                        {DOW_SHORT[d.dow] ?? DOW_LABELS[d.dow]?.slice(0, 2)}
+                        {dowShort(d.dow, locale)}
                       </span>
                     </button>
                   </li>
@@ -382,16 +387,14 @@ export function StartProgramModal({
           )}
           {selected && (
             <p className="text-[11px] leading-relaxed text-muted">
-              <span className="text-yellow">{selected.name}</span> →{" "}
-              {DOW_LABELS[previewDow]} ({startDate}) gününe oturur; diğer seanslar
-              aralıkları korunarak kayar.
+              {t("discover.sessionMaps", { name: selected.name, dow: dowLong(previewDow, locale), date: startDate })}
             </p>
           )}
         </div>
 
         <ul className="mt-3 space-y-1 text-xs text-muted">
-          <li>• Eski program silinir (üst üste binmez)</li>
-          <li className="text-green">• Geçmiş tamamlanan antrenmanlar kalır</li>
+          <li>• {t("discover.oldProgramRemoved")}</li>
+          <li className="text-green">• {t("discover.historyKept")}</li>
         </ul>
 
         <div className="mt-4 flex gap-2">
@@ -401,7 +404,7 @@ export function StartProgramModal({
             onClick={onCancel}
             className="h-12 flex-1 rounded-2xl bg-surface2 text-sm font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
           >
-            Vazgeç
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -419,7 +422,7 @@ export function StartProgramModal({
             ) : (
               <Download className="size-4" />
             )}
-            Başlat
+            {t("discover.start")}
           </button>
         </div>
     </AppSheet>
@@ -448,13 +451,14 @@ export function ProgramCard({
   onClone: () => void;
   onCopyCode: () => void;
 }) {
+  const t = useT();
   return (
     <article className="min-w-0 rounded-xl border border-line bg-surface p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-display truncate text-lg tracking-wide">{p.name}</p>
+          <p className="font-display line-clamp-2 text-lg leading-tight tracking-wide">{p.name}</p>
           <p className="text-[11px] text-muted">
-            {p.author_name} · {p.day_count} gün · {p.exercise_count} hareket
+            {p.author_name} · {t("discover.daysExercises", { days: p.day_count, exercises: p.exercise_count })}
           </p>
         </div>
         {p.is_catalog && (
@@ -474,7 +478,7 @@ export function ProgramCard({
           onClick={onOpen}
           className="h-12 flex-1 rounded-2xl bg-surface2 text-sm font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
         >
-          İncele
+          {t("discover.inspect")}
         </button>
         {!p.is_own && (
           <button
@@ -484,7 +488,7 @@ export function ProgramCard({
             className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-yellow text-sm font-semibold text-bg shadow-[0_4px_14px_rgba(245,197,66,0.28)] active:scale-[0.98] disabled:opacity-60"
           >
             <Download className="size-3.5" />
-            Seç
+            {t("discover.select")}
           </button>
         )}
         {p.share_code && (
@@ -492,7 +496,7 @@ export function ProgramCard({
             type="button"
             className="num flex h-12 shrink-0 items-center gap-1.5 rounded-2xl bg-surface2 px-3 text-xs font-semibold text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:text-yellow"
             onClick={onCopyCode}
-            aria-label="Kodu kopyala"
+            aria-label={t("discover.copyCode")}
           >
             <Copy className="size-3.5" />
             {p.share_code}
@@ -514,6 +518,8 @@ export function DetailModal({
   onClose: () => void;
   onClone: (name: string) => void;
 }) {
+  const t = useT();
+  const { locale } = useI18n();
   const [data, setData] = useState<Awaited<
     ReturnType<typeof getPublicProgramDetail>
   > | null>(null);
@@ -560,7 +566,7 @@ export function DetailModal({
                   <p className="font-display text-base">
                     {d.name}{" "}
                     <span className="text-xs font-sans text-muted">
-                      {DOW_LABELS[d.dow]}
+                      {dowLong(d.dow, locale)}
                     </span>
                   </p>
                   <ul className="mt-2 space-y-2">
@@ -598,16 +604,10 @@ export function DetailModal({
                 ) : (
                   <Download className="size-4" />
                 )}
-                Seç — başlangıç ayarla
+                {t("discover.selectToStart")}
               </button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-2 h-11 w-full rounded-lg border border-line text-sm text-muted"
-            >
-              Kapat
-            </button>
+
           </>
         )}
     </AppSheet>

@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/activity";
 import { relativeTime } from "@/lib/relative-time";
 import { Spinner } from "@/components/ui/spinner";
+import { useI18n } from "@/lib/i18n/provider";
 
 type Comment = {
   id: number;
@@ -31,6 +32,7 @@ export function CommentSheet({
   onClose: () => void;
   onAdded: () => void;
 }) {
+  const { locale } = useI18n();
   const [rows, setRows] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
@@ -103,7 +105,7 @@ export function CommentSheet({
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xs font-semibold">{c.name}</span>
                     <span className="text-[10px] text-dim">
-                      {relativeTime(c.created_at)}
+                      {relativeTime(c.created_at, locale)}
                     </span>
                   </div>
                   <p className="mt-0.5 text-sm leading-snug">{c.body}</p>

@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
-import { useT } from "@/lib/i18n/provider";
+import { useI18n } from "@/lib/i18n/provider";
 import { btnClass } from "@/components/ui/btn";
 import { LoadTagBadge } from "@/components/load-tag";
 import { MuscleBadge } from "@/components/muscle-badge";
@@ -54,9 +54,8 @@ import {
 } from "@/lib/server/exercises";
 import { abandonProgram } from "@/lib/server/share";
 import { clearFutureWorkouts } from "@/lib/server/workouts";
-import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { qk } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
+import { cn, dowLong, dowShort } from "@/lib/utils";
 
 export const Route = createFileRoute("/program")({
   component: ProgramPage,
@@ -65,7 +64,7 @@ export const Route = createFileRoute("/program")({
 function ProgramPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
-  const t = useT();
+  const { t, locale } = useI18n();
   const qc = useQueryClient();
 
   const [program, setProgram] = useState<ProgramDetail | null>(null);
@@ -253,27 +252,22 @@ function ProgramPage() {
                       className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-surface2"
                       onClick={() => {
                         setMoreOpen(false);
-                        if (
-                          !confirm(
-                            "Bugünden itibaren planlanan (ve atlanan) seanslar silinir. Tamamlanan geçmiş KALIR. Devam?",
-                          )
-                        )
-                          return;
+                        if (!confirm(t("workout.clearFutureConfirm"))) return;
                         void clearFutureWorkouts()
                           .then((r) => {
                             toast.success(
                               r.deleted === 0
-                                ? "Temizlenecek gelecek seans yok"
-                                : `${r.deleted} gelecek seans silindi (geçmiş duruyor)`,
+                                ? t("workout.clearFutureNone")
+                                : t("workout.clearFutureDone", { n: r.deleted }),
                             );
                           })
                           .catch((e) =>
-                            toast.error(e instanceof Error ? e.message : "Hata"),
+                            toast.error(e instanceof Error ? e.message : t("common.error")),
                           );
                       }}
                     >
                       <Eraser className="size-4 text-muted" />
-                      Gelecek seansları temizle
+                      {t("program.clearFuture")}
                     </button>
                     <button
                       type="button"
@@ -301,7 +295,7 @@ function ProgramPage() {
                       }}
                     >
                       <Trash2 className="size-4" />
-                      Programı terk et
+                      {t("program.abandon")}
                     </button>
                   </div>
                 </>
@@ -328,7 +322,7 @@ function ProgramPage() {
                   )}
                 >
                   <span className="text-[9px] text-muted">
-                    {DOW_SHORT[dow] ?? DOW_LABELS[dow]?.slice(0, 2)}
+                    {dowShort(dow, locale)}
                   </span>
                   <span
                     className={cn(
@@ -369,14 +363,14 @@ function ProgramPage() {
                 let free = 1;
                 while (used.has(free) && free <= 7) free += 1;
                 if (free > 7) {
-                  toast.error("Haftada en fazla 7 gün. Önce bir günü sil veya değiştir.");
+                  toast.error(t("program.maxDays"));
                   return;
                 }
                 const r = await addProgramDay({
                   data: {
                     programId: program.id,
                     dow: free,
-                    name: `Gün ${program.days.length + 1}`,
+                    name: t("program.dayN", { n: program.days.length + 1 }),
                   },
                 });
                 await reload();
@@ -384,7 +378,7 @@ function ProgramPage() {
               }}
               className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-line px-3 py-2 text-sm text-muted"
             >
-              <Plus className="size-3.5" /> Gün
+              <Plus className="size-3.5" /> {t("program.day")}
             </button>
           </div>
 
@@ -394,7 +388,7 @@ function ProgramPage() {
                 <div className="min-w-0">
                   <p className="font-display text-xl tracking-wide">{day.name}</p>
                   <p className="text-xs text-muted">
-                    {DOW_LABELS[day.dow]}
+                    {dowLong(day.dow, locale)}
                     {day.focus ? ` · ${day.focus}` : ""}
                   </p>
                 </div>
@@ -402,7 +396,7 @@ function ProgramPage() {
                   type="button"
                   onClick={() => setDaySettingsOpen(true)}
                   className="grid size-10 place-items-center rounded-lg border border-line text-muted"
-                  aria-label="Gün ayarı"
+                  aria-label={t("program.daySettings")}
                 >
                   <Settings2 className="size-4" />
                 </button>
@@ -450,7 +444,7 @@ function ProgramPage() {
                           className="grid size-11 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
 
                           onClick={() => void move(ex.id, -1)}
-                          aria-label="Yukarı"
+                          aria-label={t("program.moveUp")}
                         >
                           <ChevronUp className="size-4" />
                         </button>
@@ -459,7 +453,7 @@ function ProgramPage() {
                           className="grid size-11 place-items-center rounded-2xl bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
 
                           onClick={() => void move(ex.id, 1)}
-                          aria-label="Aşağı"
+                          aria-label={t("program.moveDown")}
                         >
                           <ChevronDown className="size-4" />
                         </button>
@@ -472,13 +466,13 @@ function ProgramPage() {
 
                         onClick={() => setEditing(ex)}
                       >
-                        Düzenle
+                        {t("common.edit")}
                       </button>
                       <button
                         type="button"
                         className="grid size-10 place-items-center rounded-lg border border-line text-red"
                         onClick={() => void removeEx(ex.id)}
-                        aria-label="Sil"
+                        aria-label={t("common.delete")}
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -505,7 +499,7 @@ function ProgramPage() {
           onClose={() => setEditing(null)}
           onSave={async (patch) => {
             await updateProgramExercise({ data: { id: editing.id, ...patch } });
-            toast.success("Kaydedildi");
+            toast.success(t("common.saved"));
             setEditing(null);
             await reload();
           }}
@@ -547,7 +541,7 @@ function ProgramPage() {
           onSaved={async () => {
             setScheduleOpen(false);
             await reload();
-            toast.success("Takvim güncellendi");
+            toast.success(t("program.scheduleUpdated"));
           }}
         />
       )}
@@ -557,7 +551,7 @@ function ProgramPage() {
           onClose={() => setDaySettingsOpen(false)}
           onSave={async (patch) => {
             await updateProgramDay({ data: { id: day.id, ...patch } });
-            toast.success("Kaydedildi");
+            toast.success(t("common.saved"));
             setDaySettingsOpen(false);
             await reload();
           }}

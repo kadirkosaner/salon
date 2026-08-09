@@ -5,20 +5,55 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDateTR(date: string | Date): string {
-  return formatDate(date, "tr");
+/** BCP47 tag for Intl from app locale id */
+export function localeTag(locale: string = "en"): string {
+  if (locale === "pt-BR") return "pt-BR";
+  if (locale === "zh-Hans") return "zh-CN";
+  return locale || "en";
 }
 
-export function formatDate(date: string | Date, locale: string = "tr"): string {
+/** Medium date with weekday — unambiguous across locales (e.g. Sun, 9 Aug 2026). */
+export function formatDate(date: string | Date, locale: string = "en"): string {
   const d =
     typeof date === "string"
       ? new Date(date + (date.length === 10 ? "T12:00:00" : ""))
       : date;
-  const tag = locale === "en" ? "en-GB" : "tr-TR";
-  return d.toLocaleDateString(tag, {
-    day: "2-digit",
-    month: "2-digit",
+  return d.toLocaleDateString(localeTag(locale), {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
     year: "numeric",
+  });
+}
+
+/** @deprecated use formatDate(date, locale) */
+export function formatDateTR(date: string | Date): string {
+  return formatDate(date, "tr");
+}
+
+export function formatNumber(
+  n: number,
+  locale: string = "en",
+  opts?: Intl.NumberFormatOptions,
+): string {
+  return n.toLocaleString(localeTag(locale), opts);
+}
+
+/** ISO weekday 1=Mon … 7=Sun → long name in locale */
+export function dowLong(dow: number, locale: string = "en"): string {
+  // 2024-01-01 is Monday
+  const d = new Date(Date.UTC(2024, 0, dow)); // 1→Mon
+  return d.toLocaleDateString(localeTag(locale), {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+}
+
+export function dowShort(dow: number, locale: string = "en"): string {
+  const d = new Date(Date.UTC(2024, 0, dow));
+  return d.toLocaleDateString(localeTag(locale), {
+    weekday: "short",
+    timeZone: "UTC",
   });
 }
 
@@ -67,11 +102,14 @@ export function remapDow(
   return ((startDateDow - 1 + rel) % 7) + 1;
 }
 
-/** Short chart tick: YYYY-MM-DD → DD.MM */
-export function formatChartDate(iso: string): string {
+/** Short chart tick: YYYY-MM-DD → locale-ish short */
+export function formatChartDate(iso: string, locale: string = "en"): string {
   if (iso.length >= 10) {
-    const [, m, d] = iso.slice(0, 10).split("-");
-    return `${d}.${m}`;
+    const d = new Date(iso.slice(0, 10) + "T12:00:00");
+    return d.toLocaleDateString(localeTag(locale), {
+      day: "2-digit",
+      month: "2-digit",
+    });
   }
   if (iso.includes("-") && iso.length <= 5) {
     const [m, d] = iso.split("-");

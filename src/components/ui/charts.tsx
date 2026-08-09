@@ -48,7 +48,7 @@ function ChartTip({
             <span className="num text-sm text-text">
               {valueFmt
                 ? valueFmt(Number(p.value), p.name)
-                : Number(p.value).toLocaleString("tr-TR")}
+                : Number(p.value).toLocaleString()}
             </span>
           </div>
         ))}
@@ -103,7 +103,7 @@ export function ProgressAreaChart({
   yKey,
   color = ACCENT,
   xFormatter,
-  valueLabel = "Değer",
+  valueLabel = "Value",
   valueUnit = "",
   emptyHint,
 }: {
@@ -152,7 +152,7 @@ export function ProgressAreaChart({
               Son
             </p>
             <p className="num text-2xl leading-none text-text">
-              {last.toLocaleString("tr-TR")}
+              {last.toLocaleString()}
               <span className="ml-1 text-sm font-normal text-muted">{valueUnit}</span>
             </p>
           </div>
@@ -161,7 +161,7 @@ export function ProgressAreaChart({
               className={`num text-sm ${delta > 0 ? "text-green" : delta < 0 ? "text-red" : "text-muted"}`}
             >
               {delta > 0 ? "+" : ""}
-              {delta.toLocaleString("tr-TR")} {valueUnit}
+              {delta.toLocaleString()} {valueUnit}
             </p>
           )}
         </div>
@@ -197,7 +197,7 @@ export function ProgressAreaChart({
                 <ChartTip
                   labelFmt={xFormatter}
                   valueFmt={(v) =>
-                    `${v.toLocaleString("tr-TR")}${valueUnit ? ` ${valueUnit}` : ""} · ${valueLabel}`
+                    `${v.toLocaleString()}${valueUnit ? ` ${valueUnit}` : ""} · ${valueLabel}`
                   }
                 />
               }
@@ -259,7 +259,7 @@ export function MultiLineChart({
               <ChartTip
                 labelFmt={xFormatter}
                 valueFmt={(v, name) =>
-                  `${v.toLocaleString("tr-TR")} cm${name ? ` · ${name}` : ""}`
+                  `${v.toLocaleString()} cm${name ? ` · ${name}` : ""}`
                 }
               />
             }
@@ -312,7 +312,7 @@ export function VolumeBarChart({
               cursor={{ fill: "rgba(242,194,48,0.06)" }}
               content={
                 <ChartTip
-                  valueFmt={(v) => `${Number(v).toLocaleString("tr-TR")} kg`}
+                  valueFmt={(v) => `${Number(v).toLocaleString()} kg`}
                 />
               }
             />
@@ -359,7 +359,7 @@ function MiniStat({
 
 function fmtTon(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}t`;
-  return n.toLocaleString("tr-TR");
+  return n.toLocaleString();
 }
 
 export { formatChartDate } from "@/lib/utils";

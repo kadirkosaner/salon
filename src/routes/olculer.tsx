@@ -20,9 +20,9 @@ import {
   listMeasurements,
   saveMeasurement,
 } from "@/lib/server/measurements";
-import { cn, formatChartDate, formatDateTR, todayISO } from "@/lib/utils";
+import { cn, formatChartDate, formatDate, todayISO } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
-import { useT } from "@/lib/i18n/provider";
+import { useI18n, useT } from "@/lib/i18n/provider";
 import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/olculer")({ component: MeasurementsPage });
@@ -62,6 +62,7 @@ function deltaOf(
 
 function MeasurementsPage() {
   const t = useT();
+  const { locale } = useI18n();
   const METRICS = metricsFor(t);
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
@@ -147,7 +148,7 @@ function MeasurementsPage() {
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     if (!bw && !waist && !chest && !arm && !thigh) {
-      toast.error("En az bir değer gir");
+      toast.error(t("measure.needValue"));
       return;
     }
     setSaving(true);
@@ -162,11 +163,11 @@ function MeasurementsPage() {
           thigh: thigh === "" ? null : Number(thigh),
         },
       });
-      toast.success("Ölçüm kaydedildi");
+      toast.success(t("measure.saved"));
       await reload();
       setTab("charts");
     } catch {
-      toast.error("Kayıt başarısız");
+      toast.error(t("measure.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -188,11 +189,11 @@ function MeasurementsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-                    Son ağırlık
+                    {t("measure.lastWeight")}
                   </p>
                   <div className="mt-1 flex items-end gap-2">
                     <span className="num font-display text-5xl leading-none tracking-wide text-yellow">
-                      {weightNow != null ? weightNow : "—"}
+                      {weightNow != null ? weightNow : t("measure.noValue")}
                     </span>
                     {weightNow != null && (
                       <span className="mb-1 text-sm text-muted">kg</span>
@@ -200,18 +201,18 @@ function MeasurementsPage() {
                   </div>
                   <p className="mt-2 text-xs text-muted">
                     {latest
-                      ? formatDateTR(latest.date)
-                      : "Henüz kayıt yok · Giriş’ten ekle"}
-                    {rows.length > 0 ? ` · ${rows.length} kayıt` : ""}
+                      ? formatDate(latest.date, locale)
+                      : t("measure.noRecordsHint")}
+                    {rows.length > 0 ? ` · ${t("measure.recordsCount", { n: rows.length })}` : ""}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <DeltaPill value={weightDelta} unit="kg" label="önceki" />
+                  <DeltaPill value={weightDelta} unit="kg" label={t("measure.prev")} />
                   {totalWeightDelta != null && chronological.length > 2 && (
                     <DeltaPill
                       value={totalWeightDelta}
                       unit="kg"
-                      label="toplam"
+                      label={t("measure.total")}
                       subtle
                     />
                   )}
@@ -221,7 +222,7 @@ function MeasurementsPage() {
                     className="mt-1 flex h-10 items-center gap-1.5 rounded-full bg-yellow px-3.5 text-xs font-semibold text-bg"
                   >
                     <Plus className="size-3.5" />
-                    Yeni ölçüm
+                    {t("measure.new")}
                   </button>
                 </div>
               </div>
@@ -268,8 +269,8 @@ function MeasurementsPage() {
           <div className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-surface p-1">
             {(
               [
-                ["charts", "Özet"],
-                ["today", "Giriş"],
+                ["charts", t("measure.summary")],
+                ["today", t("measure.entry")],
                 ["history", t("measure.history")],
               ] as const
             ).map(([k, lab]) => (
@@ -290,11 +291,11 @@ function MeasurementsPage() {
           {tab === "today" && (
             <PageSection
               title={t("measure.enter")}
-              description="Aynı tarihte kayıt üzerine yazılır · son değerler önceden doldurulur"
+              description={t("measure.overwriteHint")}
             >
               <form onSubmit={onSave} className="space-y-3">
                 <label className="block space-y-1">
-                  <span className="text-xs text-muted">Tarih</span>
+                  <span className="text-xs text-muted">{t("measure.date")}</span>
                   <input
                     type="date"
                     value={date}
@@ -308,7 +309,7 @@ function MeasurementsPage() {
                   <div className="mb-2 flex items-center gap-2 text-yellow">
                     <Scale className="size-4" />
                     <span className="text-xs font-semibold uppercase tracking-wide">
-                      Vücut ağırlığı
+                      {t("measure.bodyWeight")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -318,7 +319,7 @@ function MeasurementsPage() {
                       step="0.1"
                       value={bw}
                       onChange={(e) => setBw(e.target.value)}
-                      placeholder="örn. 78.5"
+                      placeholder={t("measure.weightPlaceholder")}
                       className="num h-14 min-w-0 flex-1 rounded-lg border border-yellow/30 bg-surface2 px-3 text-2xl text-yellow"
                     />
                     <span className="shrink-0 text-sm text-muted">kg</span>
@@ -326,13 +327,13 @@ function MeasurementsPage() {
                 </div>
 
                 <p className="text-[11px] font-medium uppercase tracking-wide text-dim">
-                  Çevre ölçüleri (cm) — isteğe bağlı
+                  {t("measure.girthsOptional")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Num label="Bel" value={waist} onChange={setWaist} unit="cm" />
-                  <Num label="Göğüs" value={chest} onChange={setChest} unit="cm" />
-                  <Num label="Kol" value={arm} onChange={setArm} unit="cm" />
-                  <Num label="Uyluk" value={thigh} onChange={setThigh} unit="cm" />
+                  <Num label={t("measure.waist")} value={waist} onChange={setWaist} unit="cm" />
+                  <Num label={t("measure.chest")} value={chest} onChange={setChest} unit="cm" />
+                  <Num label={t("measure.arm")} value={arm} onChange={setArm} unit="cm" />
+                  <Num label={t("measure.thigh")} value={thigh} onChange={setThigh} unit="cm" />
                 </div>
                 <button
                   type="submit"
@@ -357,7 +358,7 @@ function MeasurementsPage() {
                 <EmptyState
                   icon={Scale}
                   title={t("measure.empty")}
-                  hint="Giriş sekmesinden ilk kaydı ekle — trend burada görünecek."
+                  hint={t("measure.chartEmptyHint")}
                 />
               ) : (
                 <>
@@ -365,32 +366,32 @@ function MeasurementsPage() {
                     title={t("measure.weightTrend")}
                     description={
                       weightSeries.length > 1
-                        ? `${weightSeries.length} nokta`
-                        : "Daha fazla kayıtla trend netleşir"
+                        ? t("measure.nPoints", { n: weightSeries.length })
+                        : t("measure.moreData")
                     }
                   >
                     <ProgressAreaChart
                       data={weightSeries}
                       xKey="date"
                       yKey="body_weight"
-                      valueLabel="Ağırlık"
+                      valueLabel={t("measure.weight")}
                       valueUnit="kg"
                       xFormatter={formatChartDate}
-                      emptyHint="Giriş sekmesinden ilk ölçümü kaydet."
+                      emptyHint={t("measure.chartEmptyHint")}
                     />
                   </PageSection>
 
                   <PageSection
                     title={t("measure.girth")}
-                    description="Serileri aç/kapat"
+                    description={t("measure.toggleSeries")}
                     action={
                       <div className="flex flex-wrap justify-end gap-1">
                         {(
                           [
-                            ["waist", "Bel", "#E07B1F"],
-                            ["chest", "Göğüs", "#2F6FD0"],
-                            ["arm", "Kol", "#2E9E5B"],
-                            ["thigh", "Uyluk", "#D9312B"],
+                            ["waist", t("measure.waist"), "#E07B1F"],
+                            ["chest", t("measure.chest"), "#2F6FD0"],
+                            ["arm", t("measure.arm"), "#2E9E5B"],
+                            ["thigh", t("measure.thigh"), "#D9312B"],
                           ] as const
                         ).map(([k, lab, color]) => (
                           <button
@@ -425,25 +426,25 @@ function MeasurementsPage() {
                       series={[
                         {
                           key: "waist",
-                          label: "Bel",
+                          label: t("measure.waist"),
                           color: "#E07B1F",
                           visible: show.waist,
                         },
                         {
                           key: "chest",
-                          label: "Göğüs",
+                          label: t("measure.chest"),
                           color: "#2F6FD0",
                           visible: show.chest,
                         },
                         {
                           key: "arm",
-                          label: "Kol",
+                          label: t("measure.arm"),
                           color: "#2E9E5B",
                           visible: show.arm,
                         },
                         {
                           key: "thigh",
-                          label: "Uyluk",
+                          label: t("measure.thigh"),
                           color: "#D9312B",
                           visible: show.thigh,
                         },
@@ -462,7 +463,7 @@ function MeasurementsPage() {
                 <EmptyState
                   icon={Scale}
                   title={t("measure.empty")}
-                  hint="İlk ölçü kaydını ekleyince geçmiş burada görünür."
+                  hint={t("measure.historyEmptyHint")}
                 />
               ) : (
                 <ul className="divide-y divide-line">
@@ -491,7 +492,7 @@ function MeasurementsPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-2">
                               <p className="font-medium">
-                                {formatDateTR(r.date)}
+                                {formatDate(r.date, locale)}
                               </p>
                               {r.body_weight != null && (
                                 <p className="num text-sm text-yellow">

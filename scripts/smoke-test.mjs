@@ -56,12 +56,19 @@ test("matchesFilters day", () => {
 });
 
 // ── relative-time ──
-test("relativeTime now", () => {
-  assert.equal(relativeTime(new Date().toISOString()), "şimdi");
+test("relativeTime now (tr)", () => {
+  const s = relativeTime(new Date().toISOString(), "tr");
+  assert.ok(s.length > 0);
 });
-test("relativeTime minutes", () => {
+test("relativeTime minutes (tr)", () => {
   const d = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  assert.equal(relativeTime(d), "5dk");
+  const s = relativeTime(d, "tr");
+  assert.match(s, /5/);
+});
+test("relativeTime minutes (en)", () => {
+  const d = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const s = relativeTime(d, "en");
+  assert.match(s, /5/);
 });
 
 // ── utils dates ──

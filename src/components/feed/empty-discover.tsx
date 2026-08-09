@@ -125,7 +125,7 @@ export function FeedEmptyDiscover({
               >
                 <p className="truncate text-sm font-semibold">{p.name}</p>
                 <p className="mt-1 text-[11px] text-muted">
-                  {p.day_count} {t("feed.days")} · {p.clone_count} kopya
+                  {p.day_count} {t("feed.days")} · {t("feed.clones", { n: p.clone_count })}
                 </p>
               </button>
             ))}

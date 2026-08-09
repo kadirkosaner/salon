@@ -19,6 +19,7 @@ import {
 } from "@/lib/server/activity";
 import { relativeTime } from "@/lib/relative-time";
 import { haptic } from "@/lib/haptics";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 export function ActivityCard({
@@ -32,6 +33,7 @@ export function ActivityCard({
   onComment: (item: FeedItem) => void;
   onRemoved?: (id: number) => void;
 }) {
+  const { locale } = useI18n();
   const [liked, setLiked] = useState(item.liked_by_me);
   const [likes, setLikes] = useState(item.like_count);
   const [comments, setComments] = useState(item.comment_count);
@@ -123,7 +125,7 @@ export function ActivityCard({
               </span>
             ) : null}
             <span className="shrink-0 text-[11px] text-dim">
-              · {relativeTime(item.created_at)}
+              · {relativeTime(item.created_at, locale)}
             </span>
           </div>
           <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-dim">
@@ -143,7 +145,7 @@ export function ActivityCard({
         ) : null}
       </div>
 
-      <div className="px-3.5 pb-3">{renderBody(item, t)}</div>
+      <div className="px-3.5 pb-3">{renderBody(item, t, locale)}</div>
 
       <div className="flex items-center gap-1 border-t border-line/60 px-2 py-1.5">
         <button
@@ -195,7 +197,7 @@ function typeLabel(type: FeedItem["type"], t: (k: string) => string) {
   }
 }
 
-function renderBody(item: FeedItem, t: (k: string) => string) {
+function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
   const p = item.payload;
   if (item.type === "workout_completed") {
     return (
@@ -205,12 +207,12 @@ function renderBody(item: FeedItem, t: (k: string) => string) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-display truncate text-xl leading-none">
-            {String(p.day_name ?? "Seans")}
+            {String(p.day_name ?? t("feed.session"))}
           </p>
           <p className="mt-1 text-xs text-muted">
             {Number(p.exercise_count ?? 0)} {t("feed.exercises")}
             {Number(p.tonnage) > 0
-              ? ` · ${Number(p.tonnage).toLocaleString("tr-TR")} kg`
+              ? ` · ${Number(p.tonnage).toLocaleString(locale === "en" ? "en-GB" : locale)} kg`
               : ""}
           </p>
         </div>

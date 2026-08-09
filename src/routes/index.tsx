@@ -30,7 +30,7 @@ import { getDashboard } from "@/lib/server/dashboard";
 import { listDiscoverPrograms } from "@/lib/server/share";
 import { useI18n } from "@/lib/i18n/provider";
 import { qk } from "@/lib/query-keys";
-import { cn, formatDateTR } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 const CommentSheet = lazy(() =>
   import("@/components/feed/comment-sheet").then((m) => ({
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/")({ component: FeedPage });
 function FeedPage() {
   const { user, isPending } = useCurrentUserState();
   const userId = user?.id;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [commentItem, setCommentItem] = useState<FeedItem | null>(null);
@@ -196,7 +196,7 @@ function FeedPage() {
                   {next.day_name}
                 </p>
                 <p className="mt-1 text-xs text-muted">
-                  {formatDateTR(next.date)} · {next.exercise_count} {t("feed.exercises")}
+                  {formatDate(next.date, locale)} · {next.exercise_count} {t("feed.exercises")}
                 </p>
               </>
             ) : (

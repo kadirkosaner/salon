@@ -15,10 +15,13 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "node --experimental-strip-types scripts/smoke-test.mjs"
+    "test": "node --experimental-strip-types scripts/smoke-test.mjs",
+    "check-i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.3",
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
     "@hookform/resolvers": "^5.0.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

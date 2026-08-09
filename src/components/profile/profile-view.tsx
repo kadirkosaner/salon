@@ -22,7 +22,7 @@ import {
   type ProfileHub,
 } from "@/lib/server/social";
 import { cloneProgram } from "@/lib/server/share";
-import { cn, formatDateTR } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 type Tab = "activity" | "programs" | "stats";
 
@@ -177,7 +177,7 @@ export function ProfileView({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{r.day_name}</p>
-                    <p className="text-xs text-muted">{formatDateTR(r.date)}</p>
+                    <p className="text-xs text-muted">{formatDate(r.date)}</p>
                   </div>
                   <div className="text-right">
                     <p className="num text-sm text-yellow">
@@ -276,7 +276,7 @@ export function ProfileView({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.name}</p>
                       <p className="text-[11px] text-muted">
-                        {formatDateTR(r.date)}
+                        {formatDate(r.date)}
                       </p>
                     </div>
                     <span className="num text-xl text-yellow">{r.weight}</span>
@@ -315,7 +315,7 @@ export function ProfileView({
             ) : (
               <div className="space-y-3">
                 <p className="text-xs text-muted">
-                  {formatDateTR(hub.measurement.date)}
+                  {formatDate(hub.measurement.date)}
                 </p>
                 <div className="flex flex-wrap gap-2 text-sm">
                   {hub.measurement.body_weight != null && (

@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
 
 export type HeatDay = { date: string; count: number };
@@ -5,19 +6,20 @@ export type HeatDay = { date: string; count: number };
 /** GitHub-style contribution grid for last ~26 weeks of workouts. */
 export function WorkoutHeatmap({
   days,
-  label = "Son 6 ay",
+  label,
 }: {
   days: HeatDay[];
   label?: string;
 }) {
+  const t = useT();
+  const title = label ?? t("heatmap.last6mo");
   const byDate = new Map(days.map((d) => [d.date, d.count]));
   const today = new Date();
   today.setHours(12, 0, 0, 0);
 
-  // Align to Monday of week containing (today - 25 weeks)
   const start = new Date(today);
   start.setDate(start.getDate() - 7 * 25);
-  const dow = (start.getDay() + 6) % 7; // Mon=0
+  const dow = (start.getDay() + 6) % 7;
   start.setDate(start.getDate() - dow);
 
   const weeks: HeatDay[][] = [];
@@ -49,15 +51,15 @@ export function WorkoutHeatmap({
     <div className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-          {label}
+          {title}
         </p>
         <div className="flex items-center gap-1 text-[10px] text-dim">
-          <span>Az</span>
+          <span>{t("heatmap.low")}</span>
           <span className="size-2.5 rounded-sm bg-surface2" />
           <span className="size-2.5 rounded-sm bg-yellow/25" />
           <span className="size-2.5 rounded-sm bg-yellow/45" />
           <span className="size-2.5 rounded-sm bg-yellow/75" />
-          <span>Çok</span>
+          <span>{t("heatmap.high")}</span>
         </div>
       </div>
       <div className="overflow-x-auto pb-1">
@@ -70,7 +72,10 @@ export function WorkoutHeatmap({
                   title={
                     day.count < 0
                       ? undefined
-                      : `${day.date}: ${day.count} seans`
+                      : t("heatmap.sessionTitle", {
+                          date: day.date,
+                          count: day.count,
+                        })
                   }
                   className={cn(
                     "size-[11px] rounded-[2px] sm:size-3",

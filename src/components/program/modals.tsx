@@ -23,32 +23,34 @@ import {
 } from "@/lib/server/import-program";
 import { publishProgram, updateProgramMeta } from "@/lib/server/share";
 import {
-  DOW_LABELS,
-  LOAD_TAG_LABELS,
+  LOAD_TAG_KEYS,
   type LoadTag,
 } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
-import { cn } from "@/lib/utils";
+import { cn, dowLong, dowShort } from "@/lib/utils";
 import { AppSelect } from "@/components/ui/select";
 import { AppSheet } from "@/components/ui/sheet";
-import { useT } from "@/lib/i18n/provider";
+import { useI18n } from "@/lib/i18n/provider";
 import { Spinner } from "@/components/ui/spinner";
 
-const SAMPLE_PASTE = `Kişisel Program
-Pazartesi - PUSH A
-Dumbbell Bench Press 4x6-8 150s agir
-Incline Dumbbell Press 4x8-10 120s orta_agir
-Lateral Raise 3x12-15 75s hafif
+const SAMPLE_PASTE = `Personal Program
+Push / Pull / Legs
 
-Salı - PULL A
-Chest-Supported Row 4x6-8 150s agir
-Lat Pulldown 3x10-12 90s orta
-Biceps Curl 3x10-12 75s orta
+Monday - PUSH A
+1. Bench Press 4x6-8
+2. Overhead Press 3x8-10
+3. Lateral Raise 3x12-15
 
-Çarşamba - BACAK
-Leg Press 4x8-10 150s agir
-Leg Curl 3x10-12 75s orta
-Standing Calf Raise 4x12-15 75s agir`;
+Tuesday - PULL A
+1. Deadlift 3x5
+2. Lat Pulldown 4x8-10
+3. Face Pull 3x15
+
+Wednesday - LEGS
+1. Squat 4x6-8
+2. Romanian Deadlift 3x8-10
+3. Leg Curl 3x10-12
+`;
 
 export function ShareModal({
   program,
@@ -59,7 +61,7 @@ export function ShareModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const t = useT();
+  const { t } = useI18n();
   const [isPublic, setIsPublic] = useState(program.is_public);
   const [description, setDescription] = useState(program.description ?? "");
   const [tags, setTags] = useState(program.tags ?? "");
@@ -69,8 +71,7 @@ export function ShareModal({
   return (
     <Modal title={t("program.shareTitle")} onClose={onClose}>
       <p className="mb-3 text-xs leading-relaxed text-muted">
-        Herkese açık yapınca Keşfet’te görünür ve 6 haneli kod ile arkadaşların kopyalayabilir.
-        Senin orijinalin değişmez.
+        {t("program.shareHint")}
       </p>
       <label className="flex items-center gap-3 rounded-lg border border-line bg-surface2 px-3 py-3">
         <input
@@ -80,32 +81,32 @@ export function ShareModal({
           className="size-5 accent-yellow"
         />
         <span className="text-sm">
-          <span className="font-medium">Herkese açık</span>
-          <span className="mt-0.5 block text-xs text-muted">Keşfet + paylaşım kodu</span>
+          <span className="font-medium">{t("program.public")}</span>
+          <span className="mt-0.5 block text-xs text-muted">{t("program.publicHint")}</span>
         </span>
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">Kısa açıklama (paylaşımda görünür)</span>
+        <span className="text-xs text-muted">{t("program.shareDesc")}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          placeholder="Örn. 4 günlük upper/lower, orta seviye…"
+          placeholder={t("program.shareDescPh")}
           className="w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">Etiketler (virgülle)</span>
+        <span className="text-xs text-muted">{t("program.tags")}</span>
         <input
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          placeholder="ppl, ileri, güç"
+          placeholder={t("program.tagsPh")}
           className="h-11 w-full rounded-md border border-line bg-surface2 px-3 text-sm"
         />
       </label>
       {(code || isPublic) && (
         <div className="mt-3 rounded-lg border border-yellow/30 bg-yellow/10 px-3 py-2">
-          <p className="text-xs text-muted">Paylaşım kodu</p>
+          <p className="text-xs text-muted">{t("program.shareCode")}</p>
           <div className="mt-1 flex items-center justify-between gap-2">
             <p className="num text-2xl tracking-[0.2em] text-yellow">
               {code ?? t("program.codePending")}
@@ -116,7 +117,7 @@ export function ShareModal({
                 className="flex h-10 shrink-0 items-center gap-1 rounded-lg border border-yellow/40 px-3 text-xs font-semibold text-yellow"
                 onClick={async () => {
                   const ok = await copyText(code);
-                  toast.success(ok ? `Kopyalandı: ${code}` : `Kod: ${code}`);
+                  toast.success(ok ? t("program.copiedCode", { code }) : t("program.codeLabel", { code }));
                 }}
               >
                 <Copy className="size-3.5" />
@@ -144,7 +145,7 @@ export function ShareModal({
               setCode(r.share_code);
               toast.success(
                 r.is_public
-                  ? `Paylaşım açık · kod ${r.share_code}`
+                  ? t("program.shareOn", { code: r.share_code ?? "" })
                   : t("program.nowPrivate"),
               );
               await onSaved();
@@ -154,7 +155,7 @@ export function ShareModal({
         }}
       >
         {saving ? <Spinner className="size-4" /> : <Share2 className="size-4" />}
-        Kaydet
+        {t("common.save")}
       </button>
     </Modal>
   );
@@ -169,7 +170,7 @@ export function MetaModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const t = useT();
+  const { t } = useI18n();
   const [name, setName] = useState(program.name);
   const [description, setDescription] = useState(program.description ?? "");
   const [saving, setSaving] = useState(false);
@@ -177,7 +178,7 @@ export function MetaModal({
   return (
     <Modal title={t("program.metaTitle")} onClose={onClose}>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">Program adı</span>
+        <span className="text-xs text-muted">{t("program.nameLabel")}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -185,7 +186,7 @@ export function MetaModal({
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">Açıklama</span>
+        <span className="text-xs text-muted">{t("program.descLabel")}</span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -215,7 +216,7 @@ export function MetaModal({
             .finally(() => setSaving(false));
         }}
       >
-        Kaydet
+        {t("common.save")}
       </button>
     </Modal>
   );
@@ -230,7 +231,7 @@ export function ScheduleModal({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const t = useT();
+  const { t, locale } = useI18n();
   const [slots, setSlots] = useState<Record<number, number | null>>(() => {
     const init: Record<number, number | null> = {
       1: null,
@@ -265,7 +266,7 @@ export function ScheduleModal({
   return (
     <Modal title={t("program.scheduleTitle")} onClose={onClose}>
       <p className="mb-3 text-xs leading-relaxed text-muted">
-        Her hafta gününe hangi programı atayacağını seç. Boş = dinlenme.
+        {t("program.scheduleHint")}
       </p>
       <div className="space-y-2">
         {[1, 2, 3, 4, 5, 6, 7].map((dow) => (
@@ -274,7 +275,7 @@ export function ScheduleModal({
             className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface2 px-2.5 py-2"
           >
             <span className="w-20 shrink-0 text-sm font-medium text-muted sm:w-24">
-              {DOW_LABELS[dow]}
+              {dowLong(dow, locale)}
             </span>
             <AppSelect
               value={slots[dow] != null ? String(slots[dow]) : "__none__"}
@@ -287,7 +288,7 @@ export function ScheduleModal({
                 })),
               ]}
               triggerClassName="h-11 min-w-0 flex-1 rounded-md border-line bg-surface"
-              aria-label={DOW_LABELS[dow]}
+              aria-label={dowLong(dow, locale)}
             />
           </label>
         ))}
@@ -313,7 +314,7 @@ export function ScheduleModal({
         }}
       >
         {saving ? <Spinner className="size-4" /> : null}
-        Takvimi kaydet
+        {t("common.save")}
       </button>
     </Modal>
   );
@@ -328,15 +329,16 @@ export function DaySettingsModal({
   onClose: () => void;
   onSave: (p: { name: string; focus: string | null; dow: number }) => Promise<void>;
 }) {
+  const { t, locale } = useI18n();
   const [name, setName] = useState(day.name);
   const [focus, setFocus] = useState(day.focus ?? "");
   const [dow, setDow] = useState(day.dow);
   const [saving, setSaving] = useState(false);
 
   return (
-    <Modal title="Gün ayarı" onClose={onClose}>
+    <Modal title={t("program.daySettings")} onClose={onClose}>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">Program adı</span>
+        <span className="text-xs text-muted">{t("program.nameLabel")}</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -352,15 +354,15 @@ export function DaySettingsModal({
         />
       </label>
       <label className="mt-3 block space-y-1">
-        <span className="text-xs text-muted">Hangi hafta günü?</span>
+        <span className="text-xs text-muted">{t("program.whichDow")}</span>
         <AppSelect
           value={String(dow)}
           onValueChange={(v) => setDow(Number(v))}
           options={[1, 2, 3, 4, 5, 6, 7].map((d) => ({
             value: String(d),
-            label: DOW_LABELS[d]!,
+            label: dowLong(d, locale),
           }))}
-          aria-label="Hafta günü"
+          aria-label={t("program.whichDow")}
         />
       </label>
       <button
@@ -376,7 +378,7 @@ export function DaySettingsModal({
           }).finally(() => setSaving(false));
         }}
       >
-        Kaydet
+        {t("common.save")}
       </button>
     </Modal>
   );
@@ -389,6 +391,7 @@ export function ImportModal({
   onClose: () => void;
   onImported: () => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -396,7 +399,7 @@ export function ImportModal({
 
   async function runPreview() {
     if (text.trim().length < 10) {
-      toast.error("Daha fazla metin yapıştır.");
+      toast.error(t("program.importMoreText"));
       return;
     }
     setBusy(true);
@@ -404,9 +407,9 @@ export function ImportModal({
       const p = await previewProgramImport({ data: text });
       setPreview(p);
       setProgramName(p.programName);
-      if (p.days.length === 0) toast.error("Hareket algılanamadı.");
+      if (p.days.length === 0) toast.error(t("program.importNoExercises"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Önizleme başarısız");
+      toast.error(e instanceof Error ? e.message : t("program.importPreviewFailed"));
     } finally {
       setBusy(false);
     }
@@ -422,10 +425,10 @@ export function ImportModal({
           replaceActive: true,
         },
       });
-      toast.success(`${r.name}: ${r.days} gün, ${r.exercises} hareket`);
+      toast.success(t("program.importSuccess", { name: r.name, days: r.days, exercises: r.exercises }));
       await onImported();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "İçe aktarma başarısız");
+      toast.error(e instanceof Error ? e.message : t("program.importFailed"));
     } finally {
       setBusy(false);
     }
@@ -452,7 +455,7 @@ export function ImportModal({
             setPreview(null);
           }}
         >
-          Örnek
+          {t("program.importExample")}
         </button>
         <button
           type="button"
@@ -460,7 +463,7 @@ export function ImportModal({
           className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-yellow/30 bg-surface2 text-sm font-medium text-yellow"
           onClick={() => void runPreview()}
         >
-          Önizle
+          {t("program.importPreview")}
         </button>
       </div>
       {preview && preview.days.length > 0 && (
@@ -476,7 +479,7 @@ export function ImportModal({
             onClick={() => void commit()}
             className="flex h-12 w-full items-center justify-center rounded-md bg-yellow font-semibold text-bg"
           >
-            Programı oluştur
+            {t("program.importCreate")}
           </button>
         </div>
       )}
@@ -503,6 +506,7 @@ export function EditModal({
   }) => Promise<void>;
   library?: ExerciseRow[];
 }) {
+  const { t } = useI18n();
   const [sets, setSets] = useState(exercise.sets);
   const [repLo, setRepLo] = useState(exercise.rep_lo);
   const [repHi, setRepHi] = useState(exercise.rep_hi);
@@ -570,14 +574,14 @@ export function EditModal({
   }
 
   const muscleTabs: { id: string; label: string }[] = [
-    { id: "all", label: "Tümü" },
-    { id: "gogus", label: "Göğüs" },
-    { id: "sirt", label: "Sırt" },
-    { id: "omuz", label: "Omuz" },
-    { id: "kol", label: "Kol" },
-    { id: "bacak", label: "Bacak" },
-    { id: "trapez", label: "Trapez" },
-    { id: "core", label: "Core" },
+    { id: "all", label: t("muscle.all") },
+    { id: "gogus", label: t("muscle.gogus") },
+    { id: "sirt", label: t("muscle.sirt") },
+    { id: "omuz", label: t("muscle.omuz") },
+    { id: "kol", label: t("muscle.kol") },
+    { id: "bacak", label: t("muscle.bacak") },
+    { id: "trapez", label: t("muscle.trapez") },
+    { id: "core", label: t("muscle.core") },
   ];
 
   return (
@@ -593,12 +597,12 @@ export function EditModal({
       {/* Full library — always visible */}
       <div className="mb-3 rounded-lg border border-line bg-surface2/40 p-2.5">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
-          Hareketi değiştir · tüm kütüphane
+          {t("program.swapTitle")}
         </p>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Ara: bench, squat, curl, mekik…"
+          placeholder={t("program.searchPh")}
           className="mb-2 h-10 w-full rounded-md border border-line bg-surface px-3 text-sm"
         />
         <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5">
@@ -619,7 +623,7 @@ export function EditModal({
           ))}
         </div>
         {loadingCat ? (
-          <p className="py-4 text-center text-xs text-muted">Yükleniyor…</p>
+          <p className="py-4 text-center text-xs text-muted">{t("program.loading")}</p>
         ) : (
           <ul className="max-h-44 space-y-1 overflow-y-auto">
             {catalog
@@ -648,7 +652,7 @@ export function EditModal({
                 </li>
               ))}
             {catalog.length === 0 && (
-              <li className="py-3 text-center text-xs text-muted">Sonuç yok — başka kelime dene</li>
+              <li className="py-3 text-center text-xs text-muted">{t("program.noResults")}</li>
             )}
           </ul>
         )}
@@ -658,7 +662,7 @@ export function EditModal({
       {similar.length > 0 && (
         <div className="mb-3 rounded-lg border border-line/80 bg-surface2/20 p-2.5">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-dim">
-            Aynı bölgeden öneriler
+            {t("program.sameRegion")}
           </p>
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -699,7 +703,7 @@ export function EditModal({
 
       {swapName && (
         <p className="mb-2 rounded-md border border-yellow/30 bg-yellow/10 px-2.5 py-1.5 text-xs text-yellow">
-          Yeni hareket: <strong>{swapName}</strong> — Kaydet ile programa yazılır
+          {t("program.swapPending", { name: swapName })}
         </p>
       )}
 
@@ -712,19 +716,19 @@ export function EditModal({
       <AppSelect
         value={tag}
         onValueChange={setTag}
-        options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+        options={(Object.keys(LOAD_TAG_KEYS) as LoadTag[]).map((k) => ({
           value: k,
-          label: LOAD_TAG_LABELS[k],
+          label: t(LOAD_TAG_KEYS[k]),
         }))}
         className="mt-3"
-        aria-label="Yük"
+        aria-label={t("program.load")}
       />
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={3}
         className="mt-3 w-full rounded-md border border-line bg-surface2 px-3 py-2 text-sm"
-        placeholder="Not (isteğe bağlı)"
+        placeholder={t("program.noteOptional")}
       />
       <button
         type="button"
@@ -750,7 +754,7 @@ export function EditModal({
           })().finally(() => setSaving(false));
         }}
       >
-        Kaydet
+        {t("common.save")}
       </button>
     </Modal>
   );
@@ -776,6 +780,7 @@ export function AddModal({
     note?: string;
   }) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [muscleFilter, setMuscleFilter] = useState("all");
   const [catalog, setCatalog] = useState<ExerciseRow[]>([]);
@@ -814,19 +819,19 @@ export function AddModal({
   }, [q, muscleFilter]);
 
   const muscleTabs: { id: string; label: string }[] = [
-    { id: "all", label: "Tümü" },
-    { id: "gogus", label: "Göğüs" },
-    { id: "sirt", label: "Sırt" },
-    { id: "omuz", label: "Omuz" },
-    { id: "kol", label: "Kol" },
-    { id: "bacak", label: "Bacak" },
-    { id: "core", label: "Core" },
-    { id: "diger", label: "Diğer" },
+    { id: "all", label: t("muscle.all") },
+    { id: "gogus", label: t("muscle.gogus") },
+    { id: "sirt", label: t("muscle.sirt") },
+    { id: "omuz", label: t("muscle.omuz") },
+    { id: "kol", label: t("muscle.kol") },
+    { id: "bacak", label: t("muscle.bacak") },
+    { id: "core", label: t("muscle.core") },
+    { id: "diger", label: t("muscle.diger") },
   ];
 
   async function submit() {
     if (!selected) {
-      toast.error("Önce hareket seç");
+      toast.error(t("program.pickExerciseFirst"));
       return;
     }
     const s = typeof sets === "number" ? sets : Number(sets);
@@ -834,16 +839,16 @@ export function AddModal({
     const hiRaw = typeof repHi === "number" ? repHi : Number(repHi);
     const r = typeof rest === "number" ? rest : Number(rest);
     if (!Number.isFinite(s) || s < 1) {
-      toast.error("Set sayısını sen gir");
+      toast.error(t("program.enterSets"));
       return;
     }
     if (!Number.isFinite(lo) || lo < 1) {
-      toast.error("Tekrar sayısını sen gir");
+      toast.error(t("program.enterReps"));
       return;
     }
     const hi = Number.isFinite(hiRaw) && hiRaw >= lo ? hiRaw : lo;
     if (!Number.isFinite(r) || r < 0) {
-      toast.error("Dinlenme süresini sen gir (sn)");
+      toast.error(t("program.enterRest"));
       return;
     }
     setSaving(true);
@@ -867,14 +872,14 @@ export function AddModal({
         note: note.trim() || undefined,
       });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Eklenemedi");
+      toast.error(e instanceof Error ? e.message : t("common.error"));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal title="Hareket ekle · 1300+ kütüphane" onClose={onClose}>
+    <Modal title={t("program.addExerciseTitle")} onClose={onClose}>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -903,11 +908,11 @@ export function AddModal({
       <div className="mt-2 max-h-52 overflow-y-auto rounded-2xl bg-surface2/40 p-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
         {loadingCat ? (
           <p className="flex items-center justify-center gap-2 py-8 text-xs text-muted">
-            <span className="inline-flex items-center gap-2 text-sm text-muted"><span className="size-4 animate-pulse rounded-full bg-surface2" /> Yükleniyor…</span>
+            <span className="inline-flex items-center gap-2 text-sm text-muted"><span className="size-4 animate-pulse rounded-full bg-surface2" />{t("program.loading")}</span>
           </p>
         ) : catalog.length === 0 ? (
           <div className="py-6 text-center">
-            <p className="text-xs text-muted">Sonuç yok</p>
+            <p className="text-xs text-muted">{t("discover.noResults")}</p>
             {q.trim().length >= 2 && (
               <button
                 type="button"
@@ -926,7 +931,7 @@ export function AddModal({
                   );
                 }}
               >
-                “{q.trim()}” oluştur
+                {t("program.createCustom", { q: q.trim() })}
               </button>
             )}
           </div>
@@ -968,7 +973,7 @@ export function AddModal({
         )}
       </div>
       <p className="mt-1 text-[10px] text-dim">
-        {catalog.length} sonuç · dataset + kütüphane
+        {t("program.resultCount", { n: catalog.length })}
       </p>
 
       {selected && (
@@ -982,25 +987,25 @@ export function AddModal({
       )}
 
       <p className="mt-3 text-xs text-muted">
-        Set / tekrar / dinlenme boş — <span className="text-yellow">sen gir</span>, otomatik atanmaz.
+        {t("program.setsEmptyHint")}
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <EmptyNumField
           label="Set *"
           value={sets}
-          placeholder="örn. 4"
+          placeholder={t("program.exSetsPh")}
           onChange={setSets}
         />
         <EmptyNumField
           label="Dinlenme sn *"
           value={rest}
-          placeholder="örn. 90"
+          placeholder={t("program.exRestPh")}
           onChange={setRest}
         />
         <EmptyNumField
           label="Tekrar min *"
           value={repLo}
-          placeholder="örn. 6"
+          placeholder={t("program.exRepLoPh")}
           onChange={(v) => {
             setRepLo(v);
             if (
@@ -1014,26 +1019,26 @@ export function AddModal({
         <EmptyNumField
           label="Tekrar max"
           value={repHi}
-          placeholder="örn. 8"
+          placeholder={t("program.exRepHiPh")}
           onChange={setRepHi}
         />
       </div>
       <AppSelect
         value={tag}
         onValueChange={setTag}
-        options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
+        options={(Object.keys(LOAD_TAG_KEYS) as LoadTag[]).map((k) => ({
           value: k,
-          label: LOAD_TAG_LABELS[k],
+          label: t(LOAD_TAG_KEYS[k]),
         }))}
         className="mt-2"
         triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-        aria-label="Yük"
+        aria-label={t("program.load")}
       />
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={2}
-        placeholder="Not (isteğe bağlı)"
+        placeholder={t("program.noteOptional")}
         className="mt-2 w-full rounded-2xl bg-surface2 px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
       />
       <button
@@ -1146,7 +1151,6 @@ type DraftDay = {
   exercises: DraftEx[];
 };
 
-const DOW_SHORT = ["", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 
 export function CreateProgramWizard({
   onClose,
@@ -1157,6 +1161,7 @@ export function CreateProgramWizard({
   onCreated: () => Promise<void>;
   hasActiveProgram?: boolean;
 }) {
+  const { t, locale } = useI18n();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -1197,7 +1202,7 @@ export function CreateProgramWizard({
           return {
             ...d,
             enabled: d.dow <= 3,
-            name: `Gün ${d.dow}`,
+            name: t("program.dayN", { n: d.dow }),
             focus: "",
             exercises: [],
           };
@@ -1291,12 +1296,12 @@ export function CreateProgramWizard({
   async function finish() {
     const n = name.trim();
     if (n.length < 2) {
-      toast.error("Program adı gir");
+      toast.error(t("program.nameRequired"));
       setStep(0);
       return;
     }
     if (enabledDays.length === 0) {
-      toast.error("En az bir gün seç");
+      toast.error(t("program.pickOneDay"));
       setStep(1);
       return;
     }
@@ -1308,7 +1313,7 @@ export function CreateProgramWizard({
           description: description.trim() || undefined,
           days: enabledDays.map((d) => ({
             dow: d.dow,
-            name: d.name.trim() || DOW_SHORT[d.dow]!,
+            name: d.name.trim() || dowShort(d.dow, locale),
             focus: d.focus.trim() || undefined,
           })),
         },
@@ -1321,14 +1326,14 @@ export function CreateProgramWizard({
       const { getActiveProgram } = await import("@/lib/server/programs");
       const prog = await getActiveProgram();
       if (!prog || prog.id !== created.id) {
-        toast.success("Program oluşturuldu");
+        toast.success(t("program.created"));
         await onCreated();
         return;
       }
 
       for (const draft of enabledDays) {
         const day = prog.days.find(
-          (pd) => pd.dow === draft.dow && pd.name === (draft.name.trim() || DOW_SHORT[draft.dow]),
+          (pd) => pd.dow === draft.dow && pd.name === (draft.name.trim() || dowShort(draft.dow, locale)),
         ) ?? prog.days.find((pd) => pd.dow === draft.dow);
         if (!day) continue;
         for (const ex of draft.exercises) {
@@ -1355,11 +1360,11 @@ export function CreateProgramWizard({
       }
 
       toast.success(
-        `“${created.name}” hazır · ${enabledDays.reduce((a, d) => a + d.exercises.length, 0)} hareket`,
+        t("program.readyWithCount", { name: created.name, n: enabledDays.reduce((a, d) => a + d.exercises.length, 0) }),
       );
       await onCreated();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Oluşturulamadı");
+      toast.error(e instanceof Error ? e.message : t("program.createFailed"));
     } finally {
       setBusy(false);
     }
@@ -1371,7 +1376,7 @@ export function CreateProgramWizard({
         step === 0
           ? "Yeni program"
           : step === 1
-            ? "Günleri ayarla"
+            ? t("program.setupDays")
             : "Hareketleri ekle"
       }
       onClose={onClose}
@@ -1393,21 +1398,21 @@ export function CreateProgramWizard({
         <div className="space-y-3">
           {hasActiveProgram && (
             <p className="rounded-xl bg-yellow/10 px-3 py-2.5 text-xs leading-relaxed text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.25)]">
-              Aktif programın devre dışı kalır. Geçmiş seanslar silinmez; gelecek planlar yenilenir.
+              {t("program.replaceActiveHint")}
             </p>
           )}
           <label className="block space-y-1">
-            <span className="text-xs text-muted">Program adı</span>
+            <span className="text-xs text-muted">{t("program.nameLabel")}</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Örn: Benim Full Split"
+              placeholder={t("program.namePh")}
               className="h-12 w-full rounded-2xl bg-surface2 px-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               autoFocus
             />
           </label>
           <label className="block space-y-1">
-            <span className="text-xs text-muted">Açıklama</span>
+            <span className="text-xs text-muted">{t("program.descLabel")}</span>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -1415,14 +1420,14 @@ export function CreateProgramWizard({
               className="w-full rounded-2xl bg-surface2 px-3 py-2 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
             />
           </label>
-          <p className="text-xs text-dim">Hızlı şablon (sonra gün / hareket düzenlersin)</p>
+          <p className="text-xs text-dim">{t("program.quickTemplate")}</p>
           <div className="grid grid-cols-2 gap-2">
             {(
               [
-                ["ppl", "PPL 6 gün"],
+                ["ppl", t("program.tplPpl")],
                 ["full", "Full body 3"],
-                ["ul", "Upper / Lower"],
-                ["blank", "Boş günler"],
+                ["ul", t("program.templateUpperLower")],
+                ["blank", t("program.tplBlank")],
               ] as const
             ).map(([k, lab]) => (
               <button
@@ -1431,7 +1436,7 @@ export function CreateProgramWizard({
                 onClick={() => applyTemplate(k)}
                 className="rounded-2xl bg-surface2 px-3 py-3 text-left text-xs font-semibold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98]"
               >
-                {lab}
+                {t(lab)}
               </button>
             ))}
           </div>
@@ -1440,13 +1445,13 @@ export function CreateProgramWizard({
             className="flex h-12 w-full items-center justify-center rounded-2xl bg-yellow font-semibold text-bg"
             onClick={() => {
               if (name.trim().length < 2) {
-                toast.error("Program adı gir");
+                toast.error(t("program.nameRequired"));
                 return;
               }
               setStep(1);
             }}
           >
-            Günlere geç
+            {t("program.nextDays")}
           </button>
         </div>
       )}
@@ -1454,7 +1459,7 @@ export function CreateProgramWizard({
       {step === 1 && (
         <div className="space-y-3">
           <p className="text-xs text-muted">
-            Hangi günler antrenman? Adını değiştir, pasif günler dinlenme.
+            {t("program.whichDays")}
           </p>
           <ul className="space-y-2">
             {days.map((d) => (
@@ -1478,7 +1483,7 @@ export function CreateProgramWizard({
                         : "bg-surface text-muted",
                     )}
                   >
-                    {DOW_SHORT[d.dow]}
+                    {dowShort(d.dow, locale)}
                   </button>
                   <input
                     value={d.name}
@@ -1487,7 +1492,7 @@ export function CreateProgramWizard({
                       updateEnabledDay(d.dow, { name: e.target.value })
                     }
                     className="h-11 min-w-0 flex-1 rounded-xl bg-surface px-3 text-sm disabled:opacity-50"
-                    placeholder="Gün adı"
+                    placeholder={t("program.dayNamePh")}
                   />
                 </div>
               </li>
@@ -1499,14 +1504,14 @@ export function CreateProgramWizard({
               className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
               onClick={() => setStep(0)}
             >
-              Geri
+              {t("common.back")}
             </button>
             <button
               type="button"
               className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
               onClick={() => {
                 if (enabledDays.length === 0) {
-                  toast.error("En az bir gün seç");
+                  toast.error(t("program.pickOneDay"));
                   return;
                 }
                 setBuildDayIdx(0);
@@ -1545,7 +1550,7 @@ export function CreateProgramWizard({
               <p className="font-medium">
                 {currentDay.name}{" "}
                 <span className="text-xs text-muted">
-                  · {DOW_SHORT[currentDay.dow]}
+                  · {dowShort(currentDay.dow, locale)}
                 </span>
               </p>
               <button
@@ -1558,7 +1563,7 @@ export function CreateProgramWizard({
             </div>
             {currentDay.exercises.length === 0 ? (
               <p className="py-4 text-center text-xs text-muted">
-                Henüz hareket yok — 1300+ kütüphaneden ekle
+                {t("program.noExercisesYet")}
               </p>
             ) : (
               <ul className="space-y-1.5">
@@ -1593,14 +1598,14 @@ export function CreateProgramWizard({
                             setEditingKey(isEdit ? null : ex.key)
                           }
                         >
-                          {isEdit ? "Kapat" : "Düzenle"}
+                          {isEdit ? t("program.close") : t("common.edit")}
                         </button>
                         <button
                           type="button"
                           className="shrink-0 px-2 text-xs text-red"
                           onClick={() => removeEx(currentDay.dow, ex.key)}
                         >
-                          Sil
+                          {t("common.delete")}
                         </button>
                       </div>
                       {isEdit && (
@@ -1624,7 +1629,7 @@ export function CreateProgramWizard({
               className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
               onClick={() => setStep(1)}
             >
-              Geri
+              {t("common.back")}
             </button>
             {buildDayIdx < enabledDays.length - 1 ? (
               <button
@@ -1632,7 +1637,7 @@ export function CreateProgramWizard({
                 className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
                 onClick={() => setBuildDayIdx((i) => i + 1)}
               >
-                Sonraki gün
+                {t("program.nextDay")}
               </button>
             ) : (
               <button
@@ -1642,7 +1647,7 @@ export function CreateProgramWizard({
                 onClick={() => void finish()}
               >
                 {busy ? <Spinner className="size-4" /> : null}
-                Programı oluştur
+                {t("program.importCreate")}
               </button>
             )}
           </div>
@@ -1681,6 +1686,7 @@ function DraftExEditor({
   ex: DraftEx;
   onChange: (patch: Partial<DraftEx>) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mt-2 space-y-2 border-t border-line/60 pt-2">
       <div className="grid grid-cols-2 gap-2">
@@ -1715,16 +1721,13 @@ function DraftExEditor({
         />
       </div>
       <label className="block space-y-1">
-        <span className="text-xs text-muted">Yük</span>
+        <span className="text-xs text-muted">{t("program.load")}</span>
         <AppSelect
           value={ex.load_tag}
           onValueChange={(v) => onChange({ load_tag: v })}
-          options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
-            value: k,
-            label: LOAD_TAG_LABELS[k],
-          }))}
+          options={(Object.keys(LOAD_TAG_KEYS) as LoadTag[]).map((k) => ({ value: k, label: t(LOAD_TAG_KEYS[k]) }))}
           triggerClassName="h-11 rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-          aria-label="Yük"
+          aria-label={t("program.load")}
         />
       </label>
     </div>
@@ -1740,6 +1743,7 @@ function ExerciseQuickPicker({
     draft: Omit<DraftEx, "key">,
   ) => void;
 }) {
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const [muscle, setMuscle] = useState("all");
   const [rows, setRows] = useState<ExerciseRow[]>([]);
@@ -1776,13 +1780,13 @@ function ExerciseQuickPicker({
   }, [q, muscle]);
 
   const tabs = [
-    ["all", "Tümü"],
-    ["gogus", "Göğüs"],
-    ["sirt", "Sırt"],
-    ["omuz", "Omuz"],
-    ["kol", "Kol"],
-    ["bacak", "Bacak"],
-    ["core", "Core"],
+    ["all", "muscle.all"],
+    ["gogus", "muscle.gogus"],
+    ["sirt", "muscle.sirt"],
+    ["omuz", "muscle.omuz"],
+    ["kol", "muscle.kol"],
+    ["bacak", "muscle.bacak"],
+    ["core", "muscle.core"],
   ] as const;
 
   function submit() {
@@ -1792,16 +1796,16 @@ function ExerciseQuickPicker({
     const hiRaw = typeof repHi === "number" ? repHi : Number(repHi);
     const r = typeof rest === "number" ? rest : Number(rest);
     if (!Number.isFinite(s) || s < 1) {
-      toast.error("Set sayısını gir");
+      toast.error(t("program.enterSets"));
       return;
     }
     if (!Number.isFinite(lo) || lo < 1) {
-      toast.error("Tekrar aralığını gir");
+      toast.error(t("program.enterRepRange"));
       return;
     }
     const hi = Number.isFinite(hiRaw) && hiRaw >= lo ? hiRaw : lo;
     if (!Number.isFinite(r) || r < 0) {
-      toast.error("Dinlenme süresini gir (sn)");
+      toast.error(t("program.enterRest"));
       return;
     }
     onConfirm({
@@ -1847,7 +1851,7 @@ function ExerciseQuickPicker({
                       : "bg-surface2 text-muted",
                   )}
                 >
-                  {lab}
+                  {t(lab)}
                 </button>
               ))}
             </div>
@@ -1897,7 +1901,7 @@ function ExerciseQuickPicker({
                 onChange={(e) =>
                   setSets(e.target.value === "" ? "" : Number(e.target.value))
                 }
-                placeholder="örn. 4"
+                placeholder={t("program.exSetsPh")}
                 className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
                 autoFocus
               />
@@ -1912,7 +1916,7 @@ function ExerciseQuickPicker({
                 onChange={(e) =>
                   setRest(e.target.value === "" ? "" : Number(e.target.value))
                 }
-                placeholder="örn. 90"
+                placeholder={t("program.exRestPh")}
                 className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
@@ -1935,7 +1939,7 @@ function ExerciseQuickPicker({
                     setRepHi(v);
                   }
                 }}
-                placeholder="örn. 6"
+                placeholder={t("program.exRepLoPh")}
                 className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
@@ -1951,22 +1955,19 @@ function ExerciseQuickPicker({
                     e.target.value === "" ? "" : Number(e.target.value),
                   )
                 }
-                placeholder="örn. 8"
+                placeholder={t("program.exRepHiPh")}
                 className="num h-12 w-full rounded-2xl bg-surface2 px-3 text-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
               />
             </label>
           </div>
           <label className="block space-y-1">
-            <span className="text-xs text-muted">Yük</span>
+            <span className="text-xs text-muted">{t("program.load")}</span>
             <AppSelect
               value={tag}
               onValueChange={setTag}
-              options={(Object.keys(LOAD_TAG_LABELS) as LoadTag[]).map((k) => ({
-                value: k,
-                label: LOAD_TAG_LABELS[k],
-              }))}
+              options={(Object.keys(LOAD_TAG_KEYS) as LoadTag[]).map((k) => ({ value: k, label: t(LOAD_TAG_KEYS[k]) }))}
               triggerClassName="rounded-2xl border-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-              aria-label="Yük"
+              aria-label={t("program.load")}
             />
           </label>
           <div className="flex gap-2 pt-1">
@@ -1975,14 +1976,14 @@ function ExerciseQuickPicker({
               className="h-12 flex-1 rounded-2xl bg-surface2 font-semibold text-muted"
               onClick={() => setPicked(null)}
             >
-              Hareket değiştir
+              {t("program.changeExercise")}
             </button>
             <button
               type="button"
               className="h-12 flex-1 rounded-2xl bg-yellow font-semibold text-bg"
               onClick={submit}
             >
-              Ekle
+              {t("common.add")}
             </button>
           </div>
         </div>

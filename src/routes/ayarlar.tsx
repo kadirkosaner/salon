@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AtSign, Bell, Check, ChevronLeft, ChevronRight, Clock, Copy, Download, Eye, Globe, KeyRound, LogOut, Scale, Trash2, UserRound, Vibrate } from "lucide-react";
+import { AtSign, Check, ChevronLeft, ChevronRight, Clock, Copy, Download, Eye, Globe, KeyRound, LogOut, Scale, Trash2, UserRound, Vibrate } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -57,7 +57,7 @@ function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [hapticOn, setHapticOn] = useState(true);
-  const [notifOn, setNotifOn] = useState(true);
+  const [, setNotifOn] = useState(true);
   const [deleteWord, setDeleteWord] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [_exporting, setExporting] = useState(false);
@@ -409,19 +409,7 @@ function SettingsPage() {
                   );
                 }}
               />
-              <SettingsRow
-                icon={Bell}
-                label={t("settings.notifications")}
-                value={notifOn ? t("settings.hapticOn") : t("settings.hapticOff")}
-                onClick={() => {
-                  const next = !notifOn;
-                  setNotifOn(next);
-                  void updateSettings({
-                    data: { notificationsEnabled: next },
-                  }).then(() => toast.success(t("common.saved")));
-                }}
-                last
-              />
+              {/* Notifications row hidden until real inbox (Faz 3) */}
             </SettingsGroup>
 
             <SettingsGroup label={t("settings.danger")}>

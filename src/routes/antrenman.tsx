@@ -366,6 +366,7 @@ function WorkoutPage() {
           today={today}
           statusMap={calMap}
           locale={locale}
+          t={t}
           onSelect={goDate}
           onGoToday={() => goDate(today)}
         />
@@ -411,24 +412,13 @@ function WorkoutPage() {
             onSaveProgram={() => void doSaveToProgram()}
             savingProgram={savingProgram}
             onClearFuture={() => {
-              if (
-                !confirm(
-                  locale === "en"
-                    ? "Only if you abandon the program. Clear future planned sessions? History stays."
-                    : "Programı bırakırsan gelecek planlar silinir. Geçmiş kalır. Devam?",
-                )
-              )
-                return;
+              if (!confirm(t("workout.clearFutureConfirm"))) return;
               void clearFutureWorkouts()
                 .then(async (r) => {
                   toast.success(
                     r.deleted === 0
-                      ? locale === "en"
-                        ? "Nothing to clear"
-                        : "Temizlenecek seans yok"
-                      : locale === "en"
-                        ? `${r.deleted} cleared`
-                        : `${r.deleted} gelecek seans silindi`,
+                      ? t("workout.clearFutureNone")
+                      : t("workout.clearFutureDone", { n: r.deleted }),
                   );
                   await loadCal();
                   await loadWorkout(date);
@@ -488,6 +478,7 @@ function ContinuousCalendar({
   today,
   statusMap,
   locale,
+  t,
   onSelect,
   onGoToday,
 }: {
@@ -495,6 +486,7 @@ function ContinuousCalendar({
   today: string;
   statusMap: Map<string, { day_name: string; status: string }>;
   locale: string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onSelect: (d: string) => void;
   onGoToday: () => void;
 }) {
@@ -528,11 +520,6 @@ function ContinuousCalendar({
     return "planned";
   }
 
-  const DOW =
-    locale === "en"
-      ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-      : ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
-
   return (
     <div className="rounded-2xl border border-line bg-surface p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -541,7 +528,7 @@ function ContinuousCalendar({
             {formatDate(selected, locale)}
           </p>
           <p className="text-[10px] text-dim">
-            {locale === "en" ? "Day by day · continuous" : "Gün gün · sürekli"}
+            {t("workout.dayByDay")}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -551,7 +538,7 @@ function ContinuousCalendar({
               onClick={onGoToday}
               className={btnClass("soft", undefined, { size: "sm" })}
             >
-              {locale === "en" ? "Today" : "Bugün"}
+              {t("workout.today")}
             </button>
           )}
           <button
@@ -583,7 +570,9 @@ function ContinuousCalendar({
           const isToday = d === today;
           const info = statusMap.get(d);
           const dt = new Date(d + "T12:00:00");
-          const dow = DOW[dt.getDay()] ?? "";
+          const dow = dt.toLocaleDateString(locale === "tr" ? "tr" : locale || "en", {
+            weekday: "short",
+          });
           const dayNum = d.slice(8);
           return (
             <button
@@ -614,19 +603,19 @@ function ContinuousCalendar({
       <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] text-dim">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-md border border-green/40 bg-green/20" />
-          {locale === "en" ? "Completed" : "Tamamlandı"}
+          {t("workout.legendDone")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-md border border-red/40 bg-red/15" />
-          {locale === "en" ? "Missed / skipped" : "Kaçırıldı / atlandı"}
+          {t("workout.legendMissed")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-md border border-yellow/40 bg-yellow/15" />
-          {locale === "en" ? "Planned" : "Planlı"}
+          {t("workout.legendPlanned")}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="size-3 rounded-md border border-line bg-transparent" />
-          {locale === "en" ? "Empty day" : "Boş gün"}
+          {t("workout.legendEmpty")}
         </span>
       </div>
     </div>
@@ -680,7 +669,7 @@ function EmptyDay({
 function WorkoutBody({
   workout,
   t,
-  locale,
+  locale: _locale,
   onFinish,
   onSkip,
   onUnskip,
@@ -756,11 +745,7 @@ function WorkoutBody({
             variant="icon"
             className="!size-11 text-muted hover:text-red"
             onClick={onClearFuture}
-            title={
-              locale === "en"
-                ? "Clear future when abandoning"
-                : "Program bırakınca geleceği temizle"
-            }
+            title={t("workout.clearFutureTitle")}
             aria-label="clear future"
           >
             <Eraser className="size-4" />
@@ -1243,13 +1228,13 @@ function AddExModal({
   }
 
   const tabs = [
-    ["all", "Tümü"],
-    ["gogus", "Göğüs"],
-    ["sirt", "Sırt"],
-    ["omuz", "Omuz"],
-    ["kol", "Kol"],
-    ["bacak", "Bacak"],
-    ["core", "Core"],
+    ["all", "muscle.all"],
+    ["gogus", "muscle.gogus"],
+    ["sirt", "muscle.sirt"],
+    ["omuz", "muscle.omuz"],
+    ["kol", "muscle.kol"],
+    ["bacak", "muscle.bacak"],
+    ["core", "muscle.core"],
   ] as const;
 
   return (
@@ -1257,7 +1242,7 @@ function AddExModal({
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="1300+ hareket ara…"
+        placeholder={t("workout.searchExercises")}
         className="mb-2 h-12 w-full rounded-2xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
         autoFocus
       />
@@ -1272,7 +1257,7 @@ function AddExModal({
               muscle === id ? "bg-yellow text-bg" : "bg-surface2 text-muted",
             )}
           >
-            {lab}
+            {t(lab)}
           </button>
         ))}
       </div>

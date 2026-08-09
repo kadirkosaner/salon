@@ -126,7 +126,7 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
-              placeholder="ornek@mail.com"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </label>
           {forgotSent ? (
@@ -174,7 +174,7 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-12 w-full rounded-md border border-line bg-surface2 px-3 text-text placeholder:text-dim"
-              placeholder="ornek@mail.com"
+              placeholder={t("auth.emailPlaceholder")}
             />
           </label>
           <label className="block space-y-1.5">

@@ -139,12 +139,12 @@ export function AppShell({
               );
             })}
 
-            <div className="relative flex min-h-14 items-center justify-center">
+            <div className="relative flex min-h-16 items-center justify-center">
               <Link
                 to="/kesfet"
-                aria-label={`${t("nav.search")} / ${t("nav.discover")}`}
+                aria-label={t("nav.discover")}
                 className={cn(
-                  "absolute -top-5 grid size-14 place-items-center rounded-full shadow-lg shadow-black/40 ring-4 ring-bg transition",
+                  "grid size-14 place-items-center rounded-full shadow-lg shadow-black/40 ring-4 ring-bg transition -translate-y-3",
                   searchActive
                     ? "bg-yellow text-bg"
                     : "bg-yellow/90 text-bg hover:bg-yellow",
@@ -152,14 +152,6 @@ export function AppShell({
               >
                 <Search className="size-6" strokeWidth={2.5} />
               </Link>
-              <span
-                className={cn(
-                  "mt-7 text-[10px] font-medium",
-                  searchActive ? "text-yellow" : "text-muted",
-                )}
-              >
-                {t("nav.search")}
-              </span>
             </div>
 
             {RIGHT_NAV.map((item) => {

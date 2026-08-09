@@ -7,6 +7,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/section";
+import { MuscleBadge } from "@/components/muscle-badge";
 import { ProgramCardSkeleton } from "@/components/ui/skeleton";
 import {
   DetailModal,
@@ -38,9 +39,9 @@ import {
   type ProgramGoal,
   type ProgramLevel,
 } from "@/lib/program-tags";
-import { useT } from "@/lib/i18n/provider";
+import { useI18n, useT } from "@/lib/i18n/provider";
 import { addDaysISO, cn, todayISO } from "@/lib/utils";
-import { DOW_LABELS } from "@/data/library";
+import { dowLong } from "@/lib/utils";
 import { copyText } from "@/lib/clipboard";
 import { qk } from "@/lib/query-keys";
 import { Spinner } from "@/components/ui/spinner";
@@ -80,6 +81,7 @@ function DiscoverPage() {
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const t = useT();
+  const { locale } = useI18n();
   const [q, setQ] = useState("");
   const [debounced, setDebounced] = useState("");
   const [searching, setSearching] = useState(false);
@@ -172,9 +174,9 @@ function DiscoverPage() {
           /* horizon fills later */
         }
         const dayHint = r.startDayName
-          ? ` · ${r.startDayName} → ${DOW_LABELS[r.startDow] ?? ""}`
+          ? ` · ${r.startDayName} → ${dowLong(r.startDow, locale)}`
           : "";
-        toast.success(`“${r.name}” aktif${dayHint}`);
+        toast.success(t("discover.activated", { name: r.name, day: dayHint }));
         void navigate({ to: "/program" });
       } catch (e) {
         toast.error(e instanceof Error ? e.message : t("common.error"));
@@ -182,13 +184,13 @@ function DiscoverPage() {
         setCloning(false);
       }
     },
-    [navigate, t],
+    [navigate, t, locale],
   );
 
   async function copyCode(codeStr: string) {
     const ok = await copyText(codeStr);
     if (ok) toast.success(`${t("common.copied")}: ${codeStr}`);
-    else toast.message(`Kod: ${codeStr}`);
+    else toast.message(t("program.codeLabel", { code: codeStr }));
   }
 
   async function toggleFollow(id: string, isFollowing: boolean) {
@@ -542,10 +544,10 @@ function FilterChips({
           <span className="mx-1 shrink-0 self-center text-dim">·</span>
           {(
             [
-              ["barbell", "Halter"],
-              ["dumbbell", "Dambıl"],
-              ["makine", "Makine"],
-              ["vucut", "Vücut"],
+              ["barbell", t("discover.eq.barbell")],
+              ["dumbbell", t("discover.eq.dumbbell")],
+              ["makine", t("discover.eq.machine")],
+              ["vucut", t("discover.eq.bodyweight")],
             ] as const
           ).map(([k, label]) => (
             <button
@@ -690,10 +692,10 @@ function SearchResults({
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
             <Users className="size-3.5" />
-            {t("discover.people")}
+            {t("discover.people")} · {results.people.length}
           </h3>
           <ul className="space-y-2">
-            {results.people.map((r) => (
+            {results.people.slice(0, 5).map((r) => (
               <PersonRow key={r.id} r={r} t={t} onFollow={onFollow} />
             ))}
           </ul>
@@ -704,10 +706,10 @@ function SearchResults({
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
             <BookOpen className="size-3.5" />
-            {t("discover.programs")}
+            {t("discover.programs")} · {results.programs.length}
           </h3>
           <div className="space-y-2.5">
-            {results.programs.map((p) => (
+            {results.programs.slice(0, 5).map((p) => (
               <ProgramCard
                 key={p.id}
                 p={p}
@@ -725,29 +727,29 @@ function SearchResults({
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
             <Dumbbell className="size-3.5" />
-            {t("discover.exercises")}
+            {t("discover.exercises")} · {results.exercises.length}
           </h3>
           <ul className="divide-y divide-line rounded-xl border border-line bg-surface2/40">
-            {results.exercises.map((e, i) => (
+            {results.exercises.slice(0, 5).map((e, i) => (
               <li
                 key={`${e.name}-${i}`}
-                className="flex items-center gap-3 px-3 py-2.5"
+                className="flex h-14 items-center gap-3 px-3"
               >
-                <span className="grid size-9 place-items-center rounded-lg bg-yellow/10 text-yellow">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-yellow/10 text-yellow">
                   <Dumbbell className="size-4" />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {e.name}
-                  </span>
-                  <span className="text-[11px] text-muted">
-                    {e.muscle_group}
-                    {e.detail ? ` · ${e.detail}` : ""}
-                  </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {e.name}
                 </span>
+                <MuscleBadge group={e.muscle_group} size="xs" />
               </li>
             ))}
           </ul>
+          {results.exercises.length > 5 ? (
+            <p className="mt-1 text-center text-[11px] text-muted">
+              +{results.exercises.length - 5} · {t("discover.searchAll")}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>

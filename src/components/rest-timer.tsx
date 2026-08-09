@@ -1,6 +1,7 @@
 import { Pause, Play, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/provider";
 
 export type RestTimerState = {
   seconds: number;
@@ -33,6 +34,7 @@ export function RestTimerBar({
   state: RestTimerState;
   onClose: () => void;
 }) {
+  const t = useT();
   const [left, setLeft] = useState(0);
   const [paused, setPaused] = useState(false);
   const totalRef = useRef(0);
@@ -60,8 +62,8 @@ export function RestTimerBar({
       }
       return;
     }
-    const t = window.setTimeout(() => setLeft((s) => s - 1), 1000);
-    return () => window.clearTimeout(t);
+    const id = window.setTimeout(() => setLeft((s) => s - 1), 1000);
+    return () => window.clearTimeout(id);
   }, [state, left, paused]);
 
   if (!state) return null;
@@ -87,16 +89,18 @@ export function RestTimerBar({
       </div>
       <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-muted">Dinlenme · {state.exerciseName}</p>
+          <p className="truncate text-xs text-muted">
+            {t("rest.label", { name: state.exerciseName })}
+          </p>
           <p className={cn("num text-3xl leading-none tracking-wide", left === 0 && "text-green")}>
-            {left === 0 ? "Hazır" : `${mm}:${ss}`}
+            {left === 0 ? t("rest.ready") : `${mm}:${ss}`}
           </p>
         </div>
         <button
           type="button"
           className="grid size-11 place-items-center rounded-md border border-line bg-surface text-text"
           onClick={() => setPaused((p) => !p)}
-          aria-label={paused ? "Devam" : "Duraklat"}
+          aria-label={paused ? t("rest.resume") : t("rest.pause")}
         >
           {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
         </button>
@@ -104,7 +108,7 @@ export function RestTimerBar({
           type="button"
           className="grid size-11 place-items-center rounded-md border border-line bg-surface text-text"
           onClick={() => setLeft((s) => s + 30)}
-          aria-label="30 saniye ekle"
+          aria-label={t("rest.add30")}
         >
           <Plus className="size-4" />
           <span className="sr-only">+30</span>
@@ -114,7 +118,7 @@ export function RestTimerBar({
           type="button"
           className="grid size-11 place-items-center rounded-md border border-line bg-surface text-muted"
           onClick={onClose}
-          aria-label="Kapat"
+          aria-label={t("common.close")}
         >
           <X className="size-4" />
         </button>
