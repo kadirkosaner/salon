@@ -3,13 +3,14 @@ import { useT } from "@/lib/i18n/provider";
 import type { MessageKey } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils";
 
+/** Semantic status colors only — muscle groups stay neutral by default. */
 const TONE: Partial<Record<string, string>> = {
-  gogus: "border-danger/30 bg-danger/10 text-danger",
-  sirt: "border-info/30 bg-info/10 text-info",
-  omuz: "border-accent/30 bg-accent/10 text-accent",
-  kol: "border-info/30 bg-info/10 text-info",
-  bacak: "border-success/30 bg-success/10 text-success",
-  trapez: "border-warning/30 bg-warning/10 text-warning",
+  gogus: "border-rule bg-raised text-text-2",
+  sirt: "border-rule bg-raised text-text-2",
+  omuz: "border-rule bg-raised text-text-2",
+  kol: "border-rule bg-raised text-text-2",
+  bacak: "border-rule bg-raised text-text-2",
+  trapez: "border-rule bg-raised text-text-2",
   core: "border-rule bg-raised text-text-2",
   diger: "border-rule bg-raised text-text-3",
 };

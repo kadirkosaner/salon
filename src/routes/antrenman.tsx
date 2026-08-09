@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Plus, Save, Search, SkipForward, Trash2 } from "@/components/icons";
+import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Info, MoreHorizontal, Plus, Save, Search, SkipForward, Trash2 } from "@/components/icons";
 import { toast } from "sonner";
 import { z } from "zod";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { LoadTagBadge } from "@/components/load-tag";
-import { MuscleBadge } from "@/components/muscle-badge";
+import { MuscleBadge, muscleLabel } from "@/components/muscle-badge";
 import { RestTimerBar, type RestTimerState } from "@/components/rest-timer";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import {
@@ -33,13 +33,12 @@ import {
   type ExerciseRow,
 } from "@/lib/server/exercises";
 import { useI18n } from "@/lib/i18n/provider";
-import { Btn, btnClass } from "@/components/ui/btn";
+import { btnClass } from "@/components/ui/btn";
 import { Sheet } from "@/components/ui/sheet";
 import { WorkoutSkeleton } from "@/components/ui/skeleton";
 import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
 import { haptic } from "@/lib/haptics";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
-import { Spinner } from "@/components/ui/spinner";
 
 const searchSchema = z.object({
   date: z.string().optional(),
@@ -360,7 +359,7 @@ function WorkoutPage() {
         </span>
       }
     >
-      <div className="w-full min-w-0 space-y-4">
+      <div className={cn("w-full min-w-0 space-y-3", workout && !needsProgram && "workout-finish-pad")}>
         <ContinuousCalendar
           selected={date}
           today={today}
@@ -492,14 +491,14 @@ function ContinuousCalendar({
 }) {
   const days = useMemo(() => {
     const arr: string[] = [];
-    for (let i = -10; i <= 21; i++) arr.push(addDaysISO(selected, i));
+    for (let i = -7; i <= 14; i++) arr.push(addDaysISO(selected, i));
     return arr;
   }, [selected]);
 
   const scroller = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLButtonElement>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
 
-  /** Center selected cell inside the strip only — never scroll the page. */
   const centerSelected = useCallback(() => {
     const root = scroller.current;
     const el = selectedRef.current;
@@ -526,51 +525,63 @@ function ContinuousCalendar({
     return "planned";
   }
 
-  const selectedFocus = statusMap.get(selected)?.day_name;
-
   return (
-    <div className="rounded-2xl border border-rule bg-sunken p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-display text-lg tracking-wide">
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="truncate text-xs font-medium text-text-2">
             {formatDate(selected, locale)}
+            {statusMap.get(selected)?.day_name
+              ? ` · ${statusMap.get(selected)!.day_name}`
+              : ""}
           </p>
-          <p className="truncate text-[10px] text-text-3">
-            {selectedFocus ?? t("workout.dayByDay")}
-          </p>
+          <button
+            type="button"
+            onClick={() => setLegendOpen((v) => !v)}
+            className="grid size-7 shrink-0 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
+            aria-label={t("workout.legendHint")}
+          >
+            <Info className="size-3.5" />
+          </button>
         </div>
-        <div className="flex items-center gap-1.5">
-          {selected !== today && (
+        <div className="flex items-center gap-1">
+          {selected !== today ? (
             <button
               type="button"
               onClick={onGoToday}
-              className={btnClass("soft", undefined, { size: "sm" })}
+              className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-accent"
             >
               {t("workout.today")}
             </button>
-          )}
+          ) : null}
           <button
             type="button"
             onClick={() => onSelect(addDaysISO(selected, -7))}
-            className={btnClass("icon", "!size-11")}
+            className="grid size-8 place-items-center rounded-full text-text-2 hover:bg-raised"
             aria-label="Prev week"
           >
-            <ChevronLeft className="size-5" />
+            <ChevronLeft className="size-4" />
           </button>
           <button
             type="button"
             onClick={() => onSelect(addDaysISO(selected, 7))}
-            className={btnClass("icon", "!size-11")}
+            className="grid size-8 place-items-center rounded-full text-text-2 hover:bg-raised"
             aria-label="Next week"
           >
-            <ChevronRight className="size-5" />
+            <ChevronRight className="size-4" />
           </button>
         </div>
       </div>
 
+      {legendOpen ? (
+        <p className="px-0.5 text-[10px] leading-snug text-text-3">
+          {t("workout.legendHint")}
+        </p>
+      ) : null}
+
       <div
         ref={scroller}
-        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-nowrap gap-1 overflow-x-auto overscroll-x-contain px-0.5 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {days.map((d) => {
           const tn = tone(d);
@@ -582,9 +593,6 @@ function ContinuousCalendar({
             weekday: "short",
           });
           const dayNum = d.slice(8);
-          const label = info?.day_name
-            ? info.day_name.replace(/\s+/g, " ").slice(0, 8)
-            : null;
           return (
             <button
               key={d}
@@ -595,57 +603,28 @@ function ContinuousCalendar({
               aria-current={isToday ? "date" : undefined}
               aria-pressed={isSel}
               className={cn(
-                "relative flex w-[3.4rem] shrink-0 flex-col items-center gap-0.5 rounded-2xl border px-1 py-2 transition active:scale-95",
-                isSel &&
-                  "z-[1] border-accent bg-accent/15 text-accent shadow-[0_0_0_2px_color-mix(in_oklab,var(--color-accent)_55%,transparent)]",
-                !isSel && tn === "done" && "border-success/40 bg-success/20 text-success",
-                !isSel && tn === "missed" && "border-danger/40 bg-danger/15 text-danger",
-                !isSel && tn === "planned" && "border-accent/30 bg-accent/10 text-accent",
-                !isSel && tn === "empty" && "border-rule bg-raised/40 text-text-2",
-                isToday && !isSel && "border-accent/60",
+                "relative flex w-11 shrink-0 flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 transition active:scale-95",
+                isSel
+                  ? "bg-accent/15 text-accent shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--color-accent)_50%,transparent)]"
+                  : "text-text-2 hover:bg-raised/60",
               )}
             >
-              <span className="text-[10px] font-medium uppercase opacity-80">
+              <span className="text-[9px] font-medium uppercase opacity-80">
                 {isToday ? t("workout.todayShort") : dow}
               </span>
-              <span className="num text-base leading-none">{Number(dayNum)}</span>
-              {label ? (
-                <span className="max-w-full truncate text-[8px] font-semibold leading-tight opacity-80">
-                  {label}
-                </span>
-              ) : (
-                <span className="h-2.5" />
-              )}
-              {isToday ? (
-                <span
-                  className={cn(
-                    "absolute bottom-1 size-1 rounded-full",
-                    isSel ? "bg-accent" : "bg-accent/80",
-                  )}
-                />
-              ) : null}
+              <span className="num text-sm leading-none">{Number(dayNum)}</span>
+              <span
+                className={cn(
+                  "mt-0.5 size-1.5 rounded-full",
+                  tn === "done" && "bg-success",
+                  tn === "missed" && "bg-danger",
+                  tn === "planned" && "bg-accent",
+                  tn === "empty" && "bg-edge",
+                )}
+              />
             </button>
           );
         })}
-      </div>
-
-      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] text-text-3">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-success/40 bg-success/20" />
-          {t("workout.legendDone")}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-danger/40 bg-danger/15" />
-          {t("workout.legendMissed")}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-accent/40 bg-accent/15" />
-          {t("workout.legendPlanned")}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-3 rounded-md border border-rule bg-transparent" />
-          {t("workout.legendEmpty")}
-        </span>
       </div>
     </div>
   );
@@ -695,6 +674,22 @@ function EmptyDay({
 
 /* ─── Workout body ─── */
 
+function muscleSummary(
+  exercises: WorkoutExerciseRow[],
+  t: (k: string) => string,
+): string {
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const e of exercises) {
+    const g = e.muscle_group || "";
+    if (!g || seen.has(g)) continue;
+    seen.add(g);
+    labels.push(muscleLabel(g, t as never));
+    if (labels.length >= 4) break;
+  }
+  return labels.join(" · ");
+}
+
 function WorkoutBody({
   workout,
   t,
@@ -713,7 +708,7 @@ function WorkoutBody({
   onClearFuture,
 }: {
   workout: WorkoutDetail;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   locale: string;
   onFinish: () => void;
   onSkip: () => void;
@@ -731,56 +726,132 @@ function WorkoutBody({
   savingProgram: boolean;
   onClearFuture: () => void;
 }) {
-  const statusLabel =
-    workout.status === "completed"
-      ? t("workout.completed")
-      : workout.status === "skipped"
-        ? t("workout.skipped")
-        : t("workout.planned");
+  const [moreOpen, setMoreOpen] = useState(false);
+  const doneSets = workout.exercises.reduce(
+    (n, e) => n + e.sets.filter((s) => s.completed).length,
+    0,
+  );
+  const doneEx = workout.exercises.filter(
+    (e) => e.sets.length > 0 && e.sets.every((s) => s.completed),
+  ).length;
+  const totalEx = workout.exercises.length;
+  const canFinish =
+    workout.status !== "completed" &&
+    workout.status !== "skipped" &&
+    doneSets > 0;
+  const focusLine = muscleSummary(workout.exercises, t);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="font-display text-2xl tracking-wide text-accent">
-            {workout.day_name}
-          </h2>
-          <p className="mt-0.5 text-xs text-text-2">
-            {workout.exercises.length} · {statusLabel}
-          </p>
-          {workout.status === "skipped" ? (
-            <p className="mt-1 text-[11px] text-text-3">{t("workout.skippedHint")}</p>
-          ) : null}
+    <div className="space-y-2.5">
+      {/* Single-line header + more menu */}
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <h2 className="min-w-0 truncate font-display text-xl tracking-wide text-accent">
+              {workout.day_name.replace(/\s*\/\s*/g, " ")}
+            </h2>
+            <span className="num shrink-0 text-sm font-semibold text-text-2">
+              {doneEx}/{totalEx || 0}
+            </span>
+          </div>
+          {focusLine ? (
+            <p className="truncate text-[11px] text-text-3">{focusLine}</p>
+          ) : (
+            <p className="text-[11px] text-text-3">
+              {workout.status === "completed"
+                ? t("workout.completed")
+                : workout.status === "skipped"
+                  ? t("workout.skipped")
+                  : t("workout.planned")}
+            </p>
+          )}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {workout.status === "skipped" ? (
-            <Btn variant="secondary" size="sm" onClick={onUnskip}>
-              <ArrowLeftRight className="size-4" />
-              {t("workout.unskip")}
-            </Btn>
-          ) : workout.status !== "completed" ? (
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMoreOpen((o) => !o)}
+            className="grid size-10 place-items-center rounded-xl bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-95"
+            aria-label={t("program.more")}
+          >
+            <MoreHorizontal className="size-5" />
+          </button>
+          {moreOpen ? (
             <>
-              <Btn variant="ghost" size="sm" onClick={onSkip}>
-                <SkipForward className="size-4" />
-                {t("workout.skip")}
-              </Btn>
-              <Btn variant="primary" size="sm" onClick={onFinish}>
-                <Check className="size-4" />
-                {t("workout.finish")}
-              </Btn>
+              <button
+                type="button"
+                className="fixed inset-0 z-40"
+                aria-label={t("common.close")}
+                onClick={() => setMoreOpen(false)}
+              />
+              <div className="absolute right-0 top-[calc(100%+0.25rem)] z-50 w-52 overflow-hidden rounded-xl border border-rule bg-sunken shadow-xl">
+                {workout.status === "skipped" ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      onUnskip();
+                    }}
+                  >
+                    <ArrowLeftRight className="size-4 text-text-2" />
+                    {t("workout.unskip")}
+                  </button>
+                ) : workout.status !== "completed" ? (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      onSkip();
+                    }}
+                  >
+                    <SkipForward className="size-4 text-text-2" />
+                    {t("workout.skip")}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    onAdd();
+                  }}
+                >
+                  <Plus className="size-4 text-text-2" />
+                  {t("workout.addExercise")}
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+                  disabled={savingProgram}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    onSaveProgram();
+                  }}
+                >
+                  <Save className="size-4 text-text-2" />
+                  {t("workout.saveToProgram")}
+                </button>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    onClearFuture();
+                  }}
+                >
+                  <Eraser className="size-4" />
+                  {t("program.clearFuture")}
+                </button>
+              </div>
             </>
           ) : null}
-          <Btn
-            variant="icon"
-            className="!size-11 text-text-2 hover:text-danger"
-            onClick={onClearFuture}
-            title={t("workout.clearFutureTitle")}
-            aria-label="clear future"
-          >
-            <Eraser className="size-4" />
-          </Btn>
         </div>
       </div>
+
+      {workout.status === "skipped" ? (
+        <p className="text-[11px] text-text-3">{t("workout.skippedHint")}</p>
+      ) : null}
 
       {workout.exercises.length === 0 ? (
         <p className="rounded-lg border border-rule bg-raised/40 p-4 text-sm text-text-2">
@@ -798,26 +869,33 @@ function WorkoutBody({
         />
       )}
 
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Btn variant="secondary" className="w-full flex-1" onClick={onAdd}>
-          <Plus className="size-4" />
-          {t("workout.addExercise")}
-        </Btn>
-        <Btn
-          variant="soft"
-          className="w-full flex-1"
-          disabled={savingProgram}
-          onClick={onSaveProgram}
-        >
-          {savingProgram ? (
-            <Spinner className="size-4" />
-          ) : (
-            <Save className="size-4" />
+      {/* Sticky finish bar */}
+      {workout.status !== "completed" && workout.status !== "skipped" ? (
+        <div
+          className={cn(
+            "fixed inset-x-0 z-30 mx-auto flex w-full max-w-[480px] items-center gap-2 border-t border-rule bg-sunken/95 px-3 py-2.5 backdrop-blur-md",
           )}
-          {t("workout.saveToProgram")}
-        </Btn>
-      </div>
-      <p className="text-[11px] text-text-3">{t("workout.saveToProgramHint")}</p>
+          style={{
+            bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          <button
+            type="button"
+            disabled={!canFinish}
+            onClick={onFinish}
+            title={!canFinish ? t("workout.finishNeedSet") : undefined}
+            className={cn(
+              "flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition active:scale-[0.98]",
+              canFinish
+                ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
+                : "bg-raised text-text-3",
+            )}
+          >
+            <Check className="size-4" />
+            {t("workout.finishBar", { done: doneEx, total: totalEx || 0 })}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -832,7 +910,7 @@ function ExerciseList({
   onRest,
 }: {
   exercises: WorkoutExerciseRow[];
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onSetSave: (
     id: number,
     p: { weight?: number | null; reps?: number | null; completed?: boolean },
@@ -842,42 +920,54 @@ function ExerciseList({
   onRemove: (ex: WorkoutExerciseRow) => void;
   onRest: (s: RestTimerState) => void;
 }) {
-  // Open first incomplete exercise by default
   const defaultOpen = useMemo(() => {
-    const firstOpen = exercises.find(
-      (e) => !e.sets.every((s) => s.completed),
-    );
+    const firstOpen = exercises.find((e) => !e.sets.every((s) => s.completed));
     return firstOpen?.id ?? exercises[0]?.id ?? null;
   }, [exercises]);
 
   const [openId, setOpenId] = useState<number | null>(defaultOpen);
-
-  // When exercise list identity changes (new day / new workout), reset open
   const idsKey = exercises.map((e) => e.id).join(",");
   useEffect(() => {
-    const firstOpen = exercises.find(
-      (e) => !e.sets.every((s) => s.completed),
-    );
+    const firstOpen = exercises.find((e) => !e.sets.every((s) => s.completed));
     setOpenId(firstOpen?.id ?? exercises[0]?.id ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsKey]);
 
-  function toggle(id: number) {
-    setOpenId((cur) => (cur === id ? null : id));
+  function handleSetComplete(
+    ex: WorkoutExerciseRow,
+    setId: number,
+    done: boolean,
+  ) {
+    onSetComplete(ex, setId, done);
+    if (!done) return;
+    // After complete, if all sets done → open next incomplete
+    const nextSets = ex.sets.map((s) =>
+      s.id === setId ? { ...s, completed: true } : s,
+    );
+    const allDone = nextSets.every((s) => s.completed);
+    if (!allDone) return;
+    const idx = exercises.findIndex((e) => e.id === ex.id);
+    for (let i = idx + 1; i < exercises.length; i++) {
+      const n = exercises[i]!;
+      if (!n.sets.every((s) => s.completed)) {
+        setOpenId(n.id);
+        return;
+      }
+    }
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-1.5">
       {exercises.map((ex, i) => (
         <ExerciseCard
           key={ex.id}
           index={i + 1}
           exercise={ex}
           open={openId === ex.id}
-          onToggle={() => toggle(ex.id)}
+          onToggle={() => setOpenId((cur) => (cur === ex.id ? null : ex.id))}
           t={t}
           onSetSave={onSetSave}
-          onSetComplete={onSetComplete}
+          onSetComplete={handleSetComplete}
           onSwap={() => onSwap(ex)}
           onRemove={() => onRemove(ex)}
           onRestStart={() =>
@@ -890,6 +980,26 @@ function ExerciseList({
       ))}
     </ul>
   );
+}
+
+function lastWeightForSet(
+  exercise: WorkoutExerciseRow,
+  setIndex: number,
+): number | null {
+  const last = exercise.lastTime?.sets;
+  if (!last?.length) return null;
+  const hit = last.find((s, i) => i + 1 === setIndex) ?? last[last.length - 1];
+  return hit?.weight ?? null;
+}
+
+function lastRepsForSet(
+  exercise: WorkoutExerciseRow,
+  setIndex: number,
+): number | null {
+  const last = exercise.lastTime?.sets;
+  if (!last?.length) return null;
+  const hit = last.find((s, i) => i + 1 === setIndex) ?? last[last.length - 1];
+  return hit?.reps ?? null;
 }
 
 function ExerciseCard({
@@ -908,7 +1018,7 @@ function ExerciseCard({
   exercise: WorkoutExerciseRow;
   open: boolean;
   onToggle: () => void;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onSetSave: (
     id: number,
     p: { weight?: number | null; reps?: number | null; completed?: boolean },
@@ -918,40 +1028,45 @@ function ExerciseCard({
   onRemove: () => void;
   onRestStart: () => void;
 }) {
+  const [noteOpen, setNoteOpen] = useState(false);
   const doneCount = exercise.sets.filter((s) => s.completed).length;
   const allDone = doneCount === exercise.sets.length && exercise.sets.length > 0;
-  const allFilled = exercise.sets.every(
-    (s) =>
-      s.completed &&
-      s.reps != null &&
-      s.reps >= exercise.target_rep_hi &&
-      s.weight != null,
-  );
+  const topLast =
+    exercise.lastTime?.sets.reduce<number | null>((m, s) => {
+      if (s.weight == null) return m;
+      return m == null || s.weight > m ? s.weight : m;
+    }, null) ?? null;
 
-  const lastLine = exercise.lastTime
-    ? `${t("workout.lastTime")} · ${exercise.lastTime.sets
-        .map((s) => `${s.weight ?? "—"}×${s.reps ?? "—"}`)
-        .join("  ")}`
-    : null;
+  function repeatLast() {
+    for (const s of exercise.sets) {
+      const w = lastWeightForSet(exercise, s.set_index);
+      const r = lastRepsForSet(exercise, s.set_index);
+      if (w != null || r != null) {
+        onSetSave(s.id, {
+          ...(w != null ? { weight: w } : {}),
+          ...(r != null ? { reps: r } : {}),
+        });
+      }
+    }
+  }
 
   return (
     <li
       className={cn(
         "min-w-0 overflow-hidden rounded-xl border bg-sunken transition",
-        open ? "border-accent/40" : "border-rule",
-        allDone && !open && "border-success/30 bg-success/5",
+        open ? "border-accent/40" : "border-rule/80",
+        allDone && !open && "border-success/25 bg-success/5",
       )}
     >
-      {/* Header — always visible, toggles open */}
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-start gap-2.5 p-3 text-left active:bg-raised/40"
+        className="flex w-full items-center gap-2 px-2.5 py-2 text-left active:bg-raised/40"
         aria-expanded={open}
       >
         <span
           className={cn(
-            "num mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg text-sm",
+            "num grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-semibold",
             allDone
               ? "bg-success/20 text-success"
               : open
@@ -959,132 +1074,119 @@ function ExerciseCard({
                 : "bg-raised text-text-2",
           )}
         >
-          {allDone ? <Check className="size-3.5" /> : index}
+          {allDone ? <Check className="size-3" /> : String(index).padStart(2, "0")}
         </span>
-        <div className="min-w-0 flex-1">
-          <p className="break-words font-medium leading-snug">
-            {exercise.exercise_name}
-            {exercise.detail ? (
-              <span className="text-text-2"> · {exercise.detail}</span>
-            ) : null}
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <MuscleBadge group={exercise.muscle_group} size="xs" />
-            <span className="num text-sm text-accent">
-              {exercise.target_sets}×{exercise.target_rep_lo}-{exercise.target_rep_hi}
-            </span>
-            <span className="text-[11px] text-text-2">
-              {doneCount}/{exercise.sets.length} set
-            </span>
-            {!open && exercise.load_tag && (
-              <LoadTagBadge tag={exercise.load_tag} />
-            )}
-          </div>
-        </div>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          {exercise.exercise_name}
+        </span>
+        <span className="num shrink-0 text-[11px] text-text-2">
+          {exercise.target_sets}×{exercise.target_rep_lo}–{exercise.target_rep_hi}
+        </span>
+        <span className="num shrink-0 text-[11px] tabular-nums text-text-3">
+          {doneCount}/{exercise.sets.length}
+        </span>
         <ChevronDown
           className={cn(
-            "mt-1 size-5 shrink-0 text-text-2 transition-transform duration-200",
+            "size-4 shrink-0 text-text-3 transition-transform",
             open && "rotate-180 text-accent",
           )}
         />
       </button>
 
-      {/* Body — collapsible */}
-      {open && (
-        <div className="border-t border-rule px-3 pb-3 pt-2">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-text-2">
-              {exercise.unit === "m" ? "m" : "kg"} · {exercise.rest_sec}s
-            </span>
+      {open ? (
+        <div className="border-t border-rule/80 px-2.5 pb-2.5 pt-2">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <MuscleBadge group={exercise.muscle_group} size="xs" />
             <LoadTagBadge tag={exercise.load_tag} />
             <ExercisePreviewButton
               name={exercise.exercise_name}
               muscleGroup={exercise.muscle_group}
+              compact
             />
-            <div className="ml-auto flex gap-1.5">
+            {exercise.note ? (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSwap();
-                }}
-                className={btnClass("icon", "!size-11")}
+                onClick={() => setNoteOpen((v) => !v)}
+                className="grid size-9 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
+                aria-label="Note"
+              >
+                <Info className="size-3.5" />
+              </button>
+            ) : null}
+            <div className="ml-auto flex gap-0.5">
+              <button
+                type="button"
+                onClick={onSwap}
+                className="grid size-9 place-items-center rounded-full text-text-2 hover:bg-raised"
                 aria-label={t("workout.swap")}
               >
-                <ArrowLeftRight className="size-4" />
+                <ArrowLeftRight className="size-3.5" />
               </button>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }}
-                className={btnClass("icon", "!size-11 hover:text-danger")}
+                onClick={onRemove}
+                className="grid size-9 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-danger"
                 aria-label={t("workout.removeExercise")}
               >
-                <Trash2 className="size-4" />
+                <Trash2 className="size-3.5" />
               </button>
             </div>
           </div>
 
-          {lastLine && (
-            <p className="mb-2 break-words text-xs text-text-2">{lastLine}</p>
-          )}
-          {allFilled && (
-            <p className="mb-2 rounded-md border border-success/30 bg-success/10 px-2.5 py-1.5 text-xs text-success">
-              {t("workout.progressHint")}
-            </p>
-          )}
-          {exercise.suggestedWeight != null && (
-            <p className="mb-2 text-xs text-accent/90">
-              {t("workout.suggestWeight")}: {exercise.suggestedWeight}{" "}
-              {exercise.unit}
-            </p>
-          )}
-          {exercise.note && (
-            <p className="mb-2 text-xs leading-relaxed text-text-3">{exercise.note}</p>
-          )}
+          {topLast != null ? (
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-text-3">
+                {t("workout.lastKg", { w: topLast })}
+              </p>
+              <button
+                type="button"
+                onClick={repeatLast}
+                className="rounded-full border border-rule px-2.5 py-1 text-[11px] font-semibold text-accent"
+              >
+                {t("workout.repeatLast")}
+              </button>
+            </div>
+          ) : null}
 
-          <div className="space-y-2">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="rounded-md bg-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-3">
-                {t("workout.targetReps")}: {exercise.target_rep_lo}–{exercise.target_rep_hi}
-              </span>
-            </div>
-            <div className="set-grid text-[10px] font-semibold uppercase tracking-wide text-text-3">
-              <span>#</span>
-              <span>{exercise.unit || "kg"}</span>
-              <span>{t("workout.reps")}</span>
-              <span />
-            </div>
-            {exercise.sets.map((s) => (
+          {noteOpen && exercise.note ? (
+            <p className="mb-1.5 rounded-lg bg-raised/50 px-2 py-1.5 text-[11px] leading-relaxed text-text-2">
+              {exercise.note}
+            </p>
+          ) : null}
+
+          <div className="set-grid mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-3">
+            <span>#</span>
+            <span>{exercise.unit || "kg"}</span>
+            <span>{t("workout.reps")}</span>
+            <span />
+          </div>
+          {exercise.sets.map((s) => {
+            const ghostW = lastWeightForSet(exercise, s.set_index);
+            const ghostR = lastRepsForSet(exercise, s.set_index);
+            return (
               <div key={s.id} className="set-grid">
-                <span className="num text-sm text-text-2">{s.set_index}</span>
+                <span className="num text-xs text-text-3">{s.set_index}</span>
                 <input
                   type="number"
                   inputMode="decimal"
                   value={s.weight ?? ""}
-                  placeholder="—"
+                  placeholder={ghostW != null ? String(ghostW) : "—"}
                   onChange={(e) => {
                     const v = e.target.value;
-                    onSetSave(s.id, {
-                      weight: v === "" ? null : Number(v),
-                    });
+                    onSetSave(s.id, { weight: v === "" ? null : Number(v) });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-edge bg-canvas px-2 text-center text-sm placeholder:text-text-3"
+                  className="rounded-lg border border-edge bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70"
                 />
                 <input
                   type="number"
                   inputMode="numeric"
                   value={s.reps ?? ""}
-                  placeholder="—"
+                  placeholder={ghostR != null ? String(ghostR) : "—"}
                   onChange={(e) => {
                     const v = e.target.value;
-                    onSetSave(s.id, {
-                      reps: v === "" ? null : Number(v),
-                    });
+                    onSetSave(s.id, { reps: v === "" ? null : Number(v) });
                   }}
-                  className="h-11 min-w-0 rounded-lg border border-edge bg-canvas px-2 text-center text-sm placeholder:text-text-3"
+                  className="rounded-lg border border-edge bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70"
                 />
                 <button
                   type="button"
@@ -1094,24 +1196,23 @@ function ExerciseCard({
                     if (next) onRestStart();
                   }}
                   className={cn(
-                    "grid size-12 place-items-center rounded-2xl transition active:scale-95",
+                    "set-check grid place-items-center rounded-xl transition active:scale-95",
                     s.completed
-                      ? "set-done-pop bg-success/20 text-success shadow-[inset_0_0_0_1px_rgba(61,214,140,0.35)]"
-                      : "bg-raised text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]",
+                      ? "set-done-pop bg-success/20 text-success"
+                      : "bg-raised text-text-2",
                   )}
                   aria-label={t("workout.completeSet")}
                 >
                   <Check className="size-4" />
                 </button>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      ) : null}
     </li>
   );
 }
-
 
 /* ─── Modals ─── */
 
