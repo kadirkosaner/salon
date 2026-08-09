@@ -298,7 +298,7 @@ async function loadProfileHub(
   const todayIso = await todayForUser(sql, viewerId);
   const weekStart = await startOfWeekPg(sql, todayIso);
   const weekEnd = addDays(weekStart, 6);
-  const heatStart = addDays(todayIso, -180);
+  const heatStart = addDays(todayIso, -7 * 12);
 
   const totals = await sql<{
     total_sessions: number;

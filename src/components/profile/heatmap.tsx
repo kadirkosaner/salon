@@ -1,9 +1,12 @@
-import { useT } from "@/lib/i18n/provider";
-import { cn } from "@/lib/utils";
+import { useI18n, useT } from "@/lib/i18n/provider";
+import { cn, formatDate } from "@/lib/utils";
 
 export type HeatDay = { date: string; count: number };
 
-/** GitHub-style contribution grid for last ~26 weeks of workouts. */
+/** Weeks of history shown (GitHub-style day grid — compact, not half a year). */
+const HEAT_WEEKS = 12;
+
+/** GitHub-style contribution grid for the last ~12 weeks of workouts. */
 export function WorkoutHeatmap({
   days,
   label,
@@ -12,14 +15,15 @@ export function WorkoutHeatmap({
   label?: string;
 }) {
   const t = useT();
+  const { locale } = useI18n();
   const title = label ?? t("heatmap.last6mo");
   const byDate = new Map(days.map((d) => [d.date, d.count]));
   const today = new Date();
   today.setHours(12, 0, 0, 0);
 
   const start = new Date(today);
-  start.setDate(start.getDate() - 7 * 25);
-  const dow = (start.getDay() + 6) % 7;
+  start.setDate(start.getDate() - 7 * (HEAT_WEEKS - 1));
+  const dow = (start.getDay() + 6) % 7; // Monday-first
   start.setDate(start.getDate() - dow);
 
   const weeks: HeatDay[][] = [];
@@ -63,9 +67,9 @@ export function WorkoutHeatmap({
         </div>
       </div>
       <div className="overflow-x-auto pb-1">
-        <div className="inline-flex gap-[3px]">
+        <div className="inline-flex gap-1">
           {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px]">
+            <div key={wi} className="flex flex-col gap-1">
               {week.map((day) => (
                 <div
                   key={day.date}
@@ -73,12 +77,12 @@ export function WorkoutHeatmap({
                     day.count < 0
                       ? undefined
                       : t("heatmap.sessionTitle", {
-                          date: day.date,
+                          date: formatDate(day.date, locale),
                           count: day.count,
                         })
                   }
                   className={cn(
-                    "size-[11px] rounded-[2px] sm:size-3",
+                    "size-3 rounded-[3px] sm:size-3.5",
                     cellClass(day.count),
                   )}
                 />

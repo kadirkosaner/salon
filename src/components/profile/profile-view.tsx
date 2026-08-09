@@ -22,6 +22,7 @@ import {
 } from "@/lib/server/social";
 import { cloneProgram } from "@/lib/server/share";
 import { DetailModal } from "@/components/discover-panel";
+import { useI18n } from "@/lib/i18n/provider";
 import { cn, formatDate } from "@/lib/utils";
 import { bmiBand, calcBmi } from "@/lib/bmi";
 
@@ -61,6 +62,7 @@ export function ProfileView({
   t: (k: string, vars?: Record<string, string | number>) => string;
   onChanged?: () => void;
 }) {
+  const { locale } = useI18n();
   const [tab, setTab] = useState<Tab>("activity");
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(hub.is_following);
@@ -189,9 +191,6 @@ export function ProfileView({
 
       {heatHasData ? (
         <div className="border-b border-rule py-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
-            {t("profile.heatmap")}
-          </p>
           <WorkoutHeatmap days={hub.heatmap} label={t("profile.heatmap")} />
         </div>
       ) : hub.is_self ? (
@@ -252,7 +251,7 @@ export function ProfileView({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.day_name}</p>
-                      <p className="text-[11px] text-text-2">{formatDate(r.date)}</p>
+                      <p className="text-[11px] text-text-2">{formatDate(r.date, locale)}</p>
                     </div>
                     <div className="text-right">
                       <p className="num text-sm text-accent">
@@ -380,7 +379,7 @@ export function ProfileView({
                     <Trophy className="size-4 shrink-0 text-accent" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.name}</p>
-                      <p className="text-[11px] text-text-2">{formatDate(r.date)}</p>
+                      <p className="text-[11px] text-text-2">{formatDate(r.date, locale)}</p>
                     </div>
                     <span className="num text-lg text-accent">{r.weight}</span>
                     <span className="text-xs text-text-2">kg</span>
@@ -412,7 +411,7 @@ export function ProfileView({
               </p>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-text-2">{formatDate(hub.measurement.date)}</p>
+                <p className="text-xs text-text-2">{formatDate(hub.measurement.date, locale)}</p>
                 <div className="flex flex-wrap gap-2 text-sm">
                   {hub.measurement.body_weight != null && (
                     <span className="num rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-accent">
