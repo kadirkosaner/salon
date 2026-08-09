@@ -93,12 +93,15 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({ connectionString: databaseUrl });
+    // withTransaction reads this — must be set before any query runs.
+    globalRef.__pgPool__ = pool;
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
     });
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
+    globalRef.__pgPool__ = undefined;
     throw err;
   });
   return globalRef.__pgSqlPromise__;
@@ -245,7 +248,13 @@ export async function withTransaction<T>(
 
   if (dbSource === "neon") {
     await getSql();
-    const pool = globalRef.__pgPool__;
+    let pool = globalRef.__pgPool__;
+    // Recover from stale HMR / older init that never assigned the pool.
+    if (!pool) {
+      globalRef.__pgSqlPromise__ = undefined;
+      await getSql();
+      pool = globalRef.__pgPool__;
+    }
     if (!pool) throw new Error("Neon pool not initialized");
     const client = await pool.connect();
     try {
