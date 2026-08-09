@@ -40,6 +40,10 @@ export type ProfileHub = {
   unit_system: "metric" | "imperial";
   measures_public: boolean;
   username_confirmed: boolean;
+  birth_date: string | null;
+  sex: "female" | "male" | "unspecified" | null;
+  height_cm: number | null;
+  details_public: boolean;
   /** Full hub hidden by privacy */
   restricted: boolean;
   followers: number;
@@ -95,9 +99,9 @@ async function allocateUsername(
   excludeUserId?: string,
 ): Promise<string> {
   let candidate = base.slice(0, USERNAME_MAX);
-  if (candidate.length < USERNAME_MIN) candidate = "sporcu";
+  if (candidate.length < USERNAME_MIN) candidate = "user";
   if (!isValidUsername(candidate)) {
-    candidate = "sporcu";
+    candidate = "user";
   }
   for (let i = 0; i < 50; i++) {
     const tryName =
@@ -133,7 +137,7 @@ export async function ensureUserProfile(
   const username = await allocateUsername(sql, base, userId);
   await sql`
     insert into user_profiles (user_id, username, username_confirmed)
-    values (${userId}, ${username}, false)
+    values (${userId}, ${username}, true)
     on conflict (user_id) do nothing
   `;
 }
@@ -204,9 +208,15 @@ async function loadProfileHub(
     measures_public: boolean;
     username_confirmed: boolean;
     verified: boolean;
+    birth_date: string | null;
+    sex: string | null;
+    height_cm: string | null;
+    details_public: boolean;
   }>`
     select username, bio, avatar_url, visibility, unit_system, coalesce(verified, false) as verified,
-           measures_public, username_confirmed
+           measures_public, username_confirmed,
+           birth_date::text as birth_date, sex, height_cm::text as height_cm,
+           coalesce(details_public, false) as details_public
     from user_profiles where user_id = ${userId}
   `;
   const p = prof[0]!;
@@ -260,6 +270,10 @@ async function loadProfileHub(
     unit_system: (p.unit_system as ProfileHub["unit_system"]) || "metric",
     measures_public: p.measures_public,
     username_confirmed: p.username_confirmed === true,
+    birth_date: null,
+    sex: null,
+    height_cm: null,
+    details_public: p.details_public === true,
     restricted: !canView,
     followers: stats[0]?.followers ?? 0,
     following: stats[0]?.following ?? 0,
@@ -454,10 +468,20 @@ async function loadProfileHub(
     limit 8
   `;
 
+  const showDetails = isSelf || p.details_public === true;
+  const sexVal =
+    p.sex === "female" || p.sex === "male" || p.sex === "unspecified"
+      ? p.sex
+      : null;
+
   return {
     ...baseRestricted,
     restricted: false,
     bio: p.bio,
+    birth_date: showDetails ? p.birth_date : null,
+    sex: showDetails ? sexVal : null,
+    height_cm: showDetails && p.height_cm != null ? Number(p.height_cm) : null,
+    details_public: p.details_public === true,
     streak,
     total_sessions: totals[0]?.total_sessions ?? 0,
     total_volume: Math.round(Number(totals[0]?.total_volume ?? 0)),
@@ -644,6 +668,14 @@ const profileUpdateSchema = z.object({
   unit_system: z.enum(["metric", "imperial"]).optional(),
   measures_public: z.boolean().optional(),
   confirm_username: z.boolean().optional(),
+  birth_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .optional(),
+  sex: z.enum(["female", "male", "unspecified"]).nullable().optional(),
+  height_cm: z.number().min(80).max(250).nullable().optional(),
+  details_public: z.boolean().optional(),
 });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
@@ -722,6 +754,40 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       `;
     }
 
+    if (data.birth_date !== undefined) {
+      if (data.birth_date) {
+        const d = new Date(data.birth_date + "T12:00:00");
+        const now = new Date();
+        const age =
+          (now.getTime() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+        if (Number.isNaN(d.getTime()) || age < 13 || age > 120) {
+          throw new Error("Invalid birth date");
+        }
+      }
+      await sql`
+        update user_profiles set birth_date = ${data.birth_date}, updated_at = now()
+        where user_id = ${context.userId}
+      `;
+    }
+    if (data.sex !== undefined) {
+      await sql`
+        update user_profiles set sex = ${data.sex}, updated_at = now()
+        where user_id = ${context.userId}
+      `;
+    }
+    if (data.height_cm !== undefined) {
+      await sql`
+        update user_profiles set height_cm = ${data.height_cm}, updated_at = now()
+        where user_id = ${context.userId}
+      `;
+    }
+    if (data.details_public != null) {
+      await sql`
+        update user_profiles set details_public = ${data.details_public}, updated_at = now()
+        where user_id = ${context.userId}
+      `;
+    }
+
     return loadProfileHub(sql, context.userId, context.userId);
   });
 
@@ -762,4 +828,85 @@ export const unfollowUser = createServerFn({ method: "POST" })
       where follower_id = ${context.userId} and following_id = ${userId}
     `;
     return { ok: true };
+  });
+
+
+/** Public username availability (register form). */
+export const checkUsernameAvailable = createServerFn({ method: "GET" })
+  .validator(v(z.object({ username: z.string().trim().min(1).max(32) })))
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const u = normalizeUsername(data.username);
+    if (!isValidUsername(u)) {
+      return {
+        available: false as const,
+        normalized: u,
+        reason: "invalid" as const,
+        suggestions: [] as string[],
+      };
+    }
+    const taken = await sql<{ user_id: string }>`
+      select user_id from user_profiles where lower(username) = ${u} limit 1
+    `;
+    if (taken.length === 0) {
+      return {
+        available: true as const,
+        normalized: u,
+        reason: null,
+        suggestions: [] as string[],
+      };
+    }
+    const suggestions: string[] = [];
+    for (let i = 1; i <= 6 && suggestions.length < 3; i++) {
+      const cand = `${u.slice(0, USERNAME_MAX - String(i).length)}${i}`;
+      if (!isValidUsername(cand)) continue;
+      const hit = await sql<{ user_id: string }>`
+        select user_id from user_profiles where lower(username) = ${cand} limit 1
+      `;
+      if (hit.length === 0) suggestions.push(cand);
+    }
+    return {
+      available: false as const,
+      normalized: u,
+      reason: "taken" as const,
+      suggestions,
+    };
+  });
+
+/** After email sign-up: set chosen username and mark confirmed. */
+export const claimRegisterUsername = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    v(
+      z.object({
+        username: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .min(USERNAME_MIN)
+          .max(USERNAME_MAX)
+          .regex(/^[a-z0-9_]+$/),
+      }),
+    ),
+  )
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await ensureUserSeeded(sql, context.userId);
+    const u = normalizeUsername(data.username);
+    if (!isValidUsername(u)) throw new Error("Invalid username");
+    const taken = await sql<{ user_id: string }>`
+      select user_id from user_profiles
+      where lower(username) = ${u} and user_id <> ${context.userId}
+      limit 1
+    `;
+    if (taken.length > 0) throw new Error("Username taken");
+    await sql`
+      insert into user_profiles (user_id, username, username_confirmed)
+      values (${context.userId}, ${u}, true)
+      on conflict (user_id) do update set
+        username = ${u},
+        username_confirmed = true,
+        updated_at = now()
+    `;
+    return { ok: true as const, username: u };
   });

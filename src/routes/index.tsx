@@ -166,7 +166,7 @@ function FeedPage() {
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;
 
-  const greeting = user.displayName?.split(" ")[0] ?? "Sporcu";
+  const greeting = user.displayName?.split(" ")[0] ?? t("common.athlete");
   const next = dashQuery.data?.next;
 
   return (

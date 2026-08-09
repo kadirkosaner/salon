@@ -6,7 +6,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { ProfileSkeleton } from "@/components/ui/skeleton";
 import { ProfileView } from "@/components/profile/profile-view";
-import { UsernameClaimSheet } from "@/components/profile/username-claim";
 import { useI18n } from "@/lib/i18n/provider";
 import { getMyProfileHub, type ProfileHub } from "@/lib/server/social";
 
@@ -50,16 +49,7 @@ function ProfilePage() {
       {loading || !hub ? (
         <ProfileSkeleton />
       ) : (
-        <>
-          <ProfileView hub={hub} t={t} onChanged={() => void reload()} />
-          {!hub.username_confirmed ? (
-            <UsernameClaimSheet
-              initial={hub.username}
-              t={t}
-              onDone={() => void reload()}
-            />
-          ) : null}
-        </>
+        <ProfileView hub={hub} t={t} onChanged={() => void reload()} />
       )}
     </AppShell>
   );

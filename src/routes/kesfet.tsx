@@ -368,6 +368,63 @@ function DiscoverPage() {
 
             {homeQuery.isLoading || !shelves ? (
               <ProgramCardSkeleton />
+            ) : hasActiveFilters(filters) ? (
+              (() => {
+                const seen = new Set<number>();
+                const combined: PublicProgramCard[] = [];
+                for (const list of [
+                  shelves.featured,
+                  shelves.topCloned,
+                  shelves.fromFollowing,
+                  shelves.forLevel,
+                ]) {
+                  for (const p of filterList(list)) {
+                    if (seen.has(p.id)) continue;
+                    seen.add(p.id);
+                    combined.push(p);
+                  }
+                }
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                        {t("discover.resultsCount", { n: combined.length })}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setFilters(emptyFilters())}
+                        className="text-xs font-medium text-accent"
+                      >
+                        {t("discover.clearAllFilters")}
+                      </button>
+                    </div>
+                    {combined.length === 0 ? (
+                      <p className="py-8 text-center text-sm text-text-2">
+                        {t("discover.shelfEmpty")}
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-rule border-t border-rule">
+                        {combined.map((p, i) => (
+                          <li key={p.id}>
+                            <ProgramCard
+                              rank={i + 1}
+                              p={p}
+                              busy={cloning}
+                              onOpen={() => setDetailId(p.id)}
+                              onClone={() =>
+                                setPending({ kind: "id", id: p.id, name: p.name })
+                              }
+                              onCopyCode={() =>
+                                p.share_code && void copyCode(p.share_code)
+                              }
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()
             ) : (
               <div className="space-y-5">
                 <Shelf
@@ -567,6 +624,15 @@ function FilterChips({
           <X className="size-3" />
         </button>
       ))}
+      {activeCount > 0 ? (
+        <button
+          type="button"
+          onClick={() => setFilters(emptyFilters())}
+          className="text-xs font-medium text-text-2 underline-offset-2 hover:underline"
+        >
+          {t("discover.clearAllFilters")}
+        </button>
+      ) : null}
 
       {open ? (
         <AppSheet title={t("discover.filters")} onClose={() => setOpen(false)}>

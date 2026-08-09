@@ -41,7 +41,7 @@ function mapProgram(
     clone_count: r.clone_count,
     day_count: r.day_count,
     exercise_count: r.exercise_count,
-    author_name: r.author_name ?? "Sporcu",
+    author_name: r.author_name ?? "User",
     is_catalog: r.user_id === "system",
     is_own: r.user_id === userId,
   };
@@ -68,7 +68,7 @@ async function loadPublicPrograms(
       p.id, p.name, p.description, p.tags, p.share_code,
       coalesce(p.clone_count, 0)::int as clone_count,
       p.user_id,
-      coalesce(u.name, case when p.user_id = 'system' then 'Salon' else 'Sporcu' end) as author_name,
+      coalesce(u.name, case when p.user_id = 'system' then 'Salon' else 'User' end) as author_name,
       (select count(*)::int from program_days pd where pd.program_id = p.id) as day_count,
       (
         select count(*)::int from program_exercises pe
@@ -126,7 +126,7 @@ export const getDiscoverHome = createServerFn({ method: "GET" })
         p.id, p.name, p.description, p.tags, p.share_code,
         coalesce(p.clone_count, 0)::int as clone_count,
         p.user_id,
-        coalesce(u.name, 'Sporcu') as author_name,
+        coalesce(u.name, 'User') as author_name,
         (select count(*)::int from program_days pd where pd.program_id = p.id) as day_count,
         (
           select count(*)::int from program_exercises pe
@@ -265,7 +265,7 @@ export const unifiedSearch = createServerFn({ method: "GET" })
           p.id, p.name, p.description, p.tags, p.share_code,
           coalesce(p.clone_count, 0)::int as clone_count,
           p.user_id,
-          coalesce(u.name, case when p.user_id = 'system' then 'Salon' else 'Sporcu' end) as author_name,
+          coalesce(u.name, case when p.user_id = 'system' then 'Salon' else 'User' end) as author_name,
           (select count(*)::int from program_days pd where pd.program_id = p.id) as day_count,
           (
             select count(*)::int from program_exercises pe

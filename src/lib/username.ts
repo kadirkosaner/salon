@@ -56,7 +56,7 @@ export function slugFromIdentity(name?: string | null, email?: string | null): s
   if (fromEmail.length >= USERNAME_MIN && !RESERVED_USERNAMES.has(fromEmail)) {
     return fromEmail;
   }
-  return "sporcu";
+  return "user";
 }
 
 export function isValidUsername(u: string): boolean {

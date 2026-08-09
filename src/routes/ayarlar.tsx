@@ -81,6 +81,10 @@ function SettingsPage() {
   const [visibility, setVisibility] =
     useState<ProfileHub["visibility"]>("public");
   const [measuresPublic, setMeasuresPublic] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [sex, setSex] = useState<"female" | "male" | "unspecified">("unspecified");
+  const [heightCm, setHeightCm] = useState("");
+  const [detailsPublic, setDetailsPublic] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [hapticOn, setHapticOn] = useState(true);
@@ -124,6 +128,10 @@ function SettingsPage() {
         setBio(h.bio ?? "");
         setVisibility(h.visibility);
         setMeasuresPublic(h.measures_public);
+        setBirthDate(h.birth_date ?? "");
+        setSex((h.sex as "female" | "male" | "unspecified") || "unspecified");
+        setHeightCm(h.height_cm != null ? String(h.height_cm) : "");
+        setDetailsPublic(h.details_public === true);
       })
       .catch(() => {});
   }, [user?.id, setThemeAndAccent]);
@@ -257,12 +265,25 @@ function SettingsPage() {
     }
     setSavingProfile(true);
     try {
+      const heightNum =
+        heightCm.trim() === ""
+          ? null
+          : Number(heightCm.replace(",", "."));
+      if (heightNum != null && (Number.isNaN(heightNum) || heightNum < 80 || heightNum > 250)) {
+        toast.error(t("profile.height"));
+        setSavingProfile(false);
+        return;
+      }
       const h = await updateMyProfile({
         data: {
           username: u,
           bio: bio.trim() || null,
           visibility,
           measures_public: measuresPublic,
+          birth_date: birthDate.trim() || null,
+          sex,
+          height_cm: heightNum,
+          details_public: detailsPublic,
         },
       });
       setHub(h);
@@ -660,6 +681,75 @@ function SettingsPage() {
                   </label>
                 ))}
               </fieldset>
+
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-text-2">{t("profile.birthDate")}</span>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().slice(0, 10)}
+                  min="1905-01-01"
+                  className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                />
+              </label>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-text-2">{t("profile.sexLabel")}</legend>
+                {(
+                  [
+                    ["unspecified", t("profile.sex.unspecified")],
+                    ["female", t("profile.sex.female")],
+                    ["male", t("profile.sex.male")],
+                  ] as const
+                ).map(([k, lab]) => (
+                  <label
+                    key={k}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3",
+                      sex === k
+                        ? "bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+                        : "bg-raised/50",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="sex"
+                      checked={sex === k}
+                      onChange={() => setSex(k)}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm">{lab}</span>
+                  </label>
+                ))}
+              </fieldset>
+
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-text-2">
+                  {t("profile.height")} (cm)
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={80}
+                  max={250}
+                  step={0.5}
+                  value={heightCm}
+                  onChange={(e) => setHeightCm(e.target.value)}
+                  placeholder="170"
+                  className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                />
+              </label>
+
+              <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
+                <span className="text-sm">{t("profile.detailsPublic")}</span>
+                <input
+                  type="checkbox"
+                  checked={detailsPublic}
+                  onChange={(e) => setDetailsPublic(e.target.checked)}
+                  className="size-5 accent-primary"
+                />
+              </label>
 
               <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
                 <span className="text-sm">{t("profile.measuresPublic")}</span>

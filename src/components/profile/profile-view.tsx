@@ -10,11 +10,10 @@ import {
   Trophy,
   UserMinus,
   UserPlus,
-  Weight,
+  X,
 } from "@/components/icons";
 import { toast } from "sonner";
-import { EmptyState, PageSection, StatTile } from "@/components/ui/section";
-import { btnClass } from "@/components/ui/btn";
+import { EmptyState } from "@/components/ui/section";
 import { WorkoutHeatmap } from "@/components/profile/heatmap";
 import {
   followUser,
@@ -26,19 +25,45 @@ import { cn, formatDate } from "@/lib/utils";
 
 type Tab = "activity" | "programs" | "stats";
 
+function ageFromBirth(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const d = new Date(iso + "T12:00:00");
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age -= 1;
+  return age >= 0 && age < 130 ? age : null;
+}
+
+function formatHeight(
+  cm: number | null | undefined,
+  unit: "metric" | "imperial",
+): string | null {
+  if (cm == null || !Number.isFinite(cm)) return null;
+  if (unit === "imperial") {
+    const totalIn = cm / 2.54;
+    const ft = Math.floor(totalIn / 12);
+    const inch = Math.round(totalIn - ft * 12);
+    return `${ft}'${inch}"`;
+  }
+  return `${Math.round(cm)} cm`;
+}
+
 export function ProfileView({
   hub,
   t,
   onChanged,
 }: {
   hub: ProfileHub;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
   onChanged?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("activity");
   const [busy, setBusy] = useState(false);
   const [following, setFollowing] = useState(hub.is_following);
   const [followers, setFollowers] = useState(hub.followers);
+  const [dismissPick, setDismissPick] = useState(false);
 
   const initials = (hub.name || "?")
     .split(/\s+/)
@@ -67,13 +92,12 @@ export function ProfileView({
     }
   }
 
-  async function adopt(programId: number, name: string) {
-    if (!confirm(`“${name}” programını almak mevcut programını değiştirebilir. Devam?`))
-      return;
+  async function adopt(programId: number, _name: string) {
+    if (!confirm(t("profile.cloneConfirm"))) return;
     setBusy(true);
     try {
       const r = await cloneProgram({ data: { programId, setActive: true } });
-      toast.success(`“${r.name}” aktif programın`);
+      toast.success(t("profile.programActive", { name: r.name }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("common.error"));
     } finally {
@@ -84,7 +108,15 @@ export function ProfileView({
   if (hub.restricted) {
     return (
       <div className="w-full min-w-0 space-y-4">
-        <Header hub={hub} initials={initials} t={t} following={following} busy={busy} onFollow={() => void toggleFollow()} />
+        <IdentityRow
+          hub={hub}
+          initials={initials}
+          t={t}
+          following={following}
+          followers={followers}
+          busy={busy}
+          onFollow={() => void toggleFollow()}
+        />
         <EmptyState
           icon={Lock}
           title={t("profile.private")}
@@ -94,9 +126,29 @@ export function ProfileView({
     );
   }
 
+  const heatHasData = hub.heatmap.some((d) => d.count > 0);
+  const age = ageFromBirth(hub.birth_date);
+  const heightLabel = formatHeight(hub.height_cm, hub.unit_system);
+
   return (
-    <div className="stagger-in w-full min-w-0 space-y-4">
-      <Header
+    <div className="stagger-in w-full min-w-0 space-y-0 pb-2">
+      {hub.is_self && !hub.username_confirmed && !dismissPick ? (
+        <div className="mb-3 flex items-center gap-2 border border-accent/25 bg-accent/10 px-3 py-2.5 text-xs text-text">
+          <Link to="/ayarlar" className="min-w-0 flex-1 font-medium text-accent">
+            {t("profile.pickUsername")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setDismissPick(true)}
+            className="grid size-8 place-items-center text-text-2"
+            aria-label={t("common.close")}
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
+      <IdentityRow
         hub={hub}
         initials={initials}
         t={t}
@@ -106,28 +158,35 @@ export function ProfileView({
         onFollow={() => void toggleFollow()}
       />
 
-      <div className="card-surface p-3">
-        <WorkoutHeatmap days={hub.heatmap} label={t("profile.heatmap")} />
-      </div>
+      {(age != null || hub.sex || heightLabel) && (
+        <p className="border-b border-rule px-0 py-2 text-xs text-text-2">
+          {[
+            age != null ? t("profile.ageYears", { n: age }) : null,
+            hub.sex && hub.sex !== "unspecified"
+              ? t(`profile.sex.${hub.sex}`)
+              : null,
+            heightLabel,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <StatTile
-          label={t("profile.followers")}
-          countValue={followers}
-          onClick={() => setTab("activity")}
-        />
-        <StatTile
-          label={t("profile.following")}
-          countValue={hub.following}
-        />
-        <StatTile
-          label={t("profile.sessions")}
-          countValue={hub.total_sessions}
-          onClick={() => setTab("stats")}
-        />
-      </div>
+      {heatHasData ? (
+        <div className="border-b border-rule py-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
+            {t("profile.heatmap")}
+          </p>
+          <WorkoutHeatmap days={hub.heatmap} label={t("profile.heatmap")} />
+        </div>
+      ) : hub.is_self ? (
+        <p className="border-b border-rule py-2 text-xs text-text-3">
+          {t("profile.heatmapEmpty")}
+        </p>
+      ) : null}
 
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-sunken p-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+      {/* Tabs — underline style like Discover */}
+      <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm">
         {(
           [
             ["activity", t("profile.activity")],
@@ -140,9 +199,9 @@ export function ProfileView({
             type="button"
             onClick={() => setTab(k)}
             className={cn(
-              "h-11 rounded-xl text-sm font-semibold transition active:scale-[0.98]",
+              "relative -mb-px shrink-0 pb-2.5 pt-3 font-medium transition",
               tab === k
-                ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
+                ? "text-text after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-accent"
                 : "text-text-2",
             )}
           >
@@ -152,71 +211,74 @@ export function ProfileView({
       </div>
 
       {tab === "activity" && (
-        <PageSection title={t("profile.history")}>
+        <div>
           {hub.recent.length === 0 ? (
-            <EmptyState
-              icon={Dumbbell}
-              title={t("workout.emptyDay")}
-              hint={
-                hub.is_self
-                  ? "Tamamladığın seanslar burada listelenir."
-                  : "Bu sporcu henüz antrenman paylaşmadı."
-              }
-              actionLabel={hub.is_self ? t("nav.workout") : undefined}
-              actionTo={hub.is_self ? "/antrenman" : undefined}
-            />
+            <div className="py-6">
+              <EmptyState
+                icon={Dumbbell}
+                title={t("workout.emptyDay")}
+                hint={
+                  hub.is_self
+                    ? t("profile.activityEmptyHint")
+                    : t("profile.activityEmptyOther")
+                }
+                actionLabel={hub.is_self ? t("nav.workout") : undefined}
+                actionTo={hub.is_self ? "/antrenman" : undefined}
+              />
+            </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-rule">
               {hub.recent.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex items-center gap-3 rounded-xl bg-raised/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                >
-                  <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10">
-                    <Flame className="size-4 text-accent" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{r.day_name}</p>
-                    <p className="text-xs text-text-2">{formatDate(r.date)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="num text-sm text-accent">
-                      {r.tonnage > 0 ? r.tonnage : "—"}
-                    </p>
-                    <p className="text-[10px] text-text-3">kg</p>
+                <li key={r.id}>
+                  <div className="flex w-full items-center gap-3 py-3">
+                    <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                      <Flame className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{r.day_name}</p>
+                      <p className="text-[11px] text-text-2">{formatDate(r.date)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="num text-sm text-accent">
+                        {r.tonnage > 0 ? r.tonnage : "—"}
+                      </p>
+                      <p className="text-[10px] text-text-3">kg</p>
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </PageSection>
+        </div>
       )}
 
       {tab === "programs" && (
-        <PageSection title={t("profile.programs")}>
+        <div>
           {hub.programs.length === 0 ? (
-            <EmptyState
-              icon={BookOpen}
-              title={t("profile.noPublicPrograms")}
-              hint={
-                hub.is_self
-                  ? "Programını herkese açık yaparak paylaş."
-                  : "Bu sporcu henüz program yayınlamadı."
-              }
-              actionLabel={hub.is_self ? t("nav.program") : undefined}
-              actionTo={hub.is_self ? "/program" : undefined}
-            />
+            <div className="py-6">
+              <EmptyState
+                icon={BookOpen}
+                title={t("profile.noPublicPrograms")}
+                hint={
+                  hub.is_self
+                    ? t("profile.programsEmptyHint")
+                    : t("profile.programsEmptyOther")
+                }
+                actionLabel={hub.is_self ? t("nav.program") : undefined}
+                actionTo={hub.is_self ? "/program" : undefined}
+              />
+            </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-rule">
               {hub.programs.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex min-w-0 items-center gap-3 rounded-xl bg-raised/40 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                >
+                <li key={p.id} className="flex items-center gap-3 py-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{p.name}</p>
-                    <p className="text-xs text-text-2">
-                      {p.day_count} gün · {p.clone_count} kopya
+                    <p className="truncate text-sm font-semibold">{p.name}</p>
+                    <p className="text-[11px] text-text-2">
+                      {t("discover.daysShort", { n: p.day_count })}
+                      {p.clone_count > 0
+                        ? ` · ${t("discover.clones", { n: p.clone_count })}`
+                        : ""}
                     </p>
                   </div>
                   {!hub.is_self && (
@@ -224,7 +286,7 @@ export function ProfileView({
                       type="button"
                       disabled={busy}
                       onClick={() => void adopt(p.id, p.name)}
-                      className={btnClass("primary", undefined, { size: "sm" })}
+                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary px-3 text-xs font-semibold text-on-primary disabled:opacity-60"
                     >
                       <Download className="size-3.5" /> {t("common.copy")}
                     </button>
@@ -233,90 +295,78 @@ export function ProfileView({
               ))}
             </ul>
           )}
-        </PageSection>
+        </div>
       )}
 
       {tab === "stats" && (
-        <>
-          <div className="grid grid-cols-2 gap-2">
-            <StatTile
-              label={t("profile.streak")}
-              countValue={hub.streak}
-              hint={t("profile.weekUnit")}
-              accent
-              icon={<Flame className="size-3.5 text-warning" />}
-            />
-            <StatTile
-              label={t("profile.volume")}
-              value={
-                hub.total_volume >= 1000
+        <div className="divide-y divide-rule">
+          <div className="grid grid-cols-2 gap-x-4 py-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                {t("profile.streak")}
+              </p>
+              <p className="num mt-0.5 text-2xl text-accent">{hub.streak}</p>
+              <p className="text-[11px] text-text-3">{t("profile.weekUnit")}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                {t("profile.volume")}
+              </p>
+              <p className="num mt-0.5 text-2xl text-text">
+                {hub.total_volume >= 1000
                   ? `${(hub.total_volume / 1000).toFixed(1)}k`
-                  : String(hub.total_volume)
-              }
-              hint="kg"
-              icon={<Weight className="size-3.5 text-text-2" />}
-            />
+                  : hub.total_volume}
+              </p>
+              <p className="text-[11px] text-text-3">kg</p>
+            </div>
           </div>
 
-          <PageSection title={t("profile.records")}>
+          <div className="py-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-2">
+              {t("profile.records")}
+            </p>
             {hub.records.length === 0 ? (
-              <EmptyState
-                icon={Trophy}
-                title={t("profile.noRecords")}
-                hint="Set tamamladıkça rekorlar burada."
-              />
+              <p className="text-xs text-text-3">{t("profile.recordsEmptyHint")}</p>
             ) : (
-              <ul className="divide-y divide-rule">
+              <ul className="divide-y divide-rule/60">
                 {hub.records.map((r) => (
-                  <li
-                    key={r.name}
-                    className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
-                  >
+                  <li key={r.name} className="flex items-center gap-3 py-2.5">
                     <Trophy className="size-4 shrink-0 text-accent" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{r.name}</p>
-                      <p className="text-[11px] text-text-2">
-                        {formatDate(r.date)}
-                      </p>
+                      <p className="text-[11px] text-text-2">{formatDate(r.date)}</p>
                     </div>
-                    <span className="num text-xl text-accent">{r.weight}</span>
+                    <span className="num text-lg text-accent">{r.weight}</span>
                     <span className="text-xs text-text-2">kg</span>
                   </li>
                 ))}
               </ul>
             )}
-          </PageSection>
+          </div>
 
-          <PageSection
-            title={t("profile.measures")}
-            action={
-              hub.is_self ? (
+          <div className="py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                {t("profile.measures")}
+              </p>
+              {hub.is_self ? (
                 <Link
                   to="/olculer"
                   className="flex items-center gap-1 text-xs font-medium text-accent"
                 >
                   <Ruler className="size-3.5" /> {t("common.edit")}
                 </Link>
-              ) : null
-            }
-          >
+              ) : null}
+            </div>
             {!hub.measurement ? (
-              <EmptyState
-                icon={Ruler}
-                title={t("nav.measurements")}
-                hint={
-                  hub.is_self
-                    ? "İlk ölçünü kaydet."
-                    : "Ölçüler gizli veya yok."
-                }
-                actionLabel={hub.is_self ? t("nav.measurements") : undefined}
-                actionTo={hub.is_self ? "/olculer" : undefined}
-              />
+              <p className="text-xs text-text-3">
+                {hub.is_self
+                  ? t("profile.measuresEmptySelf")
+                  : t("profile.measuresEmptyHint")}
+              </p>
             ) : (
-              <div className="space-y-3">
-                <p className="text-xs text-text-2">
-                  {formatDate(hub.measurement.date)}
-                </p>
+              <div className="space-y-2">
+                <p className="text-xs text-text-2">{formatDate(hub.measurement.date)}</p>
                 <div className="flex flex-wrap gap-2 text-sm">
                   {hub.measurement.body_weight != null && (
                     <span className="num rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-accent">
@@ -325,35 +375,35 @@ export function ProfileView({
                   )}
                   {hub.measurement.waist != null && (
                     <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
-                      Bel {hub.measurement.waist}
+                      {t("measure.waist")} {hub.measurement.waist}
                     </span>
                   )}
                   {hub.measurement.chest != null && (
                     <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
-                      Göğüs {hub.measurement.chest}
+                      {t("measure.chest")} {hub.measurement.chest}
                     </span>
                   )}
                   {hub.measurement.arm != null && (
                     <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
-                      Kol {hub.measurement.arm}
+                      {t("measure.arm")} {hub.measurement.arm}
                     </span>
                   )}
                   {hub.measurement.thigh != null && (
                     <span className="rounded-full border border-rule px-2.5 py-1 text-text-2">
-                      Uyluk {hub.measurement.thigh}
+                      {t("measure.thigh")} {hub.measurement.thigh}
                     </span>
                   )}
                 </div>
               </div>
             )}
-          </PageSection>
-        </>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function Header({
+function IdentityRow({
   hub,
   initials,
   t,
@@ -371,80 +421,94 @@ function Header({
   onFollow: () => void;
 }) {
   return (
-    <div className="card-surface relative overflow-hidden">
-      <div className="h-20 bg-gradient-to-br from-accent/25 via-accent/5 to-transparent sm:h-24" />
-      <div className="relative px-4 pb-4">
-        <div className="-mt-10 flex items-end justify-between gap-3">
-          <div className="grid size-[4.5rem] place-items-center overflow-hidden rounded-2xl border-4 border-sunken bg-accent/15 font-display text-2xl text-accent shadow-lg">
-            {hub.image ? (
-              <img src={hub.image} alt="" className="size-full object-cover" />
-            ) : (
-              initials
-            )}
-          </div>
-          {hub.is_self ? (
-            <Link to="/ayarlar" className={btnClass("soft", undefined, { size: "sm" })}>
-              {t("profile.edit")}
-            </Link>
+    <div className="border-b border-rule pb-3">
+      <div className="flex items-start gap-3">
+        <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-accent/15 font-display text-xl text-accent">
+          {hub.image ? (
+            <img src={hub.image} alt="" className="size-full object-cover" />
           ) : (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={onFollow}
-              className={cn(
-                "mb-1 inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-semibold disabled:opacity-60",
-                following
-                  ? "border border-rule text-text-2"
-                  : "bg-primary text-on-primary",
-              )}
-            >
-              {following ? (
-                <>
-                  <UserMinus className="size-3.5" /> {t("profile.followingBtn")}
-                </>
-              ) : (
-                <>
-                  <UserPlus className="size-3.5" /> {t("profile.follow")}
-                </>
-              )}
-            </button>
+            initials
           )}
         </div>
-
-        <h1 className="font-display mt-3 flex items-center justify-center gap-1.5 text-2xl tracking-wide">
-          {hub.name}
-          {hub.verified ? (
-            <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-primary" title="Verified">✓</span>
-          ) : null}
-        </h1>
-        <p className="mt-0.5 text-sm text-accent">@{hub.username}</p>
-        {hub.bio ? (
-          <p className="mt-2 text-sm leading-relaxed text-text-2">{hub.bio}</p>
-        ) : null}
-        {hub.follows_you ? (
-          <span className="mt-2 inline-block rounded-full bg-raised px-2 py-0.5 text-[11px] font-medium text-text-2">
-            {t("profile.followsYou")}
-          </span>
-        ) : null}
-        {hub.active_program && !hub.restricted ? (
-          <p className="mt-2 text-xs text-accent">{hub.active_program}</p>
-        ) : null}
-
-        {!hub.restricted && (
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-            <span>
-              <span className="num font-semibold text-text">
-                {followers ?? hub.followers}
-              </span>{" "}
-              <span className="text-text-2">{t("profile.followers").toLowerCase()}</span>
-            </span>
-            <span>
-              <span className="num font-semibold text-text">{hub.following}</span>{" "}
-              <span className="text-text-2">{t("profile.following").toLowerCase()}</span>
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-1.5 text-base font-semibold leading-tight">
+                <span className="truncate">{hub.name}</span>
+                {hub.verified ? (
+                  <span
+                    className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-on-primary"
+                    title="Verified"
+                  >
+                    ✓
+                  </span>
+                ) : null}
+              </h1>
+              <p className="text-sm text-accent">@{hub.username}</p>
+            </div>
+            {hub.is_self ? (
+              <Link
+                to="/ayarlar"
+                className="shrink-0 rounded-full border border-rule px-3 py-1.5 text-xs font-semibold text-text-2"
+              >
+                {t("profile.edit")}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={onFollow}
+                className={cn(
+                  "inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold disabled:opacity-60",
+                  following
+                    ? "border border-rule text-text-2"
+                    : "bg-primary text-on-primary",
+                )}
+              >
+                {following ? (
+                  <>
+                    <UserMinus className="size-3.5" /> {t("profile.followingBtn")}
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="size-3.5" /> {t("profile.follow")}
+                  </>
+                )}
+              </button>
+            )}
           </div>
-        )}
+          {hub.bio ? (
+            <p className="mt-1.5 text-sm leading-relaxed text-text-2">{hub.bio}</p>
+          ) : null}
+          {hub.follows_you ? (
+            <span className="mt-1.5 inline-block rounded-full bg-raised px-2 py-0.5 text-[11px] font-medium text-text-2">
+              {t("profile.followsYou")}
+            </span>
+          ) : null}
+          {hub.active_program && !hub.restricted ? (
+            <p className="mt-1 text-xs text-accent">{hub.active_program}</p>
+          ) : null}
+        </div>
       </div>
+
+      {!hub.restricted && (
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+          <span>
+            <span className="num font-semibold text-text">
+              {followers ?? hub.followers}
+            </span>{" "}
+            <span className="text-text-2">{t("profile.followers").toLowerCase()}</span>
+          </span>
+          <span>
+            <span className="num font-semibold text-text">{hub.following}</span>{" "}
+            <span className="text-text-2">{t("profile.following").toLowerCase()}</span>
+          </span>
+          <span>
+            <span className="num font-semibold text-text">{hub.total_sessions}</span>{" "}
+            <span className="text-text-2">{t("profile.sessions").toLowerCase()}</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
