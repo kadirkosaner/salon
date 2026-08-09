@@ -671,7 +671,7 @@ function ContinuousCalendar({
           <button
             type="button"
             onClick={() => setLegendOpen((v) => !v)}
-            className="grid size-7 shrink-0 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
+            className="grid size-11 shrink-0 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
             aria-label={t("workout.legendHint")}
           >
             <Info className="size-3.5" />
@@ -682,7 +682,7 @@ function ContinuousCalendar({
             <button
               type="button"
               onClick={onGoToday}
-              className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-accent"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-[11px] font-semibold text-accent"
             >
               {t("workout.today")}
             </button>
@@ -690,7 +690,7 @@ function ContinuousCalendar({
           <button
             type="button"
             onClick={() => onSelect(addDaysISO(selected, -7))}
-            className="grid size-8 place-items-center rounded-full text-text-2 hover:bg-raised"
+            className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised"
             aria-label="Prev week"
           >
             <ChevronLeft className="size-4" />
@@ -698,7 +698,7 @@ function ContinuousCalendar({
           <button
             type="button"
             onClick={() => onSelect(addDaysISO(selected, 7))}
-            className="grid size-8 place-items-center rounded-full text-text-2 hover:bg-raised"
+            className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised"
             aria-label="Next week"
           >
             <ChevronRight className="size-4" />
@@ -1007,9 +1007,7 @@ function WorkoutBody({
       {/* Sticky finish bar */}
       {workout.status !== "completed" && workout.status !== "skipped" ? (
         <div
-          className={cn(
-            "fixed inset-x-0 z-30 mx-auto flex w-full max-w-[480px] items-center gap-2 border-t border-rule bg-sunken/95 px-3 py-2.5 backdrop-blur-md",
-          )}
+          className="fixed inset-x-0 z-[45] mx-auto flex w-full max-w-[480px] items-center gap-2 border-t border-rule bg-sunken/95 px-3 py-2 backdrop-blur-md"
           style={{
             bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
           }}
@@ -1020,14 +1018,16 @@ function WorkoutBody({
             onClick={onFinish}
             title={!canFinish ? t("workout.finishNeedSet") : undefined}
             className={cn(
-              "flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition active:scale-[0.98]",
+              "flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl px-2 text-sm font-semibold transition active:scale-[0.98]",
               canFinish
                 ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
                 : "bg-raised text-text-3",
             )}
           >
-            <Check className="size-4" />
-            {t("workout.finishBar", { done: doneEx, total: totalEx || 0 })}
+            <Check className="size-4 shrink-0" />
+            <span className="truncate">
+              {t("workout.finishBar", { done: doneEx, total: totalEx || 0 })}
+            </span>
           </button>
         </div>
       ) : null}
@@ -1230,7 +1230,7 @@ function ExerciseCard({
 
       {open ? (
         <div className="border-t border-rule/80 px-2.5 pb-2.5 pt-2">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
             <MuscleBadge group={exercise.muscle_group} size="xs" />
             <LoadTagBadge tag={exercise.load_tag} />
             <ExercisePreviewButton
@@ -1242,7 +1242,7 @@ function ExerciseCard({
               <button
                 type="button"
                 onClick={() => setNoteOpen((v) => !v)}
-                className="grid size-9 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
+                className="grid size-11 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
                 aria-label="Note"
               >
                 <Info className="size-3.5" />
@@ -1252,7 +1252,7 @@ function ExerciseCard({
               <button
                 type="button"
                 onClick={onSwap}
-                className="grid size-9 place-items-center rounded-full text-text-2 hover:bg-raised"
+                className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised"
                 aria-label={t("workout.swap")}
               >
                 <ArrowLeftRight className="size-3.5" />
@@ -1260,7 +1260,7 @@ function ExerciseCard({
               <button
                 type="button"
                 onClick={onRemove}
-                className="grid size-9 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-danger"
+                className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-danger"
                 aria-label={t("workout.removeExercise")}
               >
                 <Trash2 className="size-3.5" />
@@ -1276,7 +1276,7 @@ function ExerciseCard({
               <button
                 type="button"
                 onClick={repeatLast}
-                className="rounded-full border border-rule px-2.5 py-1 text-[11px] font-semibold text-accent"
+                className="inline-flex min-h-11 items-center rounded-full border border-rule px-3 text-[11px] font-semibold text-accent"
               >
                 {t("workout.repeatLast")}
               </button>

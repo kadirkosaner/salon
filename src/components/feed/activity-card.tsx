@@ -115,7 +115,7 @@ export function ActivityCard({
           )}
         </Link>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex min-w-0 items-baseline gap-1.5">
             <Link
               to="/u/$username"
               params={{ username: item.author.username || item.author.id }}
@@ -270,7 +270,7 @@ function renderBody(
               {t("feed.prBadge")}
             </p>
             <p className="mt-1 truncate font-medium">{String(p.exercise_name)}</p>
-            <p className="num mt-1 text-3xl leading-none text-accent">
+            <p className="num mt-1 truncate text-2xl leading-none text-accent sm:text-3xl">
               {w}
               <span className="ml-1 text-sm font-sans text-text-2">kg</span>
             </p>

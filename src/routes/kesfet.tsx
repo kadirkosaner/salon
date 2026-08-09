@@ -336,7 +336,7 @@ function DiscoverPage() {
             {tab === "forYou" || tab === "programs" ? (
               <FilterChips filters={filters} setFilters={setFilters} t={t} />
             ) : null}
-            <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm">
+            <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {(
                 [
                   ["forYou", t("discover.tabForYou")],
@@ -642,7 +642,7 @@ function DiscoverPage() {
                       type="button"
                       onClick={() => setMuscleFilter(id)}
                       className={cn(
-                        "rounded-full px-3 py-1.5 text-xs font-semibold",
+                        "inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold",
                         muscleFilter === id
                           ? "bg-primary text-on-primary"
                           : "border border-rule bg-raised text-text-2",

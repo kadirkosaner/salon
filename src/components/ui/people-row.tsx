@@ -68,8 +68,8 @@ export function PeopleRow({
           className={cn(
             "shrink-0 text-sm font-semibold transition disabled:opacity-50",
             isFollowing
-              ? "rounded-[var(--radius-btn)] border border-edge px-3 py-1.5 text-text-3"
-              : "btn-primary-theme px-3 py-1.5",
+              ? "rounded-[var(--radius-btn)] border border-edge px-3 min-h-11 py-2 text-text-3"
+              : "btn-primary-theme px-3 min-h-11 py-2",
           )}
         >
           {isFollowing ? t("profile.followingBtn") : t("profile.follow")}

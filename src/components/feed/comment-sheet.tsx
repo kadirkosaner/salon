@@ -188,7 +188,7 @@ export function CommentSheet({
                 <button
                   type="button"
                   onClick={() => setReplyTo(c)}
-                  className="text-[11px] font-medium text-text-2"
+                  className="inline-flex min-h-11 items-center text-[11px] font-medium text-text-2"
                 >
                   {t("post.reply")}
                 </button>

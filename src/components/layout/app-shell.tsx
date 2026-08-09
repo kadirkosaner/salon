@@ -158,7 +158,7 @@ export function AppShell({
 
         <main
           className={cn(
-            "min-w-0 w-full flex-1 px-3 pt-3",
+            "min-w-0 w-full flex-1 overflow-x-clip px-3 pt-3",
             restTimerActive ? "rest-timer-pad" : "app-pad-bottom",
           )}
         >
@@ -185,7 +185,7 @@ export function AppShell({
                     ? { search: { date: todayISO() } }
                     : {})}
                   className={cn(
-                    "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
+                    "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium transition-colors sm:min-h-16 sm:text-[11px]",
                     isOn ? "text-accent" : "text-text-2 hover:text-text",
                   )}
                 >
@@ -225,7 +225,7 @@ export function AppShell({
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
+                    "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium transition-colors sm:min-h-16 sm:text-[11px]",
                     isOn ? "text-accent" : "text-text-2 hover:text-text",
                   )}
                 >
@@ -242,7 +242,7 @@ export function AppShell({
               to="/profil"
               aria-label={t("nav.profile")}
               className={cn(
-                "relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium transition-colors",
+                "relative flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium transition-colors sm:min-h-16 sm:text-[11px]",
                 onProfile ? "text-accent" : "text-text-2 hover:text-text",
               )}
             >

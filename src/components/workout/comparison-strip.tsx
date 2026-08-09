@@ -82,7 +82,7 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
         <button
           type="button"
           onClick={() => setClassOpen(true)}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-rule px-2 py-0.5 text-[10px] font-semibold text-text-2"
+          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-rule px-2.5 text-[10px] font-semibold text-text-2"
         >
           {t("compare.class")}
           {activeDemo > 0 ? (

@@ -188,7 +188,7 @@ export function ProfileView({
       ) : null}
 
       {/* Tabs — underline style like Discover */}
-      <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm">
+      <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {(
           [
             ["activity", t("profile.activity")],
@@ -305,7 +305,7 @@ export function ProfileView({
                       type="button"
                       disabled={busy}
                       onClick={() => void adopt(p.id, p.name)}
-                      className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary px-3 text-xs font-semibold text-on-primary disabled:opacity-60"
+                      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full bg-primary px-3 text-xs font-semibold text-on-primary disabled:opacity-60"
                     >
                       <Download className="size-3.5" /> {t("common.copy")}
                     </button>
@@ -481,7 +481,7 @@ function IdentityRow({
             {hub.is_self ? (
               <Link
                 to="/profil/duzenle"
-                className="shrink-0 rounded-full border border-rule px-3 py-1.5 text-xs font-semibold text-text-2"
+                className="inline-flex h-11 shrink-0 items-center rounded-full border border-rule px-3 text-xs font-semibold text-text-2"
               >
                 {t("profile.edit")}
               </Link>
@@ -491,7 +491,7 @@ function IdentityRow({
                 disabled={busy}
                 onClick={onFollow}
                 className={cn(
-                  "inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold disabled:opacity-60",
+                  "inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-xs font-semibold disabled:opacity-60",
                   following
                     ? "border border-rule text-text-2"
                     : "bg-primary text-on-primary",
@@ -510,21 +510,18 @@ function IdentityRow({
             )}
           </div>
           {hub.bio ? (
-            <p className="mt-1.5 text-sm leading-relaxed text-text-2">{hub.bio}</p>
+            <p className="mt-1.5 break-words text-sm leading-relaxed text-text-2">{hub.bio}</p>
           ) : null}
           {hub.follows_you ? (
             <span className="mt-1.5 inline-block rounded-full bg-raised px-2 py-0.5 text-[11px] font-medium text-text-2">
               {t("profile.followsYou")}
             </span>
           ) : null}
-          {hub.active_program && !hub.restricted ? (
-            <p className="mt-1 text-xs text-accent">{hub.active_program}</p>
-          ) : null}
         </div>
       </div>
 
       {!hub.restricted && (
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span>
             <span className="num font-semibold text-text">
               {followers ?? hub.followers}

@@ -39,7 +39,7 @@ export function ExercisePreviewButton({
         }}
         className={cn(
           compact
-            ? "grid size-9 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-accent active:scale-95"
+            ? "grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-accent active:scale-95"
             : "inline-flex min-h-11 items-center gap-1.5 rounded-2xl bg-raised px-3.5 text-xs font-semibold text-text-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:scale-[0.98] active:bg-sunken active:text-accent",
           className,
         )}

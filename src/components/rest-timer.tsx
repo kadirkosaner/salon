@@ -75,8 +75,8 @@ export function RestTimerBar({
 
   return (
     <div
-      className="fixed inset-x-0 z-50 border-t border-rule bg-raised shadow-2xl"
-      style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
+      className="fixed inset-x-0 z-50 mx-auto w-full max-w-[480px] border-t border-rule bg-raised shadow-2xl"
+      style={{ bottom: "calc(7.25rem + env(safe-area-inset-bottom, 0px))" }}
     >
       <div className="h-1 bg-rule">
         <div
@@ -87,12 +87,12 @@ export function RestTimerBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
+      <div className="flex items-center gap-2 px-3 py-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-text-2">
+          <p className="truncate text-[11px] text-text-2">
             {t("rest.label", { name: state.exerciseName })}
           </p>
-          <p className={cn("num text-3xl leading-none tracking-wide", left === 0 && "text-success")}>
+          <p className={cn("num text-2xl leading-none tracking-wide", left === 0 && "text-success")}>
             {left === 0 ? t("rest.ready") : `${mm}:${ss}`}
           </p>
         </div>
@@ -106,14 +106,13 @@ export function RestTimerBar({
         </button>
         <button
           type="button"
-          className="grid size-11 place-items-center rounded-md border border-rule bg-sunken text-text"
+          className="inline-flex h-11 min-w-11 items-center justify-center gap-0.5 rounded-md border border-rule bg-sunken px-2 text-text"
           onClick={() => setLeft((s) => s + 30)}
           aria-label={t("rest.add30")}
         >
-          <Plus className="size-4" />
-          <span className="sr-only">+30</span>
+          <Plus className="size-3.5" />
+          <span className="num text-[10px] font-semibold">30</span>
         </button>
-        <span className="num text-xs text-text-2">+30</span>
         <button
           type="button"
           className="grid size-11 place-items-center rounded-md border border-rule bg-sunken text-text-2"
