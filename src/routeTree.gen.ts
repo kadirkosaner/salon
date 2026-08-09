@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AntrenmanRouteImport } from './routes/antrenman'
 import { Route as AyarlarRouteImport } from './routes/ayarlar'
+import { Route as BildirimlerRouteImport } from './routes/bildirimler'
 import { Route as KesfetRouteImport } from './routes/kesfet'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OlculerRouteImport } from './routes/olculer'
@@ -35,6 +36,11 @@ const AntrenmanRoute = AntrenmanRouteImport.update({
 const AyarlarRoute = AyarlarRouteImport.update({
   id: '/ayarlar',
   path: '/ayarlar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BildirimlerRoute = BildirimlerRouteImport.update({
+  id: '/bildirimler',
+  path: '/bildirimler',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KesfetRoute = KesfetRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
+  '/bildirimler': typeof BildirimlerRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
+  '/bildirimler': typeof BildirimlerRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/antrenman': typeof AntrenmanRoute
   '/ayarlar': typeof AyarlarRoute
+  '/bildirimler': typeof BildirimlerRoute
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/antrenman'
     | '/ayarlar'
+    | '/bildirimler'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/antrenman'
     | '/ayarlar'
+    | '/bildirimler'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/antrenman'
     | '/ayarlar'
+    | '/bildirimler'
     | '/kesfet'
     | '/login'
     | '/olculer'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AntrenmanRoute: typeof AntrenmanRoute
   AyarlarRoute: typeof AyarlarRoute
+  BildirimlerRoute: typeof BildirimlerRoute
   KesfetRoute: typeof KesfetRoute
   LoginRoute: typeof LoginRoute
   OlculerRoute: typeof OlculerRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/ayarlar'
       fullPath: '/ayarlar'
       preLoaderRoute: typeof AyarlarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bildirimler': {
+      id: '/bildirimler'
+      path: '/bildirimler'
+      fullPath: '/bildirimler'
+      preLoaderRoute: typeof BildirimlerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kesfet': {
@@ -279,6 +299,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AntrenmanRoute: AntrenmanRoute,
   AyarlarRoute: AyarlarRoute,
+  BildirimlerRoute: BildirimlerRoute,
   KesfetRoute: KesfetRoute,
   LoginRoute: LoginRoute,
   OlculerRoute: OlculerRoute,

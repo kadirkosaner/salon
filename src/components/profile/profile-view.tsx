@@ -411,7 +411,12 @@ function Header({
           )}
         </div>
 
-        <h1 className="font-display mt-3 text-2xl tracking-wide">{hub.name}</h1>
+        <h1 className="font-display mt-3 flex items-center justify-center gap-1.5 text-2xl tracking-wide">
+          {hub.name}
+          {hub.verified ? (
+            <span className="inline-flex size-5 items-center justify-center rounded-full bg-yellow text-[11px] font-bold text-bg" title="Verified">✓</span>
+          ) : null}
+        </h1>
         <p className="mt-0.5 text-sm text-yellow">@{hub.username}</p>
         {hub.bio ? (
           <p className="mt-2 text-sm leading-relaxed text-muted">{hub.bio}</p>

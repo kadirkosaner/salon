@@ -1,24 +1,33 @@
-import { useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Heart, Send } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import { AppSheet } from "@/components/ui/sheet";
 import {
   addComment,
+  likeComment,
   listComments,
+  unlikeComment,
   type FeedItem,
 } from "@/lib/server/activity";
 import { relativeTime } from "@/lib/relative-time";
 import { Spinner } from "@/components/ui/spinner";
 import { useI18n } from "@/lib/i18n/provider";
+import { cn } from "@/lib/utils";
 
 type Comment = {
   id: number;
   body: string;
   created_at: string;
+  edited_at: string | null;
+  parent_id: number | null;
   user_id: string;
   name: string;
   username: string | null;
   image: string | null;
+  like_count: number;
+  liked_by_me: boolean;
+  verified?: boolean;
 };
 
 export function CommentSheet({
@@ -37,6 +46,12 @@ export function CommentSheet({
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
+
+  async function reload() {
+    const r = await listComments({ data: item.id });
+    setRows(r as Comment[]);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -56,22 +71,140 @@ export function CommentSheet({
     };
   }, [item.id, t]);
 
+  const tree = useMemo(() => {
+    const roots = rows.filter((c) => !c.parent_id);
+    const byParent = new Map<number, Comment[]>();
+    for (const c of rows) {
+      if (c.parent_id) {
+        const list = byParent.get(c.parent_id) ?? [];
+        list.push(c);
+        byParent.set(c.parent_id, list);
+      }
+    }
+    return { roots, byParent };
+  }, [rows]);
+
   async function send(e: React.FormEvent) {
     e.preventDefault();
     const text = body.trim();
     if (!text) return;
     setSending(true);
     try {
-      await addComment({ data: { eventId: item.id, body: text } });
+      await addComment({
+        data: {
+          eventId: item.id,
+          body: text,
+          parentId: replyTo?.id ?? null,
+        },
+      });
       setBody("");
-      const r = await listComments({ data: item.id });
-      setRows(r as Comment[]);
+      setReplyTo(null);
+      await reload();
       onAdded();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSending(false);
     }
+  }
+
+  async function toggleLike(c: Comment) {
+    const next = !c.liked_by_me;
+    setRows((prev) =>
+      prev.map((x) =>
+        x.id === c.id
+          ? {
+              ...x,
+              liked_by_me: next,
+              like_count: x.like_count + (next ? 1 : -1),
+            }
+          : x,
+      ),
+    );
+    try {
+      if (next) await likeComment({ data: c.id });
+      else await unlikeComment({ data: c.id });
+    } catch {
+      setRows((prev) =>
+        prev.map((x) =>
+          x.id === c.id
+            ? {
+                ...x,
+                liked_by_me: !next,
+                like_count: x.like_count + (next ? -1 : 1),
+              }
+            : x,
+        ),
+      );
+    }
+  }
+
+  function CommentRow({ c, depth }: { c: Comment; depth: number }) {
+    const kids = tree.byParent.get(c.id) ?? [];
+    return (
+      <div className={cn(depth > 0 && "ms-8 border-s border-line/60 ps-3")}>
+        <div className="flex gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-yellow/15 text-[11px] font-semibold text-yellow">
+            {c.image ? (
+              <img src={c.image} alt="" className="size-full object-cover" />
+            ) : (
+              (c.name || "?")[0]
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-1.5">
+              <Link
+                to="/u/$username"
+                params={{ username: c.username || c.user_id }}
+                className="text-sm font-semibold hover:underline"
+              >
+                {c.name}
+              </Link>
+              {c.verified ? (
+                <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-yellow text-[8px] font-bold text-bg">
+                  ✓
+                </span>
+              ) : null}
+              <span className="text-[11px] text-dim">
+                {relativeTime(c.created_at, locale)}
+                {c.edited_at ? ` · ${t("post.edited")}` : ""}
+              </span>
+            </div>
+            <p className="mt-0.5 whitespace-pre-wrap text-sm leading-snug">{c.body}</p>
+            <div className="mt-1 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void toggleLike(c)}
+                className={cn(
+                  "inline-flex items-center gap-1 text-[11px] font-medium",
+                  c.liked_by_me ? "text-red" : "text-muted",
+                )}
+              >
+                <Heart className={cn("size-3", c.liked_by_me && "fill-current")} />
+                {c.like_count > 0 ? c.like_count : t("post.likeComment")}
+              </button>
+              {depth === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setReplyTo(c)}
+                  className="text-[11px] font-medium text-muted"
+                >
+                  {t("post.reply")}
+                </button>
+              ) : null}
+              {/* owner delete not wired without current user id; keep simple */}
+            </div>
+          </div>
+        </div>
+        {kids.length > 0 ? (
+          <div className="mt-2 space-y-2">
+            {kids.map((k) => (
+              <CommentRow key={k.id} c={k} depth={depth + 1} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   return (
@@ -92,47 +225,42 @@ export function CommentSheet({
               {t("feed.noComments")}
             </p>
           ) : (
-            rows.map((c) => (
-              <div key={c.id} className="flex gap-2.5">
-                <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-yellow/15 text-[11px] font-semibold text-yellow">
-                  {c.image ? (
-                    <img src={c.image} alt="" className="size-full object-cover" />
-                  ) : (
-                    (c.name[0] ?? "?").toUpperCase()
-                  )}
-                </span>
-                <div className="min-w-0 flex-1 rounded-xl bg-surface2/60 px-3 py-2">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs font-semibold">{c.name}</span>
-                    <span className="text-[10px] text-dim">
-                      {relativeTime(c.created_at, locale)}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-sm leading-snug">{c.body}</p>
-                </div>
-              </div>
-            ))
+            tree.roots.map((c) => <CommentRow key={c.id} c={c} depth={0} />)
           )}
         </div>
-        <form onSubmit={(e) => void send(e)} className="flex gap-2 border-t border-line pt-3">
-          <input
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            maxLength={280}
-            placeholder={t("feed.commentPlaceholder")}
-            className="h-11 min-w-0 flex-1 rounded-xl bg-surface2 px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-          />
-          <button
-            type="submit"
-            disabled={sending || !body.trim()}
-            className="grid size-11 shrink-0 place-items-center rounded-xl bg-yellow text-bg disabled:opacity-50"
-          >
-            {sending ? (
-              <Spinner className="size-4" />
-            ) : (
-              <Send className="size-4" />
-            )}
-          </button>
+
+        <form
+          onSubmit={(e) => void send(e)}
+          className="sticky bottom-0 border-t border-line bg-surface pt-2"
+        >
+          {replyTo ? (
+            <div className="mb-1.5 flex items-center justify-between rounded-lg bg-surface2 px-2 py-1 text-[11px] text-muted">
+              <span>
+                {t("post.reply")} · {replyTo.name}
+              </span>
+              <button type="button" onClick={() => setReplyTo(null)}>
+                ×
+              </button>
+            </div>
+          ) : null}
+          <div className="flex items-end gap-2">
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value.slice(0, 500))}
+              rows={2}
+              maxLength={500}
+              placeholder={t("feed.commentPlaceholder")}
+              className="min-h-11 flex-1 resize-none rounded-xl border border-line bg-surface2 px-3 py-2 text-sm outline-none focus:border-yellow/40"
+            />
+            <button
+              type="submit"
+              disabled={sending || !body.trim()}
+              className="grid size-11 place-items-center rounded-xl bg-yellow text-bg disabled:opacity-50"
+              aria-label={t("common.save")}
+            >
+              {sending ? <Spinner className="size-4" /> : <Send className="size-4" />}
+            </button>
+          </div>
         </form>
       </div>
     </AppSheet>

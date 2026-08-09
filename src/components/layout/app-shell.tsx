@@ -1,14 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   CalendarDays,
   Dumbbell,
   LayoutDashboard,
   Search,
+  Bell,
   Settings,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/i18n/provider";
+import { getUnreadNotificationCount } from "@/lib/server/notifications";
+import { qk } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 /** Phone-frame column width — desktop stays a centered mobile shell. */
@@ -30,6 +34,14 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const user = useCurrentUser();
   const t = useT();
+  const { data: notifData } = useQuery({
+    queryKey: [...qk.settings, "notif-count"] as const,
+    queryFn: () => getUnreadNotificationCount(),
+    enabled: !!user,
+    refetchInterval: 60_000,
+  });
+  const unread = notifData?.count ?? 0;
+
 
   const LEFT_NAV = [
     { to: "/", label: t("nav.panel"), icon: LayoutDashboard },
@@ -84,6 +96,23 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {actions}
+              <Link
+                to="/bildirimler"
+                className={cn(
+                  "relative grid size-12 place-items-center rounded-2xl transition active:scale-95",
+                  pathname === "/bildirimler"
+                    ? "bg-yellow/15 text-yellow shadow-[inset_0_0_0_1px_rgba(245,197,66,0.35)]"
+                    : "bg-surface2 text-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] active:text-text",
+                )}
+                aria-label={t("nav.notifications")}
+              >
+                <Bell className="size-5" strokeWidth={pathname === "/bildirimler" ? 2.4 : 2} />
+                {unread > 0 ? (
+                  <span className="absolute right-1.5 top-1.5 grid min-w-4 place-items-center rounded-full bg-red px-1 text-[9px] font-bold leading-4 text-white">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                ) : null}
+              </Link>
               <Link
                 to="/ayarlar"
                 className={cn(

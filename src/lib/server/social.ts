@@ -36,6 +36,7 @@ export type ProfileHub = {
   image: string | null;
   email: string | null;
   visibility: "public" | "followers" | "private";
+  verified: boolean;
   unit_system: "metric" | "imperial";
   measures_public: boolean;
   username_confirmed: boolean;
@@ -202,8 +203,9 @@ async function loadProfileHub(
     unit_system: string;
     measures_public: boolean;
     username_confirmed: boolean;
+    verified: boolean;
   }>`
-    select username, bio, avatar_url, visibility, unit_system,
+    select username, bio, avatar_url, visibility, unit_system, coalesce(verified, false) as verified,
            measures_public, username_confirmed
     from user_profiles where user_id = ${userId}
   `;
@@ -254,6 +256,7 @@ async function loadProfileHub(
     image,
     email: isSelf ? u.email : null,
     visibility,
+    verified: p.verified === true,
     unit_system: (p.unit_system as ProfileHub["unit_system"]) || "metric",
     measures_public: p.measures_public,
     username_confirmed: p.username_confirmed === true,
@@ -730,11 +733,22 @@ export const followUser = createServerFn({ method: "POST" })
     const sql = await getSql();
     const exists = await sql`select id from "user" where id = ${userId}`;
     if (exists.length === 0) throw new Error("Kullanıcı yok.");
-    await sql`
+    const ins = await sql`
       insert into user_follows (follower_id, following_id)
       values (${context.userId}, ${userId})
       on conflict do nothing
+      returning follower_id
     `;
+    if (ins.length) {
+      const { notify } = await import("./notifications");
+      await notify(sql, {
+        userId,
+        actorId: context.userId,
+        type: "follow",
+        subjectType: "user",
+        subjectId: context.userId,
+      });
+    }
     return { ok: true };
   });
 

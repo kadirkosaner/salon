@@ -15,4 +15,5 @@ export const qk = {
   me: ["me"] as const,
   exercises: ["exercises"] as const,
   settings: ["settings"] as const,
+  notifications: ["notifications"] as const,
 };

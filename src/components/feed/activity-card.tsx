@@ -119,6 +119,14 @@ export function ActivityCard({
             >
               {item.author.name}
             </Link>
+            {item.author_verified ? (
+              <span
+                className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-yellow text-[9px] font-bold text-bg"
+                title="Verified"
+              >
+                ✓
+              </span>
+            ) : null}
             {item.author.username ? (
               <span className="truncate text-xs text-muted">
                 @{item.author.username}
@@ -192,6 +200,8 @@ function typeLabel(type: FeedItem["type"], t: (k: string) => string) {
       return t("feed.typeProgram");
     case "streak_milestone":
       return t("feed.typeStreak");
+    case "user_post":
+      return t("feed.typePost");
     default:
       return "";
   }
@@ -278,11 +288,79 @@ function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
       </div>
     );
   }
+  if (item.type === "user_post") {
+    const body = String(p.body ?? "");
+    const parts = body.split(/([@#][\w\u00C0-\u024F]+)/g);
+    return (
+      <div className="space-y-2">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+          {parts.map((part, i) => {
+            if (part.startsWith("@") && part.length > 1) {
+              const u = part.slice(1);
+              return (
+                <Link
+                  key={i}
+                  to="/u/$username"
+                  params={{ username: u }}
+                  className="font-medium text-yellow hover:underline"
+                >
+                  {part}
+                </Link>
+              );
+            }
+            if (part.startsWith("#") && part.length > 1) {
+              return (
+                <span key={i} className="font-medium text-blue">
+                  {part}
+                </span>
+              );
+            }
+            return <span key={i}>{part}</span>;
+          })}
+        </p>
+        {p.workout ? (
+          <div className="flex items-center gap-3 rounded-xl bg-surface2/60 p-3">
+            <div className="grid size-10 place-items-center rounded-xl bg-yellow/15">
+              <Dumbbell className="size-4 text-yellow" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-medium">{String(p.workout.day_name)}</p>
+              <p className="text-xs text-muted">
+                {p.workout.date}
+                {Number(p.workout.exercise_count) > 0
+                  ? ` · ${p.workout.exercise_count} ${t("feed.exercises")}`
+                  : ""}
+                {Number(p.workout.tonnage) > 0
+                  ? ` · ${Number(p.workout.tonnage).toLocaleString(locale)} kg`
+                  : ""}
+              </p>
+            </div>
+          </div>
+        ) : null}
+        {p.program ? (
+          <div className="flex items-center gap-3 rounded-xl bg-surface2/60 p-3">
+            <div className="grid size-10 place-items-center rounded-xl bg-blue/15">
+              <BookOpen className="size-4 text-blue" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-medium">{String(p.program.name)}</p>
+              <p className="text-xs text-muted">
+                {Number(p.program.day_count ?? 0)} {t("feed.days")}
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
   return null;
 }
 
 function shareText(item: FeedItem): string {
   const p = item.payload;
+  if (item.type === "user_post") {
+    return `${item.author.name}: ${p.body ?? ""} — Salon`;
+  }
   if (item.type === "personal_record") {
     return `🏆 ${p.exercise_name}: ${p.weight} kg — Salon`;
   }

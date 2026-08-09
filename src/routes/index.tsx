@@ -17,6 +17,7 @@ import { AppShell, AuthGateSkeleton } from "@/components/layout/app-shell";
 import { EmptyState } from "@/components/ui/section";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
 import { ActivityCard } from "@/components/feed/activity-card";
+import { ComposePost } from "@/components/feed/compose-post";
 import {
   followUser,
 } from "@/lib/server/social";
@@ -205,6 +206,12 @@ function FeedPage() {
           </div>
           <ChevronRight className="size-5 shrink-0 text-yellow" />
         </button>
+
+        <ComposePost
+          onPosted={() => {
+            void qc.invalidateQueries({ queryKey: qk.feed });
+          }}
+        />
 
         {feedQuery.isLoading ? (
           <DashboardSkeleton />
