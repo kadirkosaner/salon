@@ -5,11 +5,13 @@ import {
   Dumbbell,
   Flame,
   Heart,
+  HeartSolid,
   MessageCircle,
   Share2,
   Trash2,
   Trophy,
 } from "@/components/icons";
+
 import { toast } from "sonner";
 import {
   deleteActivity,
@@ -174,7 +176,7 @@ export function ActivityCard({
             liked ? "text-danger" : "text-text-2",
           )}
         >
-          <Heart className={cn("size-4", liked && "fill-current")} />
+          {liked ? <HeartSolid className="size-4" /> : <Heart className="size-4" />}
           <span className="num">{likes}</span>
         </button>
         <button

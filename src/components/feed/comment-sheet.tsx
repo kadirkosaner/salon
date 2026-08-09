@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Heart, Send } from "@/components/icons";
+import { Heart, HeartSolid, Send } from "@/components/icons";
+
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { AppSheet } from "@/components/ui/sheet";
@@ -180,7 +181,7 @@ export function CommentSheet({
                   c.liked_by_me ? "text-danger" : "text-text-2",
                 )}
               >
-                <Heart className={cn("size-3", c.liked_by_me && "fill-current")} />
+                {c.liked_by_me ? <HeartSolid className="size-3" /> : <Heart className="size-3" />}
                 {c.like_count > 0 ? c.like_count : t("post.likeComment")}
               </button>
               {depth === 0 ? (
