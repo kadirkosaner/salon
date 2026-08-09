@@ -560,4 +560,5 @@ export const zhCN = {
   "discover.searchShort": "搜索…",
   "discover.codeShort": "代码",
   "discover.copyBlocked": "请手动复制（剪贴板被拦截）",
+  "feed.workoutGone": "此训练已不存在",
 } as const;

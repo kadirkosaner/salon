@@ -560,4 +560,5 @@ export const id = {
   "discover.searchShort": "Cari…",
   "discover.codeShort": "Kode",
   "discover.copyBlocked": "Salin manual (papan klip diblokir)",
+  "feed.workoutGone": "Latihan ini tidak lagi tersedia",
 } as const;

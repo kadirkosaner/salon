@@ -56,6 +56,8 @@ import { abandonProgram } from "@/lib/server/share";
 import { clearFutureWorkouts } from "@/lib/server/workouts";
 import { qk } from "@/lib/query-keys";
 import { cn, dowLong, dowShort } from "@/lib/utils";
+import { AppSheet } from "@/components/ui/sheet";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/program")({
   component: ProgramPage,
@@ -80,6 +82,53 @@ function ProgramPage() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [library, setLibrary] = useState<ExerciseRow[]>([]);
+  const [abandonOpen, setAbandonOpen] = useState(false);
+  const [clearFutureOpen, setClearFutureOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  async function doAbandon() {
+    setLeaving(true);
+    try {
+      await abandonProgram();
+      toast.success(t("program.abandoned"));
+      setAbandonOpen(false);
+      setProgram(null);
+      setActiveDayId(null);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: qk.activeProgram }),
+        qc.invalidateQueries({ queryKey: ["workouts"] }),
+        qc.invalidateQueries({ queryKey: qk.dashboard }),
+        qc.invalidateQueries({ queryKey: qk.feed }),
+        qc.invalidateQueries({ queryKey: qk.me }),
+      ]);
+      await reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("common.error"));
+    } finally {
+      setLeaving(false);
+    }
+  }
+
+  async function doClearFuture() {
+    setLeaving(true);
+    try {
+      const r = await clearFutureWorkouts();
+      toast.success(
+        r.deleted === 0
+          ? t("workout.clearFutureNone")
+          : t("workout.clearFutureDone", { n: r.deleted }),
+      );
+      setClearFutureOpen(false);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["workouts"] }),
+        qc.invalidateQueries({ queryKey: qk.dashboard }),
+      ]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("common.error"));
+    } finally {
+      setLeaving(false);
+    }
+  }
 
   const reload = useCallback(async () => {
     const p = await getActiveProgram();
@@ -252,18 +301,7 @@ function ProgramPage() {
                       className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
                       onClick={() => {
                         setMoreOpen(false);
-                        if (!confirm(t("workout.clearFutureConfirm"))) return;
-                        void clearFutureWorkouts()
-                          .then((r) => {
-                            toast.success(
-                              r.deleted === 0
-                                ? t("workout.clearFutureNone")
-                                : t("workout.clearFutureDone", { n: r.deleted }),
-                            );
-                          })
-                          .catch((e) =>
-                            toast.error(e instanceof Error ? e.message : t("common.error")),
-                          );
+                        setClearFutureOpen(true);
                       }}
                     >
                       <Eraser className="size-4 text-text-2" />
@@ -274,24 +312,7 @@ function ProgramPage() {
                       className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
                       onClick={() => {
                         setMoreOpen(false);
-                        if (!confirm(t("program.abandonConfirm"))) return;
-                        void abandonProgram()
-                          .then(async () => {
-                            toast.success(t("program.abandoned"));
-                            setLoading(true);
-                            await Promise.all([
-                              qc.invalidateQueries({ queryKey: qk.activeProgram }),
-                              qc.invalidateQueries({ queryKey: ["workouts"] }),
-                              qc.invalidateQueries({ queryKey: qk.dashboard }),
-                              qc.invalidateQueries({ queryKey: qk.feed }),
-                              qc.invalidateQueries({ queryKey: qk.me }),
-                            ]);
-                            await reload();
-                            setLoading(false);
-                          })
-                          .catch((e) =>
-                            toast.error(e instanceof Error ? e.message : t("common.error")),
-                          );
+                        setAbandonOpen(true);
                       }}
                     >
                       <Trash2 className="size-4" />
@@ -589,6 +610,70 @@ function ProgramPage() {
           }}
         />
       )}
+
+      {abandonOpen ? (
+        <AppSheet
+          title={t("program.abandon")}
+          onClose={() => !leaving && setAbandonOpen(false)}
+          footer={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={leaving}
+                onClick={() => setAbandonOpen(false)}
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-edge text-sm font-semibold"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={leaving}
+                onClick={() => void doAbandon()}
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-danger text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {leaving ? <Spinner className="size-4" /> : null}
+                {t("program.abandon")}
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm leading-relaxed text-text-2">
+            {t("program.abandonConfirm")}
+          </p>
+        </AppSheet>
+      ) : null}
+
+      {clearFutureOpen ? (
+        <AppSheet
+          title={t("program.clearFuture")}
+          onClose={() => !leaving && setClearFutureOpen(false)}
+          footer={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={leaving}
+                onClick={() => setClearFutureOpen(false)}
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-edge text-sm font-semibold"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={leaving}
+                onClick={() => void doClearFuture()}
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-on-primary disabled:opacity-60"
+              >
+                {leaving ? <Spinner className="size-4" /> : null}
+                {t("common.yes")}
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm leading-relaxed text-text-2">
+            {t("workout.clearFutureConfirm")}
+          </p>
+        </AppSheet>
+      ) : null}
     </AppShell>
   );
 }

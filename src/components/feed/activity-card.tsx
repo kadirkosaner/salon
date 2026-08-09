@@ -21,6 +21,7 @@ import { relativeTime } from "@/lib/relative-time";
 import { haptic } from "@/lib/haptics";
 import { useI18n } from "@/lib/i18n/provider";
 import { cn } from "@/lib/utils";
+import { WorkoutDetailSheet } from "@/components/feed/workout-detail-sheet";
 
 export function ActivityCard({
   item,
@@ -38,6 +39,7 @@ export function ActivityCard({
   const [likes, setLikes] = useState(item.like_count);
   const [comments, setComments] = useState(item.comment_count);
   const [busy, setBusy] = useState(false);
+  const [openWorkoutId, setOpenWorkoutId] = useState<number | null>(null);
 
   const initials = (item.author.name || "?")
     .split(/\s+/)
@@ -153,7 +155,15 @@ export function ActivityCard({
         ) : null}
       </div>
 
-      <div className="px-3.5 pb-3">{renderBody(item, t, locale)}</div>
+      <div className="px-3.5 pb-3">
+        {renderBody(item, t, locale, (id) => setOpenWorkoutId(id))}
+      </div>
+      {openWorkoutId != null ? (
+        <WorkoutDetailSheet
+          workoutId={openWorkoutId}
+          onClose={() => setOpenWorkoutId(null)}
+        />
+      ) : null}
 
       <div className="flex items-center gap-1 border-t border-rule/60 px-2 py-1.5">
         <button
@@ -207,11 +217,21 @@ function typeLabel(type: FeedItem["type"], t: (k: string) => string) {
   }
 }
 
-function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
+function renderBody(
+  item: FeedItem,
+  t: (k: string) => string,
+  locale: string,
+  onOpenWorkout?: (id: number) => void,
+) {
   const p = item.payload;
   if (item.type === "workout_completed") {
+    const wid = item.subject_id ?? p.workout_id ?? null;
     return (
-      <div className="flex items-center gap-3 rounded-xl bg-raised/60 p-3">
+      <button
+        type="button"
+        onClick={() => wid != null && onOpenWorkout?.(wid)}
+        className="flex w-full items-center gap-3 rounded-xl bg-raised/60 p-3 text-left transition active:scale-[0.99]"
+      >
         <div className="grid size-11 place-items-center rounded-xl bg-accent/15">
           <Dumbbell className="size-5 text-accent" />
         </div>
@@ -226,14 +246,19 @@ function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
               : ""}
           </p>
         </div>
-      </div>
+      </button>
     );
   }
   if (item.type === "personal_record") {
     const prev = p.prev_weight != null ? Number(p.prev_weight) : null;
     const w = Number(p.weight ?? 0);
+    const wid = p.workout_id ?? null;
     return (
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-accent/20 via-accent/5 to-transparent p-4">
+      <button
+        type="button"
+        onClick={() => wid != null && onOpenWorkout?.(wid)}
+        className="relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-accent/20 via-accent/5 to-transparent p-4 text-left transition active:scale-[0.99]"
+      >
         <div className="flex items-start gap-3">
           <div className="grid size-12 place-items-center rounded-2xl bg-primary text-on-primary">
             <Trophy className="size-6" />
@@ -254,7 +279,7 @@ function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
             ) : null}
           </div>
         </div>
-      </div>
+      </button>
     );
   }
   if (item.type === "program_published") {
@@ -319,7 +344,13 @@ function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
           })}
         </p>
         {p.workout ? (
-          <div className="flex items-center gap-3 rounded-xl bg-raised/60 p-3">
+          <button
+            type="button"
+            onClick={() =>
+              p.workout_id != null && onOpenWorkout?.(p.workout_id)
+            }
+            className="flex w-full items-center gap-3 rounded-xl bg-raised/60 p-3 text-left"
+          >
             <div className="grid size-10 place-items-center rounded-xl bg-accent/15">
               <Dumbbell className="size-4 text-accent" />
             </div>
@@ -335,7 +366,7 @@ function renderBody(item: FeedItem, t: (k: string) => string, locale: string) {
                   : ""}
               </p>
             </div>
-          </div>
+          </button>
         ) : null}
         {p.program ? (
           <div className="flex items-center gap-3 rounded-xl bg-raised/60 p-3">

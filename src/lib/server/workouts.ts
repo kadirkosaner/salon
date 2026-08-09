@@ -1161,3 +1161,180 @@ async function loadWorkout(
     exercises: result,
   };
 }
+
+export type PublicWorkoutView = {
+  id: number;
+  date: string;
+  day_name: string;
+  status: string;
+  tonnage: number;
+  is_owner: boolean;
+  author: { id: string; name: string; username: string | null };
+  program: { id: number; name: string; is_public: boolean } | null;
+  exercises: Array<{
+    id: number;
+    name: string;
+    unit: string;
+    sets: Array<{
+      set_index: number;
+      weight: number | null;
+      reps: number | null;
+      completed: boolean;
+    }>;
+  }>;
+};
+
+/** Public/social workout detail — privacy enforced server-side. */
+export const getPublicWorkout = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(v(positiveId))
+  .handler(async ({ context, data: workoutId }): Promise<PublicWorkoutView | null> => {
+    const sql = await getSql();
+    const rows = await sql<{
+      id: number;
+      date: string;
+      day_name: string;
+      status: string;
+      notes: string | null;
+      user_id: string;
+      program_day_id: number | null;
+    }>`
+      select id, date::text as date, day_name, status, notes, user_id, program_day_id
+      from workouts where id = ${workoutId}
+    `;
+    if (rows.length === 0) return null;
+    const w = rows[0]!;
+    const isOwner = w.user_id === context.userId;
+
+    if (!isOwner) {
+      const prof = await sql<{
+        visibility: string;
+      }>`
+        select coalesce(visibility, 'public') as visibility
+        from user_profiles where user_id = ${w.user_id}
+      `;
+      const vis = (prof[0]?.visibility as string) || "public";
+      if (vis === "private") {
+        throw new Error("This workout is private");
+      }
+      if (vis === "followers") {
+        const fol = await sql<{ ok: boolean }>`
+          select exists(
+            select 1 from user_follows
+            where follower_id = ${context.userId} and following_id = ${w.user_id}
+          ) as ok
+        `;
+        if (!fol[0]?.ok) throw new Error("This workout is private");
+      }
+    }
+
+    const authorRows = await sql<{
+      id: string;
+      name: string;
+      username: string | null;
+    }>`
+      select u.id, u.name, up.username
+      from "user" u
+      left join user_profiles up on up.user_id = u.id
+      where u.id = ${w.user_id}
+    `;
+    const author = authorRows[0] ?? {
+      id: w.user_id,
+      name: "User",
+      username: null,
+    };
+
+    const exercises = await sql<{
+      id: number;
+      exercise_name: string;
+      unit: string;
+    }>`
+      select id, exercise_name, unit
+      from workout_exercises
+      where workout_id = ${workoutId}
+      order by sort
+    `;
+
+    const allSets = await sql<{
+      workout_exercise_id: number;
+      set_index: number;
+      weight: string | null;
+      reps: number | null;
+      completed: boolean;
+    }>`
+      select ws.workout_exercise_id, ws.set_index,
+             ws.weight::text as weight, ws.reps, ws.completed
+      from workout_sets ws
+      join workout_exercises we on we.id = ws.workout_exercise_id
+      where we.workout_id = ${workoutId}
+      order by ws.workout_exercise_id, ws.set_index
+    `;
+    const setsByEx = new Map<number, typeof allSets>();
+    for (const s of allSets) {
+      const list = setsByEx.get(s.workout_exercise_id) ?? [];
+      list.push(s);
+      setsByEx.set(s.workout_exercise_id, list);
+    }
+
+    let tonnage = 0;
+    const mapped = exercises.map((ex) => {
+      const sets = (setsByEx.get(ex.id) ?? []).map((s) => {
+        const weight = s.weight != null ? Number(s.weight) : null;
+        const reps = s.reps;
+        if (s.completed && weight != null && reps != null && ex.unit === "kg") {
+          tonnage += weight * reps;
+        }
+        return {
+          set_index: s.set_index,
+          weight,
+          reps,
+          completed: s.completed,
+        };
+      });
+      return {
+        id: ex.id,
+        name: ex.exercise_name,
+        unit: ex.unit,
+        sets,
+      };
+    });
+
+    let program: PublicWorkoutView["program"] = null;
+    if (w.program_day_id != null) {
+      const pr = await sql<{
+        id: number;
+        name: string;
+        is_public: boolean;
+      }>`
+        select p.id, p.name, p.is_public
+        from programs p
+        join program_days pd on pd.program_id = p.id
+        where pd.id = ${w.program_day_id}
+      `;
+      if (pr[0]) {
+        program = {
+          id: pr[0].id,
+          name: pr[0].name,
+          is_public: pr[0].is_public,
+        };
+      }
+    }
+
+    return {
+      id: w.id,
+      date: w.date,
+      day_name: w.day_name,
+      status: w.status,
+      tonnage: Math.round(tonnage),
+      is_owner: isOwner,
+      author: {
+        id: author.id,
+        name: author.name,
+        username: author.username,
+      },
+      program:
+        program && (isOwner || program.is_public) ? program : null,
+      exercises: mapped,
+    };
+  });
+

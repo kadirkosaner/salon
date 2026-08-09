@@ -17,6 +17,7 @@ import {
 } from "@/components/discover-panel";
 import {
   cloneProgram,
+  listDiscoverPrograms,
   type PublicProgramCard,
 } from "@/lib/server/share";
 import { generateWorkouts } from "@/lib/server/workouts";
@@ -25,6 +26,8 @@ import {
   unfollowUser,
   type PublicUserCard,
 } from "@/lib/server/social";
+import { getSuggestedAthletes } from "@/lib/server/activity";
+import { searchExerciseCatalog } from "@/lib/server/exercises";
 import {
   getDiscoverHome,
   unifiedSearch,
@@ -46,8 +49,16 @@ import { copyText } from "@/lib/clipboard";
 import { qk } from "@/lib/query-keys";
 import { Spinner } from "@/components/ui/spinner";
 import { AppSheet } from "@/components/ui/sheet";
+import { z } from "zod";
 
-export const Route = createFileRoute("/kesfet")({ component: DiscoverPage });
+const tabSchema = z.object({
+  tab: z.enum(["forYou", "programs", "people", "exercises"]).optional(),
+});
+
+export const Route = createFileRoute("/kesfet")({
+  validateSearch: tabSchema,
+  component: DiscoverPage,
+});
 
 const RECENT_KEY = "salon.recent_searches";
 const SUGGESTED_Q = ["squat", "bench", "full body", "push", "pull", "admin"];
@@ -93,8 +104,18 @@ function DiscoverPage() {
   const [detailId, setDetailId] = useState<number | null>(null);
   const [cloning, setCloning] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [tab, setTab] = useState<"forYou" | "programs" | "people" | "exercises">("forYou");
+  const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const tab = search.tab ?? "forYou";
   const raceRef = useRef(0);
+
+  function setTab(next: "forYou" | "programs" | "people" | "exercises") {
+    void navigate({
+      to: "/kesfet",
+      search: next === "forYou" ? {} : { tab: next },
+      replace: true,
+    });
+  }
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -133,7 +154,31 @@ function DiscoverPage() {
   const homeQuery = useQuery({
     queryKey: [...qk.discoverHome, locale] as const,
     queryFn: () => getDiscoverHome({ data: { locale } }),
-    enabled: !!user?.id && debounced.length < 1,
+    enabled: !!user?.id && debounced.length < 1 && tab === "forYou",
+  });
+
+  const programsQuery = useQuery({
+    queryKey: [...qk.discover, "all", locale] as const,
+    queryFn: () => listDiscoverPrograms({ data: { locale } }),
+    enabled: !!user?.id && debounced.length < 1 && tab === "programs",
+  });
+
+  const peopleQuery = useQuery({
+    queryKey: ["discover-people"] as const,
+    queryFn: () => getSuggestedAthletes({ data: { limit: 40 } }),
+    enabled: !!user?.id && debounced.length < 1 && tab === "people",
+  });
+
+  const exercisesQuery = useQuery({
+    queryKey: ["discover-exercises", muscleFilter] as const,
+    queryFn: () =>
+      searchExerciseCatalog({
+        data: {
+          muscleGroup: muscleFilter ?? undefined,
+          limit: 80,
+        },
+      }),
+    enabled: !!user?.id && debounced.length < 1 && tab === "exercises",
   });
 
   const runClone = useCallback(
@@ -226,6 +271,7 @@ function DiscoverPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("common.error"));
       void homeQuery.refetch();
+      void peopleQuery.refetch();
     }
   }
 
@@ -279,7 +325,9 @@ function DiscoverPage() {
         {/* Filters — wrap, not horizontal rail */}
         {!searchingMode ? (
           <>
-            <FilterChips filters={filters} setFilters={setFilters} t={t} />
+            {tab === "forYou" || tab === "programs" ? (
+              <FilterChips filters={filters} setFilters={setFilters} t={t} />
+            ) : null}
             <div className="flex gap-4 overflow-x-auto border-b border-rule text-sm">
               {(
                 [
@@ -366,126 +414,258 @@ function DiscoverPage() {
               </div>
             ) : null}
 
-            {homeQuery.isLoading || !shelves ? (
-              <ProgramCardSkeleton />
-            ) : hasActiveFilters(filters) ? (
-              (() => {
-                const seen = new Set<number>();
-                const combined: PublicProgramCard[] = [];
-                for (const list of [
-                  shelves.featured,
-                  shelves.topCloned,
-                  shelves.fromFollowing,
-                  shelves.forLevel,
-                ]) {
-                  for (const p of filterList(list)) {
-                    if (seen.has(p.id)) continue;
-                    seen.add(p.id);
-                    combined.push(p);
+            {tab === "forYou" ? (
+              homeQuery.isLoading ? (
+                <ProgramCardSkeleton />
+              ) : homeQuery.isError || !shelves ? (
+                <p className="py-8 text-center text-sm text-text-2">
+                  {t("common.error")}
+                </p>
+              ) : hasActiveFilters(filters) ? (
+                (() => {
+                  const seen = new Set<number>();
+                  const combined: PublicProgramCard[] = [];
+                  for (const list of [
+                    shelves.featured,
+                    shelves.topCloned,
+                    shelves.fromFollowing,
+                    shelves.forLevel,
+                  ]) {
+                    for (const p of filterList(list)) {
+                      if (seen.has(p.id)) continue;
+                      seen.add(p.id);
+                      combined.push(p);
+                    }
                   }
-                }
-                return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
-                        {t("discover.resultsCount", { n: combined.length })}
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setFilters(emptyFilters())}
-                        className="text-xs font-medium text-accent"
-                      >
-                        {t("discover.clearAllFilters")}
-                      </button>
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                          {t("discover.resultsCount", { n: combined.length })}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setFilters(emptyFilters())}
+                          className="text-xs font-medium text-accent"
+                        >
+                          {t("discover.clearAllFilters")}
+                        </button>
+                      </div>
+                      {combined.length === 0 ? (
+                        <p className="py-8 text-center text-sm text-text-2">
+                          {t("discover.shelfEmpty")}
+                        </p>
+                      ) : (
+                        <ul className="divide-y divide-rule border-t border-rule">
+                          {combined.map((p, i) => (
+                            <li key={p.id}>
+                              <ProgramCard
+                                rank={i + 1}
+                                p={p}
+                                busy={cloning}
+                                onOpen={() => setDetailId(p.id)}
+                                onClone={() =>
+                                  setPending({ kind: "id", id: p.id, name: p.name })
+                                }
+                                onCopyCode={() =>
+                                  p.share_code && void copyCode(p.share_code)
+                                }
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    {combined.length === 0 ? (
-                      <p className="py-8 text-center text-sm text-text-2">
-                        {t("discover.shelfEmpty")}
-                      </p>
-                    ) : (
-                      <ul className="divide-y divide-rule border-t border-rule">
-                        {combined.map((p, i) => (
-                          <li key={p.id}>
-                            <ProgramCard
-                              rank={i + 1}
-                              p={p}
-                              busy={cloning}
-                              onOpen={() => setDetailId(p.id)}
-                              onClone={() =>
-                                setPending({ kind: "id", id: p.id, name: p.name })
-                              }
-                              onCopyCode={() =>
-                                p.share_code && void copyCode(p.share_code)
-                              }
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })()
-            ) : (
-              <div className="space-y-5">
-                <Shelf
-                  title={t("discover.featuredWeek")}
-                  icon={<Sparkles className="size-4 text-accent" />}
-                  items={filterList(shelves.featured)}
-                  cloning={cloning}
-                  onOpen={setDetailId}
-                  onClone={(p) =>
-                    setPending({ kind: "id", id: p.id, name: p.name })
-                  }
-                  onCopyCode={(c) => void copyCode(c)}
-                  empty={t("discover.shelfEmpty")}
-                />
-                <Shelf
-                  title={t("discover.newest")}
-                  icon={<TrendingUp className="size-4 text-info" />}
-                  items={filterList(shelves.topCloned)}
-                  cloning={cloning}
-                  onOpen={setDetailId}
-                  onClone={(p) =>
-                    setPending({ kind: "id", id: p.id, name: p.name })
-                  }
-                  onCopyCode={(c) => void copyCode(c)}
-                  empty={t("discover.shelfEmpty")}
-                  horizontal
-                />
-                <Shelf
-                  title={t("discover.followSection")}
-                  icon={<Users className="size-4 text-success" />}
-                  items={filterList(shelves.fromFollowing)}
-                  cloning={cloning}
-                  onOpen={setDetailId}
-                  onClone={(p) =>
-                    setPending({ kind: "id", id: p.id, name: p.name })
-                  }
-                  onCopyCode={(c) => void copyCode(c)}
-                  empty={t("discover.followingEmpty")}
-                  horizontal
-                />
-                <Shelf
-                  title={
-                    shelves.levelHint === "baslangic"
-                      ? t("discover.forBeginner")
-                      : shelves.levelHint === "orta"
-                        ? t("discover.forMid")
-                        : t("discover.forAdv")
-                  }
-                  icon={<BookOpen className="size-4 text-warning" />}
-                  items={filterList(shelves.forLevel)}
-                  cloning={cloning}
-                  onOpen={setDetailId}
-                  onClone={(p) =>
-                    setPending({ kind: "id", id: p.id, name: p.name })
-                  }
-                  onCopyCode={(c) => void copyCode(c)}
-                  empty={t("discover.shelfEmpty")}
-                  horizontal
-                />
+                  );
+                })()
+              ) : (
+                <div className="space-y-5">
+                  <Shelf
+                    title={t("discover.featuredWeek")}
+                    icon={<Sparkles className="size-4 text-accent" />}
+                    items={filterList(shelves.featured)}
+                    cloning={cloning}
+                    onOpen={setDetailId}
+                    onClone={(p) =>
+                      setPending({ kind: "id", id: p.id, name: p.name })
+                    }
+                    onCopyCode={(c) => void copyCode(c)}
+                    empty={t("discover.shelfEmpty")}
+                  />
+                  <Shelf
+                    title={t("discover.newest")}
+                    icon={<TrendingUp className="size-4 text-info" />}
+                    items={filterList(shelves.topCloned)}
+                    cloning={cloning}
+                    onOpen={setDetailId}
+                    onClone={(p) =>
+                      setPending({ kind: "id", id: p.id, name: p.name })
+                    }
+                    onCopyCode={(c) => void copyCode(c)}
+                    empty={t("discover.shelfEmpty")}
+                    horizontal
+                  />
+                  <Shelf
+                    title={t("discover.followSection")}
+                    icon={<Users className="size-4 text-success" />}
+                    items={filterList(shelves.fromFollowing)}
+                    cloning={cloning}
+                    onOpen={setDetailId}
+                    onClone={(p) =>
+                      setPending({ kind: "id", id: p.id, name: p.name })
+                    }
+                    onCopyCode={(c) => void copyCode(c)}
+                    empty={t("discover.followingEmpty")}
+                    horizontal
+                  />
+                  <Shelf
+                    title={
+                      shelves.levelHint === "baslangic"
+                        ? t("discover.forBeginner")
+                        : shelves.levelHint === "orta"
+                          ? t("discover.forMid")
+                          : t("discover.forAdv")
+                    }
+                    icon={<BookOpen className="size-4 text-warning" />}
+                    items={filterList(shelves.forLevel)}
+                    cloning={cloning}
+                    onOpen={setDetailId}
+                    onClone={(p) =>
+                      setPending({ kind: "id", id: p.id, name: p.name })
+                    }
+                    onCopyCode={(c) => void copyCode(c)}
+                    empty={t("discover.shelfEmpty")}
+                    horizontal
+                  />
+                </div>
+              )
+            ) : null}
+
+            {tab === "programs" ? (
+              programsQuery.isLoading ? (
+                <ProgramCardSkeleton />
+              ) : (
+                (() => {
+                  const list = filterList(programsQuery.data ?? []);
+                  return (
+                    <div className="space-y-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-2">
+                        {t("discover.programs")} · {list.length}
+                      </h3>
+                      {list.length === 0 ? (
+                        <p className="py-8 text-center text-sm text-text-2">
+                          {t("discover.shelfEmpty")}
+                        </p>
+                      ) : (
+                        <ul className="divide-y divide-rule border-t border-rule">
+                          {list.map((p, i) => (
+                            <li key={p.id}>
+                              <ProgramCard
+                                rank={i + 1}
+                                p={p}
+                                busy={cloning}
+                                onOpen={() => setDetailId(p.id)}
+                                onClone={() =>
+                                  setPending({ kind: "id", id: p.id, name: p.name })
+                                }
+                                onCopyCode={() =>
+                                  p.share_code && void copyCode(p.share_code)
+                                }
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })()
+              )
+            ) : null}
+
+            {tab === "people" ? (
+              peopleQuery.isLoading ? (
+                <ProgramCardSkeleton />
+              ) : (peopleQuery.data ?? []).length === 0 ? (
+                <p className="py-8 text-center text-sm text-text-2">
+                  {t("discover.shelfEmpty")}
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {(peopleQuery.data ?? []).map((r) => (
+                    <PersonRow
+                      key={r.id}
+                      r={{
+                        id: r.id,
+                        name: r.name,
+                        username: r.username,
+                        image: r.image,
+                        followers: r.followers,
+                        following: 0,
+                        is_following: r.is_following,
+                        follows_you: false,
+                        is_self: false,
+                        public_programs: r.public_programs,
+                      }}
+                      t={t}
+                      onFollow={(id, following) => void toggleFollow(id, following)}
+                    />
+                  ))}
+                </ul>
+              )
+            ) : null}
+
+            {tab === "exercises" ? (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {(
+                    [
+                      [null, t("muscle.all")],
+                      ["gogus", t("muscle.gogus")],
+                      ["sirt", t("muscle.sirt")],
+                      ["omuz", t("muscle.omuz")],
+                      ["kol", t("muscle.kol")],
+                      ["bacak", t("muscle.bacak")],
+                      ["core", t("muscle.core")],
+                    ] as const
+                  ).map(([id, lab]) => (
+                    <button
+                      key={lab}
+                      type="button"
+                      onClick={() => setMuscleFilter(id)}
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-semibold",
+                        muscleFilter === id
+                          ? "bg-primary text-on-primary"
+                          : "border border-rule bg-raised text-text-2",
+                      )}
+                    >
+                      {lab}
+                    </button>
+                  ))}
+                </div>
+                {exercisesQuery.isLoading ? (
+                  <ProgramCardSkeleton />
+                ) : (
+                  <ul className="divide-y divide-rule rounded-xl border border-rule bg-raised/40">
+                    {(exercisesQuery.data ?? []).map((e, i) => (
+                      <li
+                        key={`${e.id}-${e.name}-${i}`}
+                        className="flex h-14 items-center gap-3 px-3"
+                      >
+                        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+                          <Dumbbell className="size-4" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {e.name}
+                        </span>
+                        <MuscleBadge group={e.muscle_group} size="xs" />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            )}
+            ) : null}
+
           </>
         )}
       </div>

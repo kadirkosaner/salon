@@ -20,6 +20,7 @@ import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as ProgramRouteImport } from './routes/program'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ApiExMediaRouteImport } from './routes/api/ex-media'
+import { Route as ProfilDuzenleRouteImport } from './routes/profil.duzenle'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -78,6 +79,11 @@ const ApiExMediaRoute = ApiExMediaRouteImport.update({
   path: '/api/ex-media',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfilDuzenleRoute = ProfilDuzenleRouteImport.update({
+  id: '/duzenle',
+  path: '/duzenle',
+  getParentRoute: () => ProfilRoute,
+} as any)
 const UUsernameRoute = UUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
@@ -97,10 +103,11 @@ export interface FileRoutesByFullPath {
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRoute
+  '/profil': typeof ProfilRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
+  '/profil/duzenle': typeof ProfilDuzenleRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -112,10 +119,11 @@ export interface FileRoutesByTo {
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRoute
+  '/profil': typeof ProfilRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
+  '/profil/duzenle': typeof ProfilDuzenleRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -128,10 +136,11 @@ export interface FileRoutesById {
   '/kesfet': typeof KesfetRoute
   '/login': typeof LoginRoute
   '/olculer': typeof OlculerRoute
-  '/profil': typeof ProfilRoute
+  '/profil': typeof ProfilRouteWithChildren
   '/program': typeof ProgramRoute
   '/register': typeof RegisterRoute
   '/api/ex-media': typeof ApiExMediaRoute
+  '/profil/duzenle': typeof ProfilDuzenleRoute
   '/u/$username': typeof UUsernameRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
+    | '/profil/duzenle'
     | '/u/$username'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
+    | '/profil/duzenle'
     | '/u/$username'
     | '/api/auth/$'
   id:
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/program'
     | '/register'
     | '/api/ex-media'
+    | '/profil/duzenle'
     | '/u/$username'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -191,7 +203,7 @@ export interface RootRouteChildren {
   KesfetRoute: typeof KesfetRoute
   LoginRoute: typeof LoginRoute
   OlculerRoute: typeof OlculerRoute
-  ProfilRoute: typeof ProfilRoute
+  ProfilRoute: typeof ProfilRouteWithChildren
   ProgramRoute: typeof ProgramRoute
   RegisterRoute: typeof RegisterRoute
   ApiExMediaRoute: typeof ApiExMediaRoute
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiExMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profil/duzenle': {
+      id: '/profil/duzenle'
+      path: '/duzenle'
+      fullPath: '/profil/duzenle'
+      preLoaderRoute: typeof ProfilDuzenleRouteImport
+      parentRoute: typeof ProfilRoute
+    }
     '/u/$username': {
       id: '/u/$username'
       path: '/u/$username'
@@ -295,6 +314,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ProfilRouteChildren {
+  ProfilDuzenleRoute: typeof ProfilDuzenleRoute
+}
+
+const ProfilRouteChildren: ProfilRouteChildren = {
+  ProfilDuzenleRoute: ProfilDuzenleRoute,
+}
+
+const ProfilRouteWithChildren =
+  ProfilRoute._addFileChildren(ProfilRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AntrenmanRoute: AntrenmanRoute,
@@ -303,7 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   KesfetRoute: KesfetRoute,
   LoginRoute: LoginRoute,
   OlculerRoute: OlculerRoute,
-  ProfilRoute: ProfilRoute,
+  ProfilRoute: ProfilRouteWithChildren,
   ProgramRoute: ProgramRoute,
   RegisterRoute: RegisterRoute,
   ApiExMediaRoute: ApiExMediaRoute,

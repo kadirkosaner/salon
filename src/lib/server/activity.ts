@@ -457,10 +457,11 @@ export const getDiscoverFeed = createServerFn({ method: "GET" })
 
 export const getSuggestedAthletes = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(noInput)
-  .handler(async ({ context }) => {
+  .validator(v(z.object({ limit: z.number().int().min(1).max(60).optional() }).optional()))
+  .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
+    const limit = data?.limit ?? 8;
     return sql<{
       id: string;
       name: string;
@@ -486,7 +487,7 @@ export const getSuggestedAthletes = createServerFn({ method: "GET" })
       where u.id <> ${context.userId}
         and coalesce(up.visibility, 'public') = 'public'
       order by followers desc, public_programs desc
-      limit 8
+      limit ${limit}
     `;
   });
 

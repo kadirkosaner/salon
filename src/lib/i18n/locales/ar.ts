@@ -560,4 +560,5 @@ export const ar = {
   "discover.searchShort": "بحث…",
   "discover.codeShort": "الرمز",
   "discover.copyBlocked": "انسخ يدويًا (الحافظة محظورة)",
+  "feed.workoutGone": "هذا التمرين لم يعد متاحًا",
 } as const;

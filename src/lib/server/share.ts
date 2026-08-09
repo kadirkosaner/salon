@@ -51,19 +51,6 @@ async function clearFuturePlanned(sql: Sql, userId: string) {
   `;
 }
 
-/**
- * On abandon: remove future shells but keep today's in-progress session
- * (user may leave mid-workout without losing entered sets).
- */
-async function clearFutureOnAbandon(sql: Sql, userId: string) {
-  const todayIso = await todayForUser(sql, userId);
-  await sql`
-    delete from workouts
-    where user_id = ${userId}
-      and date >= ${todayIso}::date
-      and status in ('planned', 'skipped')
-  `;
-}
 
 export const listDiscoverPrograms = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -489,8 +476,16 @@ export const abandonProgram = createServerFn({ method: "POST" })
   .validator(noInput)
   .handler(async ({ context }) => {
     return withTransaction(async (sql) => {
+      // Deactivate first so rolling horizon cannot re-seed mid-delete.
+      await sql`
+        update programs set is_active = false
+        where user_id = ${context.userId}
+      `;
+      // Drop all future shells (incl. in_progress) — user is leaving the plan.
+      await clearFuturePlanned(sql, context.userId);
       await deleteUserPrograms(sql, context.userId);
-      await clearFutureOnAbandon(sql, context.userId);
+      // Second pass: any leftover planned shells without a program.
+      await clearFuturePlanned(sql, context.userId);
       return { ok: true as const };
     });
   });

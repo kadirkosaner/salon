@@ -560,4 +560,5 @@ export const de = {
   "discover.searchShort": "Suchen…",
   "discover.codeShort": "Code",
   "discover.copyBlocked": "Manuell kopieren (Zwischenablage blockiert)",
+  "feed.workoutGone": "Dieses Training ist nicht mehr verfügbar",
 } as const;

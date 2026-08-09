@@ -560,4 +560,5 @@ export const ptBR = {
   "discover.searchShort": "Buscar…",
   "discover.codeShort": "Código",
   "discover.copyBlocked": "Copie manualmente (área de transferência bloqueada)",
+  "feed.workoutGone": "Este treino não está mais disponível",
 } as const;

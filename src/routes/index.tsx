@@ -187,50 +187,6 @@ function FeedPage() {
           />
         </div>
 
-        {/* Next workout strip */}
-        <button
-          type="button"
-          onClick={() => {
-            if (next) navigate({ to: "/antrenman", search: { date: next.date } });
-            else navigate({ to: "/antrenman" });
-          }}
-          className="card-accent flex w-full items-center gap-3 p-3.5 text-left transition active:scale-[0.99]"
-        >
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-accent">
-              {t("panel.next")}
-            </p>
-            {next ? (
-              <>
-                <p className="font-display mt-0.5 truncate text-2xl leading-none tracking-wide">
-                  {next.day_name}
-                </p>
-                <p className="mt-1 text-xs text-text-2">
-                  {formatDate(next.date, locale)} · {next.exercise_count} {t("feed.exercises")}
-                </p>
-              </>
-            ) : (
-              <p className="font-display mt-0.5 text-xl">{t("feed.planWorkout")}</p>
-            )}
-          </div>
-          <ChevronRight className="size-5 shrink-0 text-accent" />
-        </button>
-
-        {dashQuery.data?.week ? (
-          <div className="border-t border-rule pt-3">
-            <WeeklyVolume
-              current={dashQuery.data.week.volume}
-              target={Math.max(dashQuery.data.week.volume * 1.2, 10000)}
-              sessionsLeft={Math.max(
-                0,
-                (dashQuery.data.week.planned ?? 0) -
-                  (dashQuery.data.week.completed ?? 0),
-              )}
-              unitLabel="kg"
-            />
-          </div>
-        ) : null}
-
         <Suspense
           fallback={
             <div className="h-20 animate-pulse rounded-2xl bg-raised" aria-busy="true" />
@@ -242,6 +198,51 @@ function FeedPage() {
             }}
           />
         </Suspense>
+
+        {/* Compact next session row */}
+        <button
+          type="button"
+          onClick={() => {
+            if (next) navigate({ to: "/antrenman", search: { date: next.date } });
+            else navigate({ to: "/antrenman" });
+          }}
+          className="flex w-full items-center gap-3 border-y border-rule py-3 text-left transition active:bg-raised/40"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-text-3">
+              {t("panel.next")}
+            </p>
+            {next ? (
+              <p className="mt-0.5 truncate text-sm font-semibold">
+                {next.day_name}
+                <span className="font-normal text-text-2">
+                  {" · "}
+                  {formatDate(next.date, locale)}
+                  {" · "}
+                  {next.exercise_count} {t("feed.exercises")}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-0.5 text-sm font-medium text-text-2">
+                {t("feed.planWorkout")}
+              </p>
+            )}
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-text-3" />
+        </button>
+
+        {dashQuery.data?.hasActiveProgram && dashQuery.data?.week ? (
+          <WeeklyVolume
+            current={dashQuery.data.week.volume}
+            target={Math.max(dashQuery.data.week.volume * 1.2, 10000)}
+            sessionsLeft={Math.max(
+              0,
+              (dashQuery.data.week.planned ?? 0) -
+                (dashQuery.data.week.completed ?? 0),
+            )}
+            unitLabel="kg"
+          />
+        ) : null}
 
         {feedQuery.isLoading ? (
           <DashboardSkeleton />

@@ -560,4 +560,5 @@ export const tr = {
   "discover.searchShort": "Ara…",
   "discover.codeShort": "Kod",
   "discover.copyBlocked": "Manuel kopyala (ortam panoyu engelledi)",
+  "feed.workoutGone": "Bu antrenman artık yok",
 } as const;

@@ -560,4 +560,5 @@ export const ja = {
   "discover.searchShort": "検索…",
   "discover.codeShort": "コード",
   "discover.copyBlocked": "手動でコピー（クリップボード不可）",
+  "feed.workoutGone": "このトレーニングはもうありません",
 } as const;

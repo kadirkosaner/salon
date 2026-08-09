@@ -560,4 +560,5 @@ export const zhTW = {
   "discover.searchShort": "搜尋…",
   "discover.codeShort": "代碼",
   "discover.copyBlocked": "請手動複製（剪貼簿被封鎖）",
+  "feed.workoutGone": "此訓練已不存在",
 } as const;

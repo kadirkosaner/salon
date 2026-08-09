@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   AtSign,
@@ -9,14 +9,12 @@ import {
   Clock,
   Copy,
   Download,
-  Eye,
   Globe,
   KeyRound,
   LogOut,
   Palette,
   Scale,
   Trash2,
-  UserRound,
   Vibrate,
 } from "@/components/icons";
 import { toast } from "sonner";
@@ -36,10 +34,8 @@ import {
 import { setHapticEnabled } from "@/lib/haptics";
 import {
   getMyProfileHub,
-  updateMyProfile,
   type ProfileHub,
 } from "@/lib/server/social";
-import { isValidUsername, normalizeUsername } from "@/lib/username";
 import { Spinner } from "@/components/ui/spinner";
 import { useTheme } from "@/lib/theme/provider";
 import {
@@ -53,22 +49,19 @@ export const Route = createFileRoute("/ayarlar")({ component: SettingsPage });
 
 type Panel =
   | "menu"
-  | "name"
   | "password"
   | "language"
   | "timezone"
-  | "profile"
-  | "units"
+    | "units"
   | "appearance"
   | "delete";
 
 function SettingsPage() {
   const { user, isPending } = useCurrentUserState();
+  const navigate = useNavigate();
   const { t, locale, setLocale, locales } = useI18n();
   const { theme, accent, setThemeAndAccent } = useTheme();
   const [panel, setPanel] = useState<Panel>("menu");
-  const [name, setName] = useState("");
-  const [savingName, setSavingName] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPassword2, setNewPassword2] = useState("");
@@ -76,16 +69,6 @@ function SettingsPage() {
   const [timeZone, setTimeZone] = useState("Europe/Istanbul");
   const [savingTz, setSavingTz] = useState(false);
   const [hub, setHub] = useState<ProfileHub | null>(null);
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [visibility, setVisibility] =
-    useState<ProfileHub["visibility"]>("public");
-  const [measuresPublic, setMeasuresPublic] = useState(false);
-  const [birthDate, setBirthDate] = useState("");
-  const [sex, setSex] = useState<"female" | "male" | "unspecified">("unspecified");
-  const [heightCm, setHeightCm] = useState("");
-  const [detailsPublic, setDetailsPublic] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("metric");
   const [hapticOn, setHapticOn] = useState(true);
   const [notifOn, setNotifOn] = useState(true);
@@ -93,9 +76,6 @@ function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [_exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    if (user?.displayName) setName(user.displayName);
-  }, [user?.displayName]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -124,14 +104,6 @@ function SettingsPage() {
     void getMyProfileHub()
       .then((h) => {
         setHub(h);
-        setUsername(h.username);
-        setBio(h.bio ?? "");
-        setVisibility(h.visibility);
-        setMeasuresPublic(h.measures_public);
-        setBirthDate(h.birth_date ?? "");
-        setSex((h.sex as "female" | "male" | "unspecified") || "unspecified");
-        setHeightCm(h.height_cm != null ? String(h.height_cm) : "");
-        setDetailsPublic(h.details_public === true);
       })
       .catch(() => {});
   }, [user?.id, setThemeAndAccent]);
@@ -170,29 +142,6 @@ function SettingsPage() {
     }
   }
 
-  async function saveName(e: React.FormEvent) {
-    e.preventDefault();
-    const n = name.trim();
-    if (n.length < 2) {
-      toast.error(t("common.error"));
-      return;
-    }
-    setSavingName(true);
-    try {
-      const { error } = await authClient.updateUser({ name: n });
-      if (error) {
-        toast.error(error.message || t("common.error"));
-        return;
-      }
-      toast.success(t("common.saved"));
-      await authClient.getSession();
-      setPanel("menu");
-    } catch {
-      toast.error(t("common.error"));
-    } finally {
-      setSavingName(false);
-    }
-  }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -256,69 +205,6 @@ function SettingsPage() {
     }
   }
 
-  async function saveProfile(e: React.FormEvent) {
-    e.preventDefault();
-    const u = normalizeUsername(username);
-    if (!isValidUsername(u)) {
-      toast.error(t("profile.usernameInvalid"));
-      return;
-    }
-    setSavingProfile(true);
-    try {
-      const heightNum =
-        heightCm.trim() === ""
-          ? null
-          : Number(heightCm.replace(",", "."));
-      if (heightNum != null && (Number.isNaN(heightNum) || heightNum < 80 || heightNum > 250)) {
-        toast.error(t("profile.height"));
-        setSavingProfile(false);
-        return;
-      }
-      const h = await updateMyProfile({
-        data: {
-          username: u,
-          bio: bio.trim() || null,
-          visibility,
-          measures_public: measuresPublic,
-          birth_date: birthDate.trim() || null,
-          sex,
-          height_cm: heightNum,
-          details_public: detailsPublic,
-        },
-      });
-      setHub(h);
-      setUsername(h.username);
-      toast.success(t("common.saved"));
-      setPanel("menu");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("common.error"));
-    } finally {
-      setSavingProfile(false);
-    }
-  }
-
-  async function onAvatarFile(file: File | null) {
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Max 2MB");
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      toast.error(t("common.error"));
-      return;
-    }
-    try {
-      const dataUrl = await compressImage(file, 256, 0.82);
-      setSavingProfile(true);
-      const h = await updateMyProfile({ data: { avatar_url: dataUrl } });
-      setHub(h);
-      toast.success(t("common.saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("common.error"));
-    } finally {
-      setSavingProfile(false);
-    }
-  }
 
   const COMMON_TZ = [
     "Europe/Istanbul",
@@ -429,13 +315,7 @@ function SettingsPage() {
                 icon={AtSign}
                 label={t("profile.editProfile")}
                 value={hub ? `@${hub.username}` : undefined}
-                onClick={() => setPanel("profile")}
-              />
-              <SettingsRow
-                icon={UserRound}
-                label={t("settings.displayName")}
-                value={user.displayName ?? undefined}
-                onClick={() => setPanel("name")}
+                onClick={() => void navigate({ to: "/profil/duzenle" })}
               />
               <SettingsRow
                 icon={KeyRound}
@@ -603,176 +483,6 @@ function SettingsPage() {
           </SubPanel>
         )}
 
-        {panel === "profile" && (
-          <SubPanel title={t("profile.editProfile")} onBack={() => setPanel("menu")}>
-            <form onSubmit={(e) => void saveProfile(e)} className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="grid size-16 place-items-center overflow-hidden rounded-2xl bg-accent/15 font-display text-xl text-accent">
-                  {avatarSrc ? (
-                    <img src={avatarSrc} alt="" className="size-full object-cover" />
-                  ) : (
-                    initials
-                  )}
-                </div>
-                <label className="cursor-pointer text-sm font-semibold text-accent">
-                  {t("profile.avatar")}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    onChange={(e) => void onAvatarFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
-              </div>
-
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-text-2">{t("profile.username")}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-text-2">@</span>
-                  <input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                    maxLength={20}
-                    className="h-12 min-w-0 flex-1 rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                  />
-                </div>
-              </label>
-
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-text-2">
-                  {t("profile.bio")} ({bio.length}/160)
-                </span>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value.slice(0, 160))}
-                  rows={3}
-                  className="w-full resize-none rounded-xl bg-raised px-3 py-2.5 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                />
-              </label>
-
-              <fieldset className="space-y-2">
-                <legend className="flex items-center gap-1.5 text-xs font-medium text-text-2">
-                  <Eye className="size-3.5" /> {t("profile.visibility")}
-                </legend>
-                {(
-                  [
-                    ["public", t("profile.visibilityPublic")],
-                    ["followers", t("profile.visibilityFollowers")],
-                    ["private", t("profile.visibilityPrivate")],
-                  ] as const
-                ).map(([k, lab]) => (
-                  <label
-                    key={k}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3",
-                      visibility === k
-                        ? "bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
-                        : "bg-raised/50",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="vis"
-                      checked={visibility === k}
-                      onChange={() => setVisibility(k)}
-                      className="accent-primary"
-                    />
-                    <span className="text-sm">{lab}</span>
-                  </label>
-                ))}
-              </fieldset>
-
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-text-2">{t("profile.birthDate")}</span>
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().slice(0, 10)}
-                  min="1905-01-01"
-                  className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                />
-              </label>
-
-              <fieldset className="space-y-2">
-                <legend className="text-xs font-medium text-text-2">{t("profile.sexLabel")}</legend>
-                {(
-                  [
-                    ["unspecified", t("profile.sex.unspecified")],
-                    ["female", t("profile.sex.female")],
-                    ["male", t("profile.sex.male")],
-                  ] as const
-                ).map(([k, lab]) => (
-                  <label
-                    key={k}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-xl px-3 py-3",
-                      sex === k
-                        ? "bg-accent/10 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
-                        : "bg-raised/50",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="sex"
-                      checked={sex === k}
-                      onChange={() => setSex(k)}
-                      className="accent-primary"
-                    />
-                    <span className="text-sm">{lab}</span>
-                  </label>
-                ))}
-              </fieldset>
-
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-text-2">
-                  {t("profile.height")} (cm)
-                </span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min={80}
-                  max={250}
-                  step={0.5}
-                  value={heightCm}
-                  onChange={(e) => setHeightCm(e.target.value)}
-                  placeholder="170"
-                  className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                />
-              </label>
-
-              <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
-                <span className="text-sm">{t("profile.detailsPublic")}</span>
-                <input
-                  type="checkbox"
-                  checked={detailsPublic}
-                  onChange={(e) => setDetailsPublic(e.target.checked)}
-                  className="size-5 accent-primary"
-                />
-              </label>
-
-              <label className="flex items-center justify-between gap-3 rounded-xl bg-raised/50 px-3 py-3">
-                <span className="text-sm">{t("profile.measuresPublic")}</span>
-                <input
-                  type="checkbox"
-                  checked={measuresPublic}
-                  onChange={(e) => setMeasuresPublic(e.target.checked)}
-                  className="size-5 accent-primary"
-                />
-              </label>
-
-              <button
-                type="submit"
-                disabled={savingProfile}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
-              >
-                {savingProfile ? <Spinner className="size-4" /> : null}
-                {t("common.save")}
-              </button>
-            </form>
-          </SubPanel>
-        )}
-
         {panel === "timezone" && (
           <SubPanel title={t("settings.timezone")} onBack={() => setPanel("menu")}>
             <p className="mb-3 px-1 text-xs text-text-2">{t("settings.timezoneHint")}</p>
@@ -798,26 +508,6 @@ function SettingsPage() {
                 );
               })}
             </div>
-          </SubPanel>
-        )}
-
-        {panel === "name" && (
-          <SubPanel title={t("settings.displayName")} onBack={() => setPanel("menu")}>
-            <form onSubmit={(e) => void saveName(e)} className="space-y-3">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-12 w-full rounded-xl bg-raised px-3 text-sm shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-              />
-              <button
-                type="submit"
-                disabled={savingName}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold text-on-primary disabled:opacity-60"
-              >
-                {savingName ? <Spinner className="size-4" /> : null}
-                {t("common.save")}
-              </button>
-            </form>
           </SubPanel>
         )}
 
@@ -1038,30 +728,3 @@ function SubPanel({
   );
 }
 
-function compressImage(file: File, maxSize: number, quality: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("canvas"));
-        return;
-      }
-      ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", quality));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("image"));
-    };
-    img.src = url;
-  });
-}

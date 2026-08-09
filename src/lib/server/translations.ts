@@ -3,8 +3,11 @@ import type { Sql } from "@/lib/db";
 /** Normalize app locale id for program_translations rows. */
 function translationLocale(locale: string): string {
   const v = (locale || "en").trim();
-  if (v === "pt-BR" || v.toLowerCase() === "pt-br") return "pt-BR";
-  // primary subtag for simple ids
+  const lower = v.toLowerCase();
+  if (lower === "pt-br" || v === "pt-BR") return "pt-BR";
+  if (lower === "zh-cn" || lower === "zh-hans" || v === "zh-CN") return "zh-CN";
+  if (lower === "zh-tw" || lower === "zh-hant" || v === "zh-TW") return "zh-TW";
+  // primary subtag for simple ids (en, tr, de, …)
   const primary = v.split("-")[0]!.toLowerCase();
   return primary || "en";
 }

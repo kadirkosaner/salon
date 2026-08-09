@@ -170,12 +170,19 @@ export const getDashboard = createServerFn({ method: "GET" })
       }
     }
 
+    const activeProg = await sql<{ id: number }>`
+      select id from programs
+      where user_id = ${context.userId} and is_active = true
+      limit 1
+    `;
+
     return {
       week: {
         completed: completedThisWeek,
         planned: plannedThisWeek || weekWorkouts.length,
         volume: Math.round(weekVolume),
       },
+      hasActiveProgram: activeProg.length > 0,
       streak,
       next: next[0] ?? null,
       volumeByWeek,

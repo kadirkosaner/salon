@@ -560,4 +560,5 @@ export const ko = {
   "discover.searchShort": "검색…",
   "discover.codeShort": "코드",
   "discover.copyBlocked": "수동 복사 (클립보드 차단)",
+  "feed.workoutGone": "이 운동은 더 이상 없습니다",
 } as const;

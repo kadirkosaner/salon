@@ -560,4 +560,5 @@ export const vi = {
   "discover.searchShort": "Tìm…",
   "discover.codeShort": "Mã",
   "discover.copyBlocked": "Sao chép thủ công (clipboard bị chặn)",
+  "feed.workoutGone": "Buổi tập này không còn nữa",
 } as const;

@@ -560,4 +560,5 @@ export const en = {
   "discover.searchShort": "Search…",
   "discover.codeShort": "Code",
   "discover.copyBlocked": "Copy manually (clipboard blocked)",
+  "feed.workoutGone": "This workout is no longer available",
 } as const;

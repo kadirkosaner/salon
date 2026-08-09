@@ -562,7 +562,7 @@ function ContinuousCalendar({
 
       <div
         ref={scroller}
-        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 py-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {days.map((d) => {
           const tn = tone(d);
