@@ -37,7 +37,7 @@ export function AppShell({
   const { data: notifData } = useQuery({
     queryKey: [...qk.settings, "notif-count"] as const,
     queryFn: () => getUnreadNotificationCount(),
-    enabled: !!user,
+    enabled: !!user?.id,
     refetchInterval: 60_000,
   });
   const unread = notifData?.count ?? 0;

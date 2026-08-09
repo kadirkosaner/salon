@@ -67,7 +67,7 @@ function SettingsPage() {
   }, [user?.displayName]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     void getSettings()
       .then((st) => {
         if (st.timeZone) setTimeZone(st.timeZone);
@@ -93,7 +93,7 @@ function SettingsPage() {
         setMeasuresPublic(h.measures_public);
       })
       .catch(() => {});
-  }, [user]);
+  }, [user?.id]);
 
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;

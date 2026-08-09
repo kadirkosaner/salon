@@ -389,7 +389,7 @@ function WorkoutPage() {
 
         {loading ? (
           <WorkoutSkeleton />
-        ) : !workout ? (
+        ) : needsProgram ? null : !workout ? (
           <EmptyDay
             programDays={programDays}
             onCreate={(id) => void createFromProgram(id)}

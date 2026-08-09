@@ -540,7 +540,27 @@ export function DetailModal({
   }, [id]);
 
   return (
-    <AppSheet title={data?.name ?? "Program"} onClose={onClose}>
+    <AppSheet
+      title={data?.name ?? "Program"}
+      onClose={onClose}
+      footer={
+        data && !data.is_own ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onClone(data.name)}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg shadow-[0_4px_14px_rgba(245,197,66,0.28)] active:scale-[0.98] disabled:opacity-60"
+          >
+            {busy ? (
+              <Spinner className="size-4" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            {t("discover.selectToStart")}
+          </button>
+        ) : null
+      }
+    >
         {!data && !err && (
           <div className="space-y-3 py-6" aria-busy="true">
             <div className="h-8 w-2/3 animate-pulse rounded-lg bg-surface2" />
@@ -592,22 +612,6 @@ export function DetailModal({
                 </div>
               ))}
             </div>
-            {!data.is_own && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onClone(data.name)}
-                className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-yellow font-semibold text-bg disabled:opacity-60"
-              >
-                {busy ? (
-                  <Spinner className="size-4" />
-                ) : (
-                  <Download className="size-4" />
-                )}
-                {t("discover.selectToStart")}
-              </button>
-            )}
-
           </>
         )}
     </AppSheet>

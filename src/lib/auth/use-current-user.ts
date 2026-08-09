@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -33,43 +34,46 @@ export type CurrentUserState = {
   isPending: boolean;
 };
 
+const DISABLED_STATE: CurrentUserState = {
+  user: DEV_USER,
+  isPending: false,
+};
+
 /**
- * Current user + loading state. Same behavior in live preview and when deployed:
- *   - Auth enabled (default) -> the real signed-in user; `user` is `null` while
- *                            the session resolves (`isPending: true`) and when
- *                            signed out (`isPending: false`). Session comes from
- *                            Better Auth `useSession()` → `/api/auth/get-session`
- *                            (cookie when deployed; bearer in live preview).
- *   - Auth disabled (`VITE_AUTH_ENABLED=false`) -> `DEV_USER`, never pending.
+ * Current user + loading state.
  *
- * Protect a route by waiting out `isPending` before acting on `user` —
- * redirecting on `user: null` alone bounces signed-in visitors to sign-in on
- * every hard reload:
+ * IMPORTANT: `user` is memoized by primitive fields so putting it (or the whole
+ * return value) in a React effect/query dependency array does not re-fire every
+ * render. Previously a fresh object literal every render caused infinite
+ * useEffect loops (e.g. notifications page calling listNotifications ~140/s).
  *
- *   import { RedirectToSignIn } from "@/lib/auth/gates";
- *   const { user, isPending } = useCurrentUserState();
- *   if (isPending) return null;              // still resolving — don't redirect yet
- *   if (!user) return <RedirectToSignIn />;  // definitely signed out
- *
- * `authEnabled` is a module-level constant fixed at load, so the guarded hook
- * call keeps a stable hook order across every render of a given component.
+ * Hooks always run in the same order: when auth is disabled we still call
+ * `useSession` (cheap no-op client) and ignore it, returning the stable
+ * `DISABLED_STATE` singleton.
  */
 export function useCurrentUserState(): CurrentUserState {
-  if (!authEnabled) return { user: DEV_USER, isPending: false };
   const { data, isPending } = authClient.useSession();
-  const user = data?.user;
-  return {
-    user: user
-      ? {
-          id: user.id,
-          displayName: user.name ?? null,
-          primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
-          isDevFallback: false,
-        }
-      : null,
-    isPending,
-  };
+  const id = data?.user?.id;
+  const name = data?.user?.name;
+  const email = data?.user?.email;
+  const image = data?.user?.image;
+
+  const user = useMemo<AppUser | null>(() => {
+    if (!authEnabled) return DEV_USER;
+    if (!id) return null;
+    return {
+      id,
+      displayName: name ?? null,
+      primaryEmail: email ?? null,
+      profileImageUrl: image ?? null,
+      isDevFallback: false,
+    };
+  }, [id, name, email, image]);
+
+  return useMemo((): CurrentUserState => {
+    if (!authEnabled) return DISABLED_STATE;
+    return { user, isPending };
+  }, [user, isPending]);
 }
 
 /**

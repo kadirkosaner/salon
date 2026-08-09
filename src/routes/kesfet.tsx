@@ -88,7 +88,6 @@ function DiscoverPage() {
   const [results, setResults] = useState<UnifiedSearchResult | null>(null);
   const [recent, setRecent] = useState<string[]>([]);
   const [filters, setFilters] = useState<DiscoverFilters>(emptyFilters());
-  const [code, setCode] = useState("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [detailId, setDetailId] = useState<number | null>(null);
   const [cloning, setCloning] = useState(false);
@@ -267,35 +266,9 @@ function DiscoverPage() {
           ) : null}
         </div>
 
-        {/* Share code row */}
-        {!searchingMode ? (
-          <div className="flex gap-2">
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder={t("discover.codePlaceholder")}
-              className="num h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface2 px-3 tracking-widest"
-              maxLength={8}
-            />
-            <button
-              type="button"
-              disabled={cloning}
-              onClick={() => {
-                const c = code.trim();
-                if (c.length < 4) {
-                  toast.error(t("discover.codeHint"));
-                  return;
-                }
-                setPending({ kind: "code", name: c, shareCode: c });
-              }}
-              className="h-11 shrink-0 rounded-lg bg-yellow px-3.5 text-sm font-semibold text-bg disabled:opacity-60"
-            >
-              {t("discover.addCode")}
-            </button>
-          </div>
-        ) : null}
+        {/* Share code is handled via main search (see unifiedSearch shareCodeHit) */}
 
-        {/* Filters */}
+        {/* Filters — wrap, not horizontal rail */}
         {!searchingMode ? (
           <FilterChips filters={filters} setFilters={setFilters} t={t} />
         ) : null}
@@ -475,101 +448,107 @@ function FilterChips({
 
   const chip = (active: boolean) =>
     cn(
-      "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95",
+      "rounded-full px-3 py-1.5 text-xs font-semibold transition active:scale-95",
       active
         ? "bg-yellow text-bg"
         : "border border-line bg-surface2 text-muted",
     );
 
   return (
-    <div className="space-y-2">
-      <div className="scroll-rail-wrap">
-        <div className="scroll-rail">
-          <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-wider text-dim">
-            {t("discover.filterDays")}
-          </span>
-          {[3, 4, 6].map((d) => (
-            <button
-              key={d}
-              type="button"
-              className={chip(filters.days === d)}
-              onClick={() => toggleDays(d)}
-            >
-              {d} {t("feed.days")}
-            </button>
-          ))}
-          <span className="mx-1 shrink-0 self-center text-dim">·</span>
-          <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-wider text-dim">
-            {t("discover.filterLevel")}
-          </span>
-          {(
-            [
-              ["baslangic", "discover.levelBeginner"],
-              ["orta", "discover.levelMid"],
-              ["ileri", "discover.levelAdv"],
-            ] as const
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              className={chip(filters.level === k)}
-              onClick={() => toggleLevel(k)}
-            >
-              {t(label)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="scroll-rail-wrap">
-        <div className="scroll-rail">
-          <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-wider text-dim">
-            {t("discover.filterGoal")}
-          </span>
-          {(
-            [
-              ["guc", "discover.goalStrength"],
-              ["hipertrofi", "discover.goalHyper"],
-              ["kilo", "discover.goalFat"],
-            ] as const
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              className={chip(filters.goal === k)}
-              onClick={() => toggleGoal(k)}
-            >
-              {t(label)}
-            </button>
-          ))}
-          <span className="mx-1 shrink-0 self-center text-dim">·</span>
-          {(
-            [
-              ["barbell", t("discover.eq.barbell")],
-              ["dumbbell", t("discover.eq.dumbbell")],
-              ["makine", t("discover.eq.machine")],
-              ["vucut", t("discover.eq.bodyweight")],
-            ] as const
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              type="button"
-              className={chip(filters.equipment === k)}
-              onClick={() => toggleEq(k)}
-            >
-              {label}
-            </button>
-          ))}
-          {hasActiveFilters(filters) ? (
-            <button
-              type="button"
-              className="shrink-0 rounded-full border border-line px-3 py-1.5 text-xs text-muted"
-              onClick={() => setFilters(emptyFilters())}
-            >
-              {t("discover.clearFilters")}
-            </button>
-          ) : null}
-        </div>
-      </div>
+    <div className="space-y-2.5">
+      <FilterRow label={t("discover.filterDays")}>
+        {[3, 4, 6].map((d) => (
+          <button
+            key={d}
+            type="button"
+            className={chip(filters.days === d)}
+            onClick={() => toggleDays(d)}
+          >
+            {d} {t("feed.days")}
+          </button>
+        ))}
+      </FilterRow>
+      <FilterRow label={t("discover.filterLevel")}>
+        {(
+          [
+            ["baslangic", "discover.levelBeginner"],
+            ["orta", "discover.levelMid"],
+            ["ileri", "discover.levelAdv"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className={chip(filters.level === k)}
+            onClick={() => toggleLevel(k)}
+          >
+            {t(label)}
+          </button>
+        ))}
+      </FilterRow>
+      <FilterRow label={t("discover.filterGoal")}>
+        {(
+          [
+            ["guc", "discover.goalStrength"],
+            ["hipertrofi", "discover.goalHyper"],
+            ["kilo", "discover.goalFat"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className={chip(filters.goal === k)}
+            onClick={() => toggleGoal(k)}
+          >
+            {t(label)}
+          </button>
+        ))}
+      </FilterRow>
+      <FilterRow label={t("discover.filterEquipment")}>
+        {(
+          [
+            ["barbell", t("discover.eq.barbell")],
+            ["dumbbell", t("discover.eq.dumbbell")],
+            ["makine", t("discover.eq.machine")],
+            ["vucut", t("discover.eq.bodyweight")],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className={chip(filters.equipment === k)}
+            onClick={() => toggleEq(k)}
+          >
+            {label}
+          </button>
+        ))}
+        {hasActiveFilters(filters) ? (
+          <button
+            type="button"
+            className="rounded-full border border-line px-3 py-1.5 text-xs text-muted"
+            onClick={() => setFilters(emptyFilters())}
+          >
+            {t("discover.clearFilters")}
+          </button>
+        ) : null}
+      </FilterRow>
+    </div>
+  );
+}
+
+function FilterRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span className="w-full text-[10px] font-semibold uppercase tracking-wider text-dim sm:w-auto sm:shrink-0">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }
@@ -672,11 +651,21 @@ function SearchResults({
   if (!results) return null;
 
   const empty =
+    !results.shareCodeHit &&
     results.people.length === 0 &&
     results.programs.length === 0 &&
     results.exercises.length === 0;
 
   if (empty && !searching) {
+    if (results.shareCodeMiss) {
+      return (
+        <EmptyState
+          icon={Search}
+          title={t("discover.codeNotFound")}
+          hint={t("discover.codeNotFoundHint")}
+        />
+      );
+    }
     return (
       <EmptyState
         icon={Search}
@@ -688,6 +677,36 @@ function SearchResults({
 
   return (
     <div className="space-y-5">
+      {results.shareCodeHit ? (
+        <section>
+          <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-yellow">
+            <Sparkles className="size-3.5" />
+            {t("discover.shareCodeGroup")}
+            {results.shareCodeQuery ? (
+              <span className="num tracking-widest text-muted">
+                · {results.shareCodeQuery}
+              </span>
+            ) : null}
+          </h3>
+          <ProgramCard
+            p={results.shareCodeHit}
+            busy={cloning}
+            onOpen={() => onOpenProgram(results.shareCodeHit!.id)}
+            onClone={() => onCloneProgram(results.shareCodeHit!)}
+            onCopyCode={() =>
+              results.shareCodeHit!.share_code &&
+              onCopyCode(results.shareCodeHit!.share_code)
+            }
+          />
+        </section>
+      ) : results.shareCodeMiss ? (
+        <EmptyState
+          icon={Search}
+          title={t("discover.codeNotFound")}
+          hint={t("discover.codeNotFoundHint")}
+        />
+      ) : null}
+
       {results.people.length > 0 ? (
         <section>
           <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">

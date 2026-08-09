@@ -183,6 +183,12 @@ export type UnifiedSearchResult = {
     source: "local" | "dataset";
     id?: number;
   }>;
+  /** Exact share-code match (shown first in UI when query looks like a code). */
+  shareCodeHit: PublicProgramCard | null;
+  /** Query matched share-code pattern but no public program found. */
+  shareCodeMiss: boolean;
+  /** Normalized upper-case code when pattern matched. */
+  shareCodeQuery: string | null;
 };
 
 export const unifiedSearch = createServerFn({ method: "GET" })
@@ -196,6 +202,43 @@ export const unifiedSearch = createServerFn({ method: "GET" })
 
     const term = data.q.trim();
     const like = `%${term}%`;
+
+    // Share-code pattern: 6 chars from Crockford-ish alphabet (no I/O/0/1)
+    const codeNorm = term.toUpperCase();
+    const isShareCode = /^[A-HJ-NP-Z2-9]{6}$/.test(codeNorm);
+    let shareCodeHit: PublicProgramCard | null = null;
+    if (isShareCode) {
+      const codeRows = await sql<{
+        id: number;
+        name: string;
+        description: string | null;
+        tags: string | null;
+        share_code: string | null;
+        clone_count: number;
+        user_id: string;
+        author_name: string | null;
+        day_count: number;
+        exercise_count: number;
+      }>`
+        select
+          p.id, p.name, p.description, p.tags, p.share_code,
+          coalesce(p.clone_count, 0)::int as clone_count,
+          p.user_id,
+          coalesce(u.name, case when p.user_id = 'system' then 'Salon' else 'Sporcu' end) as author_name,
+          (select count(*)::int from program_days pd where pd.program_id = p.id) as day_count,
+          (
+            select count(*)::int from program_exercises pe
+            join program_days pd on pd.id = pe.program_day_id
+            where pd.program_id = p.id
+          ) as exercise_count
+        from programs p
+        left join "user" u on u.id = p.user_id
+        where p.is_public = true
+          and upper(p.share_code) = ${codeNorm}
+        limit 1
+      `;
+      if (codeRows[0]) shareCodeHit = mapProgram(codeRows[0], context.userId);
+    }
 
     const peopleRows = await sql<{
       id: string;
@@ -256,8 +299,10 @@ export const unifiedSearch = createServerFn({ method: "GET" })
     const qLower = term.toLowerCase();
     const programs = progRows
       .filter((p) => {
+        // Don't duplicate exact share-code hit in the programs list
+        if (shareCodeHit && p.id === shareCodeHit.id) return false;
         const hay =
-          `${p.name} ${p.description ?? ""} ${p.tags ?? ""} ${p.author_name}`.toLowerCase();
+          `${p.name} ${p.description ?? ""} ${p.tags ?? ""} ${p.author_name} ${p.share_code ?? ""}`.toLowerCase();
         return hay.includes(qLower);
       })
       .slice(0, 12);
@@ -297,5 +342,12 @@ export const unifiedSearch = createServerFn({ method: "GET" })
       })),
     ].slice(0, 16);
 
-    return { people, programs, exercises };
+    return {
+      people,
+      programs,
+      exercises,
+      shareCodeHit,
+      shareCodeMiss: isShareCode && !shareCodeHit,
+      shareCodeQuery: isShareCode ? codeNorm : null,
+    };
   });

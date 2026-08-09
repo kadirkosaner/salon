@@ -17,6 +17,7 @@ export function AppSheet({
   nested = false,
   dismissible = true,
   showClose = true,
+  footer,
 }: {
   title?: string;
   children: React.ReactNode;
@@ -29,6 +30,8 @@ export function AppSheet({
   /** false = cannot dismiss via drag/backdrop/Escape (e.g. username claim). */
   dismissible?: boolean;
   showClose?: boolean;
+  /** Sticky footer below scroll area (primary CTA, etc.). */
+  footer?: React.ReactNode;
 }) {
   const hasTitle = title != null && title !== "";
   const Root = nested ? Drawer.NestedRoot : Drawer.Root;
@@ -96,6 +99,11 @@ export function AppSheet({
           >
             {children}
           </div>
+          {footer ? (
+            <div className="shrink-0 border-t border-line/80 bg-elevated px-4 py-3">
+              {footer}
+            </div>
+          ) : null}
         </Drawer.Content>
       </Drawer.Portal>
     </Root>

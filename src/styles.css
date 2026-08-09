@@ -301,11 +301,33 @@
   gap: 0.625rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  /* Touch: hide chrome; fine pointer (mouse): thin bar so drag/wheel works */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 .scroll-rail::-webkit-scrollbar {
   display: none;
+  height: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .scroll-rail {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(107, 117, 128, 0.55) transparent;
+    padding-bottom: 0.4rem;
+  }
+  .scroll-rail::-webkit-scrollbar {
+    display: block;
+    height: 6px;
+  }
+  .scroll-rail::-webkit-scrollbar-thumb {
+    background: rgba(107, 117, 128, 0.55);
+    border-radius: 999px;
+  }
+  .scroll-rail::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 .scroll-rail-wrap {
   position: relative;
@@ -319,4 +341,11 @@
   bottom: 0.25rem;
   width: 2.5rem;
   background: linear-gradient(to left, var(--color-bg, #0c0c0e) 10%, transparent);
+}
+@media (hover: hover) and (pointer: fine) {
+  /* Fade less critical when scrollbar is visible */
+  .scroll-rail-wrap::after {
+    width: 1.25rem;
+    opacity: 0.6;
+  }
 }

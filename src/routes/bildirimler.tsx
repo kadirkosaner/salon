@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -14,6 +14,7 @@ import { useI18n } from "@/lib/i18n/provider";
 import { relativeTime } from "@/lib/relative-time";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { qk } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/bildirimler")({
   component: NotificationsPage,
@@ -47,30 +48,35 @@ function labelFor(
 
 function NotificationsPage() {
   const { user, isPending } = useCurrentUserState();
+  const userId = user?.id;
   const { t, locale } = useI18n();
-  const [items, setItems] = useState<NotificationRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const r = await listNotifications({ data: { limit: 40 } });
-      setItems(r.items);
-    } catch {
-      toast.error(t("common.error"));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  const listQuery = useQuery({
+    queryKey: qk.notifications,
+    queryFn: () => listNotifications({ data: { limit: 40 } }),
+    enabled: !!userId,
+    staleTime: 15_000,
+  });
 
-  useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+  const items = listQuery.data?.items ?? [];
+  const loading = listQuery.isLoading;
 
   async function markAll() {
     try {
       await markNotificationsRead({ data: { all: true } });
-      setItems((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
+      qc.setQueryData(qk.notifications, (prev: { items: NotificationRow[] } | undefined) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((n) => ({
+                ...n,
+                read_at: n.read_at ?? new Date().toISOString(),
+              })),
+            }
+          : prev,
+      );
+      void qc.invalidateQueries({ queryKey: [...qk.settings, "notif-count"] });
     } catch {
       toast.error(t("common.error"));
     }
