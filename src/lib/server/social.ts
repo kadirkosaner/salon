@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
-import { v, userIdStr, parseOrThrow, noInput } from "@/lib/validation";
+import { v, userIdStr, noInput } from "@/lib/validation";
 import { z } from "zod";
 import { todayForUser, startOfWeekMonday as startOfWeekPg } from "./time";
 import {

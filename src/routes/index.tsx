@@ -97,20 +97,24 @@ function FeedPage() {
     enabled: !!userId && empty,
   });
 
+  const hasNextPage = feedQuery.hasNextPage;
+  const isFetchingNextPage = feedQuery.isFetchingNextPage;
+  const fetchNextPage = feedQuery.fetchNextPage;
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
-          void feedQuery.fetchNextPage();
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
         }
       },
       { rootMargin: "200px" },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [feedQuery.hasNextPage, feedQuery.isFetchingNextPage, feedQuery.fetchNextPage, items.length]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);

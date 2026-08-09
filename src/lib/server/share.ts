@@ -6,7 +6,7 @@ import { ensureUserSeeded } from "./seed";
 import { isoDow, remapDow } from "@/lib/utils";
 import { todayForUser } from "./time";
 import { emitProgramPublished } from "./activity";
-import { parseOrThrow, v, positiveId, isoDate, optionalText, noInput } from "@/lib/validation";
+import { v, positiveId, isoDate, optionalText, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type PublicProgramCard = {

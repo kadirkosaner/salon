@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getUserTimeZone, setUserTimeZone } from "./time";
 import { ensureUserProfile } from "./social";
-import { parseOrThrow, v, noInput } from "@/lib/validation";
+import { v, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export const getSettings = createServerFn({ method: "GET" })

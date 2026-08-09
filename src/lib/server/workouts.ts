@@ -14,8 +14,7 @@ import { v,
   restSec,
   repRange,
   loadTag,
-  optionalText,
-  parseOrThrow, noInput } from "@/lib/validation";
+  optionalText, noInput } from "@/lib/validation";
 import { z } from "zod";
 import {
   emitPersonalRecordIfAny,

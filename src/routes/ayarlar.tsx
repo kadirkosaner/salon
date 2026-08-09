@@ -1,24 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  AtSign,
-  Bell,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Copy,
-  Download,
-  Eye,
-  Globe,
-  KeyRound,
-  Loader2,
-  LogOut,
-  Scale,
-  Trash2,
-  UserRound,
-  Vibrate,
-} from "lucide-react";
+import { AtSign, Bell, Check, ChevronLeft, ChevronRight, Clock, Copy, Download, Eye, Globe, KeyRound, LogOut, Scale, Trash2, UserRound, Vibrate } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -40,6 +22,7 @@ import {
   type ProfileHub,
 } from "@/lib/server/social";
 import { isValidUsername, normalizeUsername } from "@/lib/username";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/ayarlar")({ component: SettingsPage });
 
@@ -77,7 +60,7 @@ function SettingsPage() {
   const [notifOn, setNotifOn] = useState(true);
   const [deleteWord, setDeleteWord] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [_exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (user?.displayName) setName(user.displayName);
@@ -560,7 +543,7 @@ function SettingsPage() {
                 disabled={savingProfile}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
               >
-                {savingProfile ? <Loader2 className="size-4 animate-spin" /> : null}
+                {savingProfile ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
               </button>
             </form>
@@ -610,7 +593,7 @@ function SettingsPage() {
                 disabled={savingName}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
               >
-                {savingName ? <Loader2 className="size-4 animate-spin" /> : null}
+                {savingName ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
               </button>
             </form>
@@ -646,7 +629,7 @@ function SettingsPage() {
                 disabled={savingPw}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
               >
-                {savingPw ? <Loader2 className="size-4 animate-spin" /> : null}
+                {savingPw ? <Spinner className="size-4" /> : null}
                 {t("common.save")}
               </button>
             </form>
@@ -748,7 +731,7 @@ function SettingsPage() {
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-red font-semibold text-white disabled:opacity-50"
               >
                 {deleting ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Spinner className="size-4" />
                 ) : (
                   <Trash2 className="size-4" />
                 )}

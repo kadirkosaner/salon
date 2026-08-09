@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
-import { X } from "lucide-react";
 import { btnClass } from "@/components/ui/btn";
 import { updateMyProfile } from "@/lib/server/social";
 import { isValidUsername, normalizeUsername, usernameError } from "@/lib/username";

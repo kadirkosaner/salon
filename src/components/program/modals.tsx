@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { Copy, Loader2, Share2, X } from "lucide-react";
+import { Copy, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { MuscleBadge } from "@/components/muscle-badge";
 import {
   setWeekSchedule,
   createProgram,
-  addProgramDay,
   addProgramExercise,
   type ProgramDetail,
   type ProgramExerciseRow,
@@ -26,15 +25,14 @@ import { publishProgram, updateProgramMeta } from "@/lib/server/share";
 import {
   DOW_LABELS,
   LOAD_TAG_LABELS,
-  MUSCLE_LABELS,
   type LoadTag,
-  type MuscleGroup,
 } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 import { AppSelect } from "@/components/ui/select";
 import { AppSheet } from "@/components/ui/sheet";
 import { useT } from "@/lib/i18n/provider";
+import { Spinner } from "@/components/ui/spinner";
 
 const SAMPLE_PASTE = `Kişisel Program
 Pazartesi - PUSH A
@@ -155,7 +153,7 @@ export function ShareModal({
             .finally(() => setSaving(false));
         }}
       >
-        {saving ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />}
+        {saving ? <Spinner className="size-4" /> : <Share2 className="size-4" />}
         Kaydet
       </button>
     </Modal>
@@ -314,7 +312,7 @@ export function ScheduleModal({
             .finally(() => setSaving(false));
         }}
       >
-        {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+        {saving ? <Spinner className="size-4" /> : null}
         Takvimi kaydet
       </button>
     </Modal>
@@ -763,7 +761,6 @@ export function AddModal({
   onClose,
   onAdd,
   onCreateExercise,
-  dayExerciseIds,
 }: {
   library: ExerciseRow[];
   onClose: () => void;
@@ -1045,7 +1042,7 @@ export function AddModal({
         className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg shadow-[0_4px_14px_rgba(245,197,66,0.28)] disabled:opacity-50"
         onClick={() => void submit()}
       >
-        {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+        {saving ? <Spinner className="size-4" /> : null}
         Programa ekle
       </button>
     </Modal>
@@ -1644,7 +1641,7 @@ export function CreateProgramWizard({
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg disabled:opacity-60"
                 onClick={() => void finish()}
               >
-                {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                {busy ? <Spinner className="size-4" /> : null}
                 Programı oluştur
               </button>
             )}

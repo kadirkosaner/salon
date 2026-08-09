@@ -170,7 +170,7 @@ const catalogGlobal = globalThis as typeof globalThis & {
   __ensureCatalogSeeded__?: Promise<void>;
 };
 
-export async function ensureCatalogSeeded(sql: Sql): Promise<void> {
+export async function ensureCatalogSeeded(_sql: Sql): Promise<void> {
   if (catalogGlobal.__ensureCatalogSeeded__) {
     return catalogGlobal.__ensureCatalogSeeded__;
   }

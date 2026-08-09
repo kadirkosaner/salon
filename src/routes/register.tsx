@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Activity, Loader2 } from "lucide-react";
+import { Activity } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/i18n/provider";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/register")({ component: RegisterPage });
 
@@ -117,7 +118,7 @@ function RegisterPage() {
           disabled={loading}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-yellow font-semibold text-bg disabled:opacity-60"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+          {loading ? <Spinner className="size-4" /> : null}
           {t("auth.register")}
         </button>
         <p className="text-center text-sm text-muted">

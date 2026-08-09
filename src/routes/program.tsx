@@ -14,7 +14,6 @@ import {
   Share2,
   Sparkles,
   Trash2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -39,7 +38,6 @@ import {
 import {
   addProgramDay,
   addProgramExercise,
-  deleteProgramDay,
   deleteProgramExercise,
   getActiveProgram,
   reorderProgramExercises,
@@ -111,7 +109,7 @@ function ProgramPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId, reload]);
+  }, [userId, reload, t]);
 
   if (isPending) return <AuthGateSkeleton />;
   if (!user) return <RedirectToSignIn />;

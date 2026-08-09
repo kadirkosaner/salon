@@ -3,7 +3,7 @@ import { getSql, withTransaction } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
 import { matchExerciseName, parseProgramText } from "@/lib/program-parser";
-import { v, shortText, optionalString } from "@/lib/validation";
+import { v, optionalString } from "@/lib/validation";
 import { z } from "zod";
 
 export const previewProgramImport = createServerFn({ method: "POST" })

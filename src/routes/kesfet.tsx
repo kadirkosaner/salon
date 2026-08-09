@@ -1,17 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BookOpen,
-  Dumbbell,
-  Loader2,
-  Search,
-  Sparkles,
-  TrendingUp,
-  UserPlus,
-  Users,
-  X,
-} from "lucide-react";
+import { BookOpen, Dumbbell, Search, Sparkles, TrendingUp, UserPlus, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -53,6 +43,7 @@ import { addDaysISO, cn, todayISO } from "@/lib/utils";
 import { DOW_LABELS } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { qk } from "@/lib/query-keys";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/kesfet")({ component: DiscoverPage });
 
@@ -270,7 +261,7 @@ function DiscoverPage() {
             </button>
           ) : null}
           {searching ? (
-            <Loader2 className="absolute right-10 top-1/2 size-4 -translate-y-1/2 animate-spin text-yellow" />
+            <Spinner className="absolute right-10 top-1/2 size-4 -translate-y-1/2 text-yellow" />
           ) : null}
         </div>
 

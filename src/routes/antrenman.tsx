@@ -1,20 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ArrowLeftRight,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Eraser,
-  Loader2,
-  Plus,
-  Save,
-  Search,
-  SkipForward,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ArrowLeftRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eraser, Plus, Save, Search, SkipForward, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -41,7 +27,6 @@ import {
 } from "@/lib/server/workouts";
 import { getActiveProgram } from "@/lib/server/programs";
 import {
-  listExercises,
   similarExercises,
   adoptDatasetExercise,
   searchExerciseCatalog,
@@ -54,6 +39,7 @@ import { WorkoutSkeleton } from "@/components/ui/skeleton";
 import { PrCelebration, type PrMoment } from "@/components/pr-celebration";
 import { haptic } from "@/lib/haptics";
 import { addDaysISO, cn, formatDate, todayISO } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const searchSchema = z.object({
   date: z.string().optional(),
@@ -810,7 +796,7 @@ function WorkoutBody({
           onClick={onSaveProgram}
         >
           {savingProgram ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Spinner className="size-4" />
           ) : (
             <Save className="size-4" />
           )}

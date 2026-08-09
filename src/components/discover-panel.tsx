@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Copy, Download, Loader2, Search, Users, X } from "lucide-react";
+import { BookOpen, Copy, Download, Search, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { ExercisePreviewButton } from "@/components/exercise-preview";
 import { LoadTagBadge } from "@/components/load-tag";
@@ -15,6 +15,7 @@ import { generateWorkouts } from "@/lib/server/workouts";
 import { DOW_LABELS, DOW_SHORT } from "@/data/library";
 import { copyText } from "@/lib/clipboard";
 import { todayISO, addDaysISO, cn, isoDow } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 export type Pending = {
   kind: "id" | "code";
@@ -164,7 +165,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
             className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg bg-yellow px-3.5 text-sm font-semibold text-bg disabled:opacity-60"
           >
             {cloning ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Spinner className="size-4" />
             ) : (
               <Download className="size-4" />
             )}
@@ -421,7 +422,7 @@ export function StartProgramModal({
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-yellow font-semibold text-bg shadow-[0_4px_14px_rgba(245,197,66,0.28)] active:scale-[0.98] disabled:opacity-60"
           >
             {busy ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Spinner className="size-4" />
             ) : (
               <Download className="size-4" />
             )}
@@ -620,7 +621,7 @@ export function DetailModal({
                 className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-yellow font-semibold text-bg disabled:opacity-60"
               >
                 {busy ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Spinner className="size-4" />
                 ) : (
                   <Download className="size-4" />
                 )}

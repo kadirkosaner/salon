@@ -3,7 +3,7 @@ import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureUserSeeded } from "./seed";
 import { ensureUserProfile } from "./social";
-import { v, positiveId, parseOrThrow, noInput } from "@/lib/validation";
+import { v, positiveId, noInput } from "@/lib/validation";
 import { z } from "zod";
 
 export type ActivityType =

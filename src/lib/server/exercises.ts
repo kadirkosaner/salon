@@ -4,7 +4,6 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { resolveExerciseMedia } from "@/lib/exercise-media-resolve.server";
 import {
   browseDatasetByMuscle,
-  datasetCount,
   ensureDatasetExercise,
   ensureExerciseLibrary,
   resolveDataset,

@@ -1,17 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Loader2,
-  Minus,
-  Plus,
-  Scale,
-  Trash2,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowDownRight, ArrowUpRight, Minus, Plus, Scale, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -29,11 +19,11 @@ import {
   deleteMeasurement,
   listMeasurements,
   saveMeasurement,
-  type MeasurementRow,
 } from "@/lib/server/measurements";
 import { cn, formatChartDate, formatDateTR, todayISO } from "@/lib/utils";
 import { qk } from "@/lib/query-keys";
 import { useT } from "@/lib/i18n/provider";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/olculer")({ component: MeasurementsPage });
 
@@ -96,7 +86,7 @@ function MeasurementsPage() {
     queryFn: () => listMeasurements(),
     enabled: !!userId,
   });
-  const rows = listQuery.data ?? [];
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data]);
   const loading = listQuery.isLoading;
 
   async function reload() {
@@ -350,7 +340,7 @@ function MeasurementsPage() {
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-yellow font-semibold text-bg disabled:opacity-60"
                 >
                   {saving ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <Spinner className="size-4" />
                   ) : (
                     <Plus className="size-4" />
                   )}

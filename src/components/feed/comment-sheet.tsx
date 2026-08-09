@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { AppSheet } from "@/components/ui/sheet";
 import {
@@ -8,6 +8,7 @@ import {
   type FeedItem,
 } from "@/lib/server/activity";
 import { relativeTime } from "@/lib/relative-time";
+import { Spinner } from "@/components/ui/spinner";
 
 type Comment = {
   id: number;
@@ -125,7 +126,7 @@ export function CommentSheet({
             className="grid size-11 shrink-0 place-items-center rounded-xl bg-yellow text-bg disabled:opacity-50"
           >
             {sending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <Spinner className="size-4" />
             ) : (
               <Send className="size-4" />
             )}

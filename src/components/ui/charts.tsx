@@ -77,7 +77,13 @@ function AxisX({
   );
 }
 
-function AxisY({ width = 36 }: { width?: number }) {
+function AxisY({
+  width = 36,
+  domain,
+}: {
+  width?: number;
+  domain?: [number, number];
+}) {
   return (
     <YAxis
       tick={{ fill: TICK, fontSize: 10, fontWeight: 500 }}
@@ -86,6 +92,7 @@ function AxisY({ width = 36 }: { width?: number }) {
       width={width}
       tickMargin={6}
       allowDecimals={false}
+      domain={domain}
     />
   );
 }
@@ -183,7 +190,7 @@ export function ProgressAreaChart({
               strokeWidth={1}
             />
             <AxisX dataKey={xKey} formatter={xFormatter} />
-            <AxisY />
+            <AxisY domain={domain} />
             <Tooltip
               cursor={{ stroke: color, strokeWidth: 1, strokeOpacity: 0.25 }}
               content={
