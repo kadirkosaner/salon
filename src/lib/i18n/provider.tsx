@@ -9,6 +9,7 @@ import {
 import {
   BASE_LOCALE,
   LOCALES,
+  localeDir,
   messages,
   type Locale,
   type MessageKey,
@@ -21,12 +22,16 @@ function normalizeLocale(raw: string | null | undefined): Locale | null {
   if (!raw) return null;
   const v = raw.trim();
   if (VALID.has(v)) return v as Locale;
-  // BCP47 fallbacks: pt-BR → pt-BR only if present; else primary subtag
+  const lower = v.toLowerCase();
+  if (lower === "pt-br" && VALID.has("pt-BR")) return "pt-BR";
+  if (lower === "zh-cn" || lower === "zh-hans" || lower === "zh") {
+    if (VALID.has("zh-CN")) return "zh-CN";
+  }
+  if (lower === "zh-tw" || lower === "zh-hant" || lower === "zh-hk") {
+    if (VALID.has("zh-TW")) return "zh-TW";
+  }
   const primary = v.split("-")[0]!.toLowerCase();
   if (VALID.has(primary)) return primary as Locale;
-  // zh-CN → zh-Hans if ever added
-  if (primary === "zh" && VALID.has("zh-Hans")) return "zh-Hans" as Locale;
-  if (v.toLowerCase() === "pt-br" && VALID.has("pt-BR")) return "pt-BR" as Locale;
   return null;
 }
 
@@ -69,6 +74,7 @@ type I18nValue = {
   setLocale: (l: Locale) => void;
   t: TranslateFn;
   locales: typeof LOCALES;
+  dir: "ltr" | "rtl";
 };
 
 const I18nContext = createContext<I18nValue | null>(null);
@@ -90,8 +96,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
     if (typeof document !== "undefined") {
+      const dir = localeDir(locale);
       document.documentElement.lang = locale;
-      document.documentElement.dir = "ltr";
+      document.documentElement.dir = dir;
     }
   }, [locale, ready]);
 
@@ -106,8 +113,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       let s: string =
         table[k] ?? messages[BASE_LOCALE][k] ?? String(key);
       if (vars) {
-        for (const [k, v] of Object.entries(vars)) {
-          s = s.replaceAll(`{${k}}`, String(v));
+        for (const [vk, vv] of Object.entries(vars)) {
+          s = s.replaceAll(`{${vk}}`, String(vv));
         }
       }
       return s;
@@ -115,9 +122,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     [locale],
   );
 
+  const dir = localeDir(locale);
+
   const value = useMemo(
-    () => ({ locale, setLocale, t, locales: LOCALES }),
-    [locale, setLocale, t],
+    () => ({ locale, setLocale, t, locales: LOCALES, dir }),
+    [locale, setLocale, t, dir],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

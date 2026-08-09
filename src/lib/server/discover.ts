@@ -234,7 +234,14 @@ export type UnifiedSearchResult = {
 
 export const unifiedSearch = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(v(z.object({ q: z.string().trim().min(1).max(80) })))
+  .validator(
+    v(
+      z.object({
+        q: z.string().trim().min(1).max(80),
+        locale: z.string().optional(),
+      }),
+    ),
+  )
   .handler(async ({ context, data }): Promise<UnifiedSearchResult> => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
@@ -242,6 +249,7 @@ export const unifiedSearch = createServerFn({ method: "GET" })
     await ensureUserProfile(sql, context.userId);
 
     const term = data.q.trim();
+    const locale = data.locale ?? "en";
     const like = `%${term}%`;
 
     // Share-code pattern: 6 chars from Crockford-ish alphabet (no I/O/0/1)
@@ -278,7 +286,18 @@ export const unifiedSearch = createServerFn({ method: "GET" })
           and upper(p.share_code) = ${codeNorm}
         limit 1
       `;
-      if (codeRows[0]) shareCodeHit = mapProgram(codeRows[0], context.userId);
+      if (codeRows[0]) {
+        shareCodeHit = mapProgram(codeRows[0], context.userId);
+        const tr = await translatePrograms(
+          sql,
+          [{ id: shareCodeHit.id, name: shareCodeHit.name, description: shareCodeHit.description }],
+          locale,
+        );
+        const hit = tr.get(shareCodeHit.id);
+        if (hit) {
+          shareCodeHit = { ...shareCodeHit, name: hit.name, description: hit.description };
+        }
+      }
     }
 
     const peopleRows = await sql<{
@@ -336,7 +355,7 @@ export const unifiedSearch = createServerFn({ method: "GET" })
       public_programs: r.public_programs,
     }));
 
-    const progRows = await loadPublicPrograms(sql, context.userId);
+    const progRows = await loadPublicPrograms(sql, context.userId, locale);
     const qLower = term.toLowerCase();
     const programs = progRows
       .filter((p) => {

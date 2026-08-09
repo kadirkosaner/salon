@@ -1,4 +1,12 @@
 /** Compact relative time via Intl (locale-aware). */
+
+function toBcp47(locale: string): string {
+  if (locale === "pt-BR") return "pt-BR";
+  if (locale === "zh-CN" || locale === "zh-Hans") return "zh-CN";
+  if (locale === "zh-TW" || locale === "zh-Hant") return "zh-TW";
+  return locale || "en";
+}
+
 export function relativeTime(
   iso: string,
   locale: string = "en",
@@ -7,7 +15,7 @@ export function relativeTime(
   const t = Date.parse(iso.includes("T") ? iso : iso.replace(" ", "T") + "Z");
   if (Number.isNaN(t)) return "";
   const sec = Math.round((now - t) / 1000);
-  const rtf = new Intl.RelativeTimeFormat(locale === "pt-BR" ? "pt-BR" : locale, {
+  const rtf = new Intl.RelativeTimeFormat(toBcp47(locale), {
     numeric: "auto",
     style: "narrow",
   });

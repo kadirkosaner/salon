@@ -102,8 +102,8 @@ function FeedPage() {
   });
 
   const programsQuery = useQuery({
-    queryKey: qk.discover,
-    queryFn: () => listDiscoverPrograms(),
+    queryKey: [...qk.discover, locale] as const,
+    queryFn: () => listDiscoverPrograms({ data: { locale } }),
     enabled: !!userId && empty,
   });
 

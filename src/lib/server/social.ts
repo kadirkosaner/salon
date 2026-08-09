@@ -873,7 +873,7 @@ export const checkUsernameAvailable = createServerFn({ method: "GET" })
     };
   });
 
-/** After email sign-up: set chosen username and mark confirmed. */
+/** After email sign-up: set chosen username + optional profile details. */
 export const claimRegisterUsername = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
@@ -886,6 +886,13 @@ export const claimRegisterUsername = createServerFn({ method: "POST" })
           .min(USERNAME_MIN)
           .max(USERNAME_MAX)
           .regex(/^[a-z0-9_]+$/),
+        birth_date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable()
+          .optional(),
+        sex: z.enum(["female", "male", "unspecified"]).nullable().optional(),
+        height_cm: z.number().min(80).max(250).nullable().optional(),
       }),
     ),
   )
@@ -900,12 +907,33 @@ export const claimRegisterUsername = createServerFn({ method: "POST" })
       limit 1
     `;
     if (taken.length > 0) throw new Error("Username taken");
+
+    const birthDate: string | null = data.birth_date ?? null;
+    if (birthDate) {
+      const d = new Date(birthDate + "T12:00:00");
+      const now = new Date();
+      const age =
+        (now.getTime() - d.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+      if (Number.isNaN(d.getTime()) || age < 13 || age > 120) {
+        throw new Error("Invalid birth date");
+      }
+    }
+    const sex = data.sex ?? null;
+    const heightCm = data.height_cm ?? null;
+
     await sql`
-      insert into user_profiles (user_id, username, username_confirmed)
-      values (${context.userId}, ${u}, true)
+      insert into user_profiles (
+        user_id, username, username_confirmed, birth_date, sex, height_cm
+      )
+      values (
+        ${context.userId}, ${u}, true, ${birthDate}, ${sex}, ${heightCm}
+      )
       on conflict (user_id) do update set
         username = ${u},
         username_confirmed = true,
+        birth_date = coalesce(${birthDate}, user_profiles.birth_date),
+        sex = coalesce(${sex}, user_profiles.sex),
+        height_cm = coalesce(${heightCm}, user_profiles.height_cm),
         updated_at = now()
     `;
     return { ok: true as const, username: u };

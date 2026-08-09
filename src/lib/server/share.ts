@@ -8,6 +8,7 @@ import { todayForUser } from "./time";
 import { emitProgramPublished } from "./activity";
 import { v, positiveId, isoDate, optionalText, noInput } from "@/lib/validation";
 import { z } from "zod";
+import { translatePrograms } from "./translations";
 
 export type PublicProgramCard = {
   id: number;
@@ -66,11 +67,12 @@ async function clearFutureOnAbandon(sql: Sql, userId: string) {
 
 export const listDiscoverPrograms = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(noInput)
-  .handler(async ({ context }) => {
+  .validator(v(z.object({ locale: z.string().optional() }).optional()))
+  .handler(async ({ context, data }) => {
     const sql = await getSql();
     await ensureUserSeeded(sql, context.userId);
     await ensureCatalogSeeded(sql);
+    const locale = data?.locale ?? "en";
     const rows = await sql<{
       id: number;
       name: string;
@@ -109,11 +111,17 @@ export const listDiscoverPrograms = createServerFn({ method: "GET" })
         p.id desc
       limit 60
     `;
-    return rows.map(
-      (r): PublicProgramCard => ({
+    const tr = await translatePrograms(
+      sql,
+      rows.map((r) => ({ id: r.id, name: r.name, description: r.description })),
+      locale,
+    );
+    return rows.map((r): PublicProgramCard => {
+      const hit = tr.get(r.id);
+      return {
         id: r.id,
-        name: r.name,
-        description: r.description,
+        name: hit?.name ?? r.name,
+        description: hit?.description ?? r.description,
         tags: r.tags,
         share_code: r.share_code,
         clone_count: r.clone_count,
@@ -122,14 +130,23 @@ export const listDiscoverPrograms = createServerFn({ method: "GET" })
         author_name: r.author_name ?? "User",
         is_catalog: r.user_id === "system",
         is_own: r.user_id === context.userId,
-      }),
-    );
+      };
+    });
   });
 
 export const getPublicProgramDetail = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator(v(positiveId))
-  .handler(async ({ context, data: id }) => {
+  .validator(
+    v(
+      z.object({
+        id: positiveId,
+        locale: z.string().optional(),
+      }),
+    ),
+  )
+  .handler(async ({ context, data }) => {
+    const id = data.id;
+    const locale = data.locale ?? "en";
     const sql = await getSql();
     await ensureCatalogSeeded(sql);
     const progs = await sql<{
@@ -149,6 +166,16 @@ export const getPublicProgramDetail = createServerFn({ method: "GET" })
     `;
     if (progs.length === 0) throw new Error("Program bulunamadı.");
     const p = progs[0]!;
+    const trMap = await translatePrograms(
+      sql,
+      [{ id: p.id, name: p.name, description: p.description }],
+      locale,
+    );
+    const tr = trMap.get(p.id);
+    if (tr) {
+      p.name = tr.name;
+      p.description = tr.description;
+    }
     if (!p.is_public && p.user_id !== context.userId) {
       throw new Error("Bu program gizli.");
     }

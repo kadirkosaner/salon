@@ -1,5 +1,14 @@
 import type { Sql } from "@/lib/db";
 
+/** Normalize app locale id for program_translations rows. */
+function translationLocale(locale: string): string {
+  const v = (locale || "en").trim();
+  if (v === "pt-BR" || v.toLowerCase() === "pt-br") return "pt-BR";
+  // primary subtag for simple ids
+  const primary = v.split("-")[0]!.toLowerCase();
+  return primary || "en";
+}
+
 /** Resolve program name/description for locale with EN fallback. */
 export async function translatePrograms(
   sql: Sql,
@@ -12,7 +21,7 @@ export async function translatePrograms(
   }
   if (rows.length === 0) return map;
   const ids = rows.map((r) => r.id);
-  const loc = locale === "tr" ? "tr" : "en";
+  const loc = translationLocale(locale);
   try {
     const tr = await sql<{
       program_id: number;
@@ -26,7 +35,7 @@ export async function translatePrograms(
         and locale in (${loc}, 'en')
     `;
     // prefer requested locale over en
-    const byId = new Map<number, { en?: typeof tr[0]; pref?: typeof tr[0] }>();
+    const byId = new Map<number, { en?: (typeof tr)[0]; pref?: (typeof tr)[0] }>();
     for (const row of tr) {
       const cur = byId.get(row.program_id) ?? {};
       if (row.locale === "en") cur.en = row;

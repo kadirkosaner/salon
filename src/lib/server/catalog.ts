@@ -8,6 +8,7 @@ import {
   type ProgramExerciseSeed,
 } from "@/data/library";
 import { ensureExerciseLibrary } from "./seed";
+import { CATALOG_I18N } from "./catalog-i18n";
 
 type CatalogProgram = {
   key: string;
@@ -746,7 +747,7 @@ const CATALOG: CatalogProgram[] = [
 ];
 
 /** Bump to force catalog rebuild on existing installs. */
-const CATALOG_VERSION = "catalog-v2";
+const CATALOG_VERSION = "catalog-v3";
 
 async function insertProgramDays(
   sql: Sql,
@@ -786,15 +787,29 @@ async function upsertTranslations(
   cat: CatalogProgram,
 ) {
   try {
-    await sql`
-      insert into program_translations (program_id, locale, name, description)
-      values
-        (${programId}, 'en', ${cat.name}, ${cat.description}),
-        (${programId}, 'tr', ${cat.name_tr}, ${cat.description_tr})
-      on conflict (program_id, locale) do update set
-        name = excluded.name,
-        description = excluded.description
-    `;
+    const rows: { locale: string; name: string; description: string }[] = [
+      { locale: "en", name: cat.name, description: cat.description },
+      { locale: "tr", name: cat.name_tr, description: cat.description_tr },
+    ];
+    const extra = CATALOG_I18N[cat.key] ?? {};
+    for (const [locale, copy] of Object.entries(extra)) {
+      if (copy?.name) {
+        rows.push({
+          locale,
+          name: copy.name,
+          description: copy.description ?? cat.description,
+        });
+      }
+    }
+    for (const row of rows) {
+      await sql`
+        insert into program_translations (program_id, locale, name, description)
+        values (${programId}, ${row.locale}, ${row.name}, ${row.description})
+        on conflict (program_id, locale) do update set
+          name = excluded.name,
+          description = excluded.description
+      `;
+    }
   } catch {
     /* table may not exist until migration */
   }

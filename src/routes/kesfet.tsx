@@ -114,7 +114,7 @@ function DiscoverPage() {
     }
     const ticket = ++raceRef.current;
     setSearching(true);
-    void unifiedSearch({ data: { q: debounced } })
+    void unifiedSearch({ data: { q: debounced, locale } })
       .then((r) => {
         if (ticket !== raceRef.current) return;
         setResults(r);
@@ -128,7 +128,7 @@ function DiscoverPage() {
       .finally(() => {
         if (ticket === raceRef.current) setSearching(false);
       });
-  }, [debounced, t]);
+  }, [debounced, t, locale]);
 
   const homeQuery = useQuery({
     queryKey: [...qk.discoverHome, locale] as const,

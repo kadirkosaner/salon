@@ -41,13 +41,13 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      setList(await listDiscoverPrograms());
+      setList(await listDiscoverPrograms({ data: { locale } }));
     } catch {
       toast.error(t("common.error"));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, locale]);
 
   useEffect(() => {
     void reload();
@@ -109,8 +109,8 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
     const ok = await copyText(codeStr);
     if (ok) toast.success(t("discover.codeCopied"));
     else
-      toast.message(`Kod: ${codeStr}`, {
-        description: "Manuel kopyala (ortam panoyu engelledi)",
+      toast.message(t("discover.codeLabel", { code: codeStr }), {
+        description: t("discover.copyBlocked"),
       });
   }
 
@@ -127,15 +127,14 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
     <div className="w-full min-w-0 space-y-4">
       <div className="rounded-xl border border-rule bg-sunken p-3">
         <p className="text-xs leading-relaxed text-text-2">
-          Katalogdan al veya arkadaş kodu gir. {t("discover.startDay")} ve hangi seansla
-          başlayacağını sen seçersin.
+          {t("discover.panelHint", { startDay: t("discover.startDay") })}
         </p>
         <div className="relative mt-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-3" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Ara…"
+            placeholder={t("discover.searchShort")}
             className="h-11 w-full rounded-lg border border-rule bg-raised py-2 pl-10 pr-3 text-sm"
           />
         </div>
@@ -143,7 +142,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="Kod"
+            placeholder={t("discover.codeShort")}
             className="num h-11 min-w-0 flex-1 rounded-lg border border-rule bg-raised px-3 tracking-widest"
             maxLength={8}
           />
@@ -173,7 +172,7 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
             ) : (
               <Download className="size-4" />
             )}
-            Ekle
+            {t("discover.addCode")}
           </button>
         </div>
       </div>
@@ -184,13 +183,13 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
         <>
           <SectionHead
             icon={<BookOpen className="size-4 text-accent" />}
-            title="Katalog"
+            title={t("discover.catalogSection")}
           />
           {catalog.length === 0 ? (
             <EmptyState
               icon={BookOpen}
-              title="Katalog boş"
-              hint="Yakında hazır programlar eklenecek."
+              title={t("discover.catalogEmpty")}
+              hint={t("discover.catalogEmptyHint")}
             />
           ) : (
             <div className="space-y-2.5">
@@ -211,14 +210,14 @@ export function DiscoverPanel({ onCloned }: { onCloned: () => void }) {
 
           <SectionHead
             icon={<Users className="size-4 text-info" />}
-            title="Topluluk"
+            title={t("discover.communitySection")}
           />
           {community.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="Henüz paylaşım yok"
-              hint="Program’dan Paylaş ile topluluğa ekle."
-              actionLabel="Programa git"
+              title={t("discover.communityEmpty")}
+              hint={t("discover.communityEmptyHint")}
+              actionLabel={t("discover.goToProgram")}
               actionTo="/program"
             />
           ) : (
@@ -294,7 +293,7 @@ export function StartProgramModal({
       setLoadingDays(false);
       return;
     }
-    void getPublicProgramDetail({ data: id })
+    void getPublicProgramDetail({ data: { id, locale } })
       .then((d) => {
         if (c) return;
         setDays(d.days.map((x) => ({ id: x.id, dow: x.dow, name: x.name, focus: x.focus })));
@@ -312,7 +311,7 @@ export function StartProgramModal({
     return () => {
       c = true;
     };
-  }, [pending.id]);
+  }, [pending.id, locale]);
 
   const previewDow = isoDow(startDate);
   const selected = days.find((d) => d.id === startDayId);
@@ -561,7 +560,7 @@ export function DetailModal({
 
   useEffect(() => {
     let c = false;
-    getPublicProgramDetail({ data: id })
+    getPublicProgramDetail({ data: { id, locale } })
       .then((d) => {
         if (!c) setData(d);
       })
@@ -571,7 +570,7 @@ export function DetailModal({
     return () => {
       c = true;
     };
-  }, [id]);
+  }, [id, locale]);
 
   return (
     <AppSheet

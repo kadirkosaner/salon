@@ -8,7 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 /** BCP47 tag for Intl from app locale id */
 export function localeTag(locale: string = "en"): string {
   if (locale === "pt-BR") return "pt-BR";
-  if (locale === "zh-Hans") return "zh-CN";
+  if (locale === "zh-CN" || locale === "zh-Hans") return "zh-CN";
+  if (locale === "zh-TW" || locale === "zh-Hant") return "zh-TW";
   return locale || "en";
 }
 
