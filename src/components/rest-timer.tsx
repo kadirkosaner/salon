@@ -76,7 +76,7 @@ export function RestTimerBar({
   return (
     <div
       className="fixed inset-x-0 z-50 mx-auto w-full max-w-[480px] border-t border-rule bg-raised shadow-2xl"
-      style={{ bottom: "calc(7.25rem + env(safe-area-inset-bottom, 0px))" }}
+      style={{ bottom: "calc(7.5rem + 1px + env(safe-area-inset-bottom, 0px))" }}
     >
       <div className="h-1 bg-rule">
         <div

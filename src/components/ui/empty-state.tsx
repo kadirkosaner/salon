@@ -14,6 +14,7 @@ export function EmptyState({
   actionLabel,
   actionTo,
   onAction,
+  actionVariant = "soft",
   className,
 }: {
   icon?: LucideIcon;
@@ -22,27 +23,28 @@ export function EmptyState({
   actionLabel?: string;
   actionTo?: string;
   onAction?: () => void;
+  actionVariant?: "primary" | "secondary" | "soft";
   className?: string;
 }) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-2xl px-5 py-10 text-center",
+        "flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 text-center",
         "bg-raised/40 shadow-[var(--shadow-highlight)]",
         className,
       )}
     >
       {Icon ? (
-        <span className="grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]">
-          <Icon className="size-7" />
+        <span className="grid size-11 place-items-center rounded-xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]">
+          <Icon className="size-5" />
         </span>
       ) : null}
       {title ? (
-        <p className="font-display text-xl tracking-wide text-text">{title}</p>
+        <p className="font-display text-base tracking-wide text-text">{title}</p>
       ) : null}
       <p className="max-w-xs text-sm leading-relaxed text-text-2">{hint}</p>
       {actionLabel && actionTo ? (
-        <Link to={actionTo} className={btnClass("primary", "mt-1 min-w-[10rem]")}>
+        <Link to={actionTo} className={btnClass(actionVariant, "mt-1 min-h-11 min-w-[10rem]")}>
           {actionLabel}
         </Link>
       ) : null}
@@ -50,7 +52,7 @@ export function EmptyState({
         <button
           type="button"
           onClick={onAction}
-          className={btnClass("primary", "mt-1 min-w-[10rem]")}
+          className={btnClass(actionVariant, "mt-1 min-h-11 min-w-[10rem]")}
         >
           {actionLabel}
         </button>

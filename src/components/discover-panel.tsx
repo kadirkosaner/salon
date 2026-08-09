@@ -502,7 +502,7 @@ export function ProgramRow({
             <>
               <span className="text-text-3">·</span>
               <span className="num">
-                {t("discover.clones", { n: p.clone_count.toLocaleString() })}
+                {p.clone_count === 1 ? t("discover.clonesOne") : t("discover.clones", { n: p.clone_count.toLocaleString() })}
               </span>
             </>
           ) : null}

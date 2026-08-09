@@ -377,11 +377,7 @@ function WorkoutPage() {
   return (
     <AppShell
       title={t("workout.title")}
-      subtitle={
-        programName
-          ? `${formatDate(date, locale)} · ${programName}`
-          : formatDate(date, locale)
-      }
+      subtitle={programName ?? formatDate(date, locale)}
       restTimerActive={!!rest}
       actions={
         <span className="text-[11px] text-text-2">
@@ -664,9 +660,6 @@ function ContinuousCalendar({
         <div className="flex min-w-0 items-center gap-1.5">
           <p className="truncate text-xs font-medium text-text-2">
             {formatDate(selected, locale)}
-            {statusMap.get(selected)?.day_name
-              ? ` · ${statusMap.get(selected)!.day_name}`
-              : ""}
           </p>
           <button
             type="button"
@@ -743,7 +736,7 @@ function ContinuousCalendar({
               )}
             >
               <span className="text-[9px] font-medium uppercase opacity-80">
-                {isToday ? t("workout.todayShort") : dow}
+                {dow}
               </span>
               <span className="num text-sm leading-none">{Number(dayNum)}</span>
               <span
@@ -860,19 +853,32 @@ function WorkoutBody({
   onClearFuture: () => void;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const [finishConfirm, setFinishConfirm] = useState(false);
   const doneSets = workout.exercises.reduce(
     (n, e) => n + e.sets.filter((s) => s.completed).length,
     0,
   );
+  const totalSets = workout.exercises.reduce((n, e) => n + e.sets.length, 0);
   const doneEx = workout.exercises.filter(
     (e) => e.sets.length > 0 && e.sets.every((s) => s.completed),
   ).length;
   const totalEx = workout.exercises.length;
+  const incompleteEx = totalEx - doneEx;
+  const allSetsDone = totalSets > 0 && doneSets >= totalSets;
   const canFinish =
     workout.status !== "completed" &&
     workout.status !== "skipped" &&
     doneSets > 0;
   const focusLine = muscleSummary(workout.exercises, t);
+
+  function requestFinish() {
+    if (!canFinish) return;
+    if (incompleteEx > 0) {
+      setFinishConfirm(true);
+      return;
+    }
+    onFinish();
+  }
 
   return (
     <div className="space-y-2.5">
@@ -884,7 +890,7 @@ function WorkoutBody({
               {workout.day_name.replace(/\s*\/\s*/g, " ")}
             </h2>
             <span className="num shrink-0 text-sm font-semibold text-text-2">
-              {doneEx}/{totalEx || 0}
+              {doneSets}/{totalSets || 0}
             </span>
           </div>
           {focusLine ? (
@@ -1004,32 +1010,69 @@ function WorkoutBody({
         />
       )}
 
-      {/* Sticky finish bar */}
+      {/* Sticky finish bar — sits flush above nav (no overlap) */}
       {workout.status !== "completed" && workout.status !== "skipped" ? (
         <div
-          className="fixed inset-x-0 z-[45] mx-auto flex w-full max-w-[480px] items-center gap-2 border-t border-rule bg-sunken/95 px-3 py-2 backdrop-blur-md"
+          className="fixed inset-x-0 z-[45] mx-auto flex w-full max-w-[480px] items-center gap-3 border-t border-rule bg-sunken/95 px-3 py-2.5 backdrop-blur-md"
           style={{
-            bottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
+            /* nav min-h-16 (4rem) + 1px rule gap — no overlap */
+            bottom: "calc(4rem + 1px + env(safe-area-inset-bottom, 0px))",
           }}
         >
+          <div className="min-w-0 shrink-0">
+            <p className="num text-sm font-semibold tabular-nums text-text">
+              {doneSets}/{totalSets || 0}
+            </p>
+            <p className="text-[10px] text-text-3">{t("workout.setsLabel")}</p>
+          </div>
           <button
             type="button"
             disabled={!canFinish}
-            onClick={onFinish}
+            onClick={requestFinish}
             title={!canFinish ? t("workout.finishNeedSet") : undefined}
             className={cn(
-              "flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl px-2 text-sm font-semibold transition active:scale-[0.98]",
-              canFinish
-                ? "bg-primary text-on-primary shadow-[var(--shadow-primary)]"
-                : "bg-raised text-text-3",
+              "flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-semibold transition active:scale-[0.98]",
+              !canFinish && "bg-raised text-text-3",
+              canFinish && allSetsDone && "bg-primary text-on-primary shadow-[var(--shadow-primary)]",
+              canFinish && !allSetsDone && "bg-raised text-text shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]",
             )}
           >
             <Check className="size-4 shrink-0" />
-            <span className="truncate">
-              {t("workout.finishBar", { done: doneEx, total: totalEx || 0 })}
-            </span>
+            <span className="truncate">{t("workout.finish")}</span>
           </button>
         </div>
+      ) : null}
+
+      {finishConfirm ? (
+        <AppSheet
+          title={t("workout.finish")}
+          onClose={() => setFinishConfirm(false)}
+          footer={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="h-11 flex-1 rounded-xl border border-rule text-sm font-semibold"
+                onClick={() => setFinishConfirm(false)}
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                className="h-11 flex-1 rounded-xl bg-primary text-sm font-semibold text-on-primary"
+                onClick={() => {
+                  setFinishConfirm(false);
+                  onFinish();
+                }}
+              >
+                {t("workout.finishAnyway")}
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm leading-relaxed text-text-2">
+            {t("workout.finishIncomplete", { n: incompleteEx })}
+          </p>
+        </AppSheet>
       ) : null}
     </div>
   );
@@ -1137,6 +1180,85 @@ function lastRepsForSet(
   return hit?.reps ?? null;
 }
 
+
+function ExerciseActionMenu({
+  t,
+  hasNote,
+  noteOpen,
+  onNote,
+  onSwap,
+  onRemove,
+}: {
+  t: (k: string, vars?: Record<string, string | number>) => string;
+  hasNote: boolean;
+  noteOpen: boolean;
+  onNote: () => void;
+  onSwap: () => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised"
+        aria-label={t("program.more")}
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40"
+            aria-label={t("common.close")}
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute right-0 top-[calc(100%+0.25rem)] z-50 w-44 overflow-hidden rounded-xl border border-rule bg-sunken shadow-xl">
+            {hasNote ? (
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+                onClick={() => {
+                  setOpen(false);
+                  onNote();
+                }}
+              >
+                <Info className="size-4 text-text-2" />
+                {noteOpen ? t("workout.hideNote") : t("workout.showNote")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-raised"
+              onClick={() => {
+                setOpen(false);
+                onSwap();
+              }}
+            >
+              <ArrowLeftRight className="size-4 text-text-2" />
+              {t("workout.swap")}
+            </button>
+            <div className="border-t border-rule" />
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-danger hover:bg-danger/10"
+              onClick={() => {
+                setOpen(false);
+                onRemove();
+              }}
+            >
+              <Trash2 className="size-4" />
+              {t("workout.removeExercise")}
+            </button>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 function ExerciseCard({
   index,
   exercise,
@@ -1164,6 +1286,7 @@ function ExerciseCard({
   onRestStart: () => void;
 }) {
   const [noteOpen, setNoteOpen] = useState(false);
+  const [highlightSet, setHighlightSet] = useState<number | null>(null);
   const doneCount = exercise.sets.filter((s) => s.completed).length;
   const allDone = doneCount === exercise.sets.length && exercise.sets.length > 0;
   const topLast =
@@ -1190,20 +1313,20 @@ function ExerciseCard({
       className={cn(
         "min-w-0 overflow-hidden rounded-xl border bg-sunken transition",
         open ? "border-accent/40" : "border-rule/80",
-        allDone && !open && "border-success/25 bg-success/5",
+        allDone && !open && "border-accent/30 bg-accent/5",
       )}
     >
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-2 px-2.5 py-2 text-left active:bg-raised/40"
+        className="flex min-h-11 w-full items-center gap-2 px-2.5 py-2.5 text-left active:bg-raised/40"
         aria-expanded={open}
       >
         <span
           className={cn(
             "num grid size-6 shrink-0 place-items-center rounded-md text-[11px] font-semibold",
             allDone
-              ? "bg-success/20 text-success"
+              ? "bg-accent/20 text-accent"
               : open
                 ? "bg-accent/20 text-accent"
                 : "bg-raised text-text-2",
@@ -1230,42 +1353,24 @@ function ExerciseCard({
 
       {open ? (
         <div className="border-t border-rule/80 px-2.5 pb-2.5 pt-2">
-          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-            <MuscleBadge group={exercise.muscle_group} size="xs" />
-            <LoadTagBadge tag={exercise.load_tag} />
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+              <MuscleBadge group={exercise.muscle_group} size="xs" />
+              {exercise.load_tag ? <LoadTagBadge tag={exercise.load_tag} /> : null}
+            </div>
             <ExercisePreviewButton
               name={exercise.exercise_name}
               muscleGroup={exercise.muscle_group}
               compact
             />
-            {exercise.note ? (
-              <button
-                type="button"
-                onClick={() => setNoteOpen((v) => !v)}
-                className="grid size-11 place-items-center rounded-full text-text-3 hover:bg-raised hover:text-text-2"
-                aria-label="Note"
-              >
-                <Info className="size-3.5" />
-              </button>
-            ) : null}
-            <div className="ml-auto flex gap-0.5">
-              <button
-                type="button"
-                onClick={onSwap}
-                className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised"
-                aria-label={t("workout.swap")}
-              >
-                <ArrowLeftRight className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={onRemove}
-                className="grid size-11 place-items-center rounded-full text-text-2 hover:bg-raised hover:text-danger"
-                aria-label={t("workout.removeExercise")}
-              >
-                <Trash2 className="size-3.5" />
-              </button>
-            </div>
+            <ExerciseActionMenu
+              t={t}
+              hasNote={!!exercise.note}
+              noteOpen={noteOpen}
+              onNote={() => setNoteOpen((v) => !v)}
+              onSwap={onSwap}
+              onRemove={onRemove}
+            />
           </div>
 
           {topLast != null ? (
@@ -1298,6 +1403,12 @@ function ExerciseCard({
           {exercise.sets.map((s) => {
             const ghostW = lastWeightForSet(exercise, s.set_index);
             const ghostR = lastRepsForSet(exercise, s.set_index);
+            const weightRequired = exercise.unit === "kg" || exercise.unit === "lb";
+            const hasWeight = s.weight != null && Number(s.weight) > 0;
+            const hasReps = s.reps != null && s.reps > 0;
+            const canComplete = hasReps && (!weightRequired || hasWeight);
+            const missingWeight = weightRequired && !hasWeight;
+            const missingReps = !hasReps;
             return (
               <div key={s.id} className="set-grid">
                 <span className="num text-xs text-text-3">{s.set_index}</span>
@@ -1306,35 +1417,62 @@ function ExerciseCard({
                   inputMode="decimal"
                   value={s.weight ?? ""}
                   placeholder={ghostW != null ? String(ghostW) : "—"}
+                  data-set-weight={s.id}
                   onChange={(e) => {
                     const v = e.target.value;
                     onSetSave(s.id, { weight: v === "" ? null : Number(v) });
                   }}
-                  className="rounded-lg border border-edge bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70"
+                  className={cn(
+                    "rounded-lg border bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70",
+                    highlightSet === s.id && missingWeight
+                      ? "border-danger"
+                      : "border-edge",
+                  )}
                 />
                 <input
                   type="number"
                   inputMode="numeric"
                   value={s.reps ?? ""}
                   placeholder={ghostR != null ? String(ghostR) : "—"}
+                  data-set-reps={s.id}
                   onChange={(e) => {
                     const v = e.target.value;
                     onSetSave(s.id, { reps: v === "" ? null : Number(v) });
                   }}
-                  className="rounded-lg border border-edge bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70"
+                  className={cn(
+                    "rounded-lg border bg-canvas px-1.5 text-center text-sm placeholder:text-text-3/70",
+                    highlightSet === s.id && missingReps
+                      ? "border-danger"
+                      : "border-edge",
+                  )}
                 />
                 <button
                   type="button"
                   onClick={() => {
-                    const next = !s.completed;
-                    onSetComplete(exercise, s.id, next);
-                    if (next) onRestStart();
+                    if (s.completed) {
+                      onSetComplete(exercise, s.id, false);
+                      return;
+                    }
+                    if (!canComplete) {
+                      setHighlightSet(s.id);
+                      const el = document.querySelector<HTMLInputElement>(
+                        missingWeight
+                          ? `[data-set-weight="${s.id}"]`
+                          : `[data-set-reps="${s.id}"]`,
+                      );
+                      el?.focus();
+                      return;
+                    }
+                    onSetComplete(exercise, s.id, true);
+                    onRestStart();
+                    setHighlightSet(null);
                   }}
                   className={cn(
                     "set-check grid place-items-center rounded-xl transition active:scale-95",
                     s.completed
-                      ? "set-done-pop bg-success/20 text-success"
+                      ? "set-done-pop bg-accent/20 text-accent"
                       : "bg-raised text-text-2",
+                    !s.completed && !canComplete && "opacity-50",
                   )}
                   aria-label={t("workout.completeSet")}
                 >

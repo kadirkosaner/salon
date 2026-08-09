@@ -77,12 +77,12 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
           {filters.measure === "relative"
             ? t("compare.relative")
             : t("compare.absolute")}
-          {slice ? ` · ${slice.pool}` : ""}
+          {slice && slice.pool > 0 ? ` · ${slice.pool}` : ` · ${t("compare.noData")}`}
         </p>
         <button
           type="button"
           onClick={() => setClassOpen(true)}
-          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-rule px-2.5 text-[10px] font-semibold text-text-2"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full border border-rule px-3 text-[10px] font-semibold text-text-2"
         >
           {t("compare.class")}
           {activeDemo > 0 ? (
@@ -96,12 +96,17 @@ export function ComparisonStrip({ exerciseId }: { exerciseId: number }) {
       </div>
 
       {!q.data.hasBodyWeight && filters.measure === "relative" ? (
-        <p className="text-[11px] text-text-2">
-          {t("compare.needWeight")}{" "}
-          <Link to="/olculer" className="font-semibold text-accent">
+        <div className="space-y-1.5">
+          <p className="text-[11px] leading-snug text-text-2">
+            {t("compare.needWeight")}
+          </p>
+          <Link
+            to="/olculer"
+            className="inline-flex min-h-11 items-center rounded-full border border-rule px-3 text-[11px] font-semibold text-accent"
+          >
             {t("compare.openMeasures")}
           </Link>
-        </p>
+        </div>
       ) : slice ? (
         <StripBody slice={slice} t={t} />
       ) : null}

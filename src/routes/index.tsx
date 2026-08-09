@@ -234,7 +234,6 @@ function FeedPage() {
         {dashQuery.data?.hasActiveProgram && dashQuery.data?.week ? (
           <WeeklyVolume
             current={dashQuery.data.week.volume}
-            target={Math.max(dashQuery.data.week.volume * 1.2, 10000)}
             sessionsLeft={Math.max(
               0,
               (dashQuery.data.week.planned ?? 0) -
@@ -254,6 +253,8 @@ function FeedPage() {
               hint={t("feed.emptyHint")}
               actionLabel={t("nav.discover")}
               actionTo="/kesfet"
+              actionVariant="soft"
+              className="py-5"
             />
 
             <Suspense

@@ -115,7 +115,7 @@ export function FeedEmptyDiscover({
           <h2 className="mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-2">
             {t("feed.featuredPrograms")}
           </h2>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="scroll-fade-x flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {programs.slice(0, 8).map((p) => (
               <button
                 key={p.id}

@@ -218,7 +218,7 @@ export function ProfileView({
             <div className="py-6">
               <EmptyState
                 icon={Dumbbell}
-                title={t("workout.emptyDay")}
+                title={t("profile.activityEmpty")}
                 hint={
                   hub.is_self
                     ? t("profile.activityEmptyHint")
@@ -226,6 +226,7 @@ export function ProfileView({
                 }
                 actionLabel={hub.is_self ? t("nav.workout") : undefined}
                 actionTo={hub.is_self ? "/antrenman" : undefined}
+                className="py-4"
               />
             </div>
           ) : (
@@ -290,7 +291,7 @@ export function ProfileView({
                       <span className="block text-[11px] text-text-2">
                         {t("discover.daysShort", { n: p.day_count })}
                         {p.clone_count > 0
-                          ? ` · ${t("discover.clones", { n: p.clone_count })}`
+                          ? ` · ${p.clone_count === 1 ? t("discover.clonesOne") : t("discover.clones", { n: p.clone_count })}`
                           : ""}
                       </span>
                     </span>
