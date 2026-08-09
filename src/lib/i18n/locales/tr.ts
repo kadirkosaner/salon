@@ -409,7 +409,7 @@ export const tr = {
   "settings.newPassword": "Yeni şifre",
   "settings.newPasswordAgain": "Yeni şifre (tekrar)",
   "settings.notifications": "Bildirimler",
-  "settings.privacy": "Gizlilik",
+  "settings.privacy": "Gizlilik ve veri",
   "settings.preferences": "Tercihler",
   "settings.subtitle": "Hesap ve tercihler",
   "settings.timezone": "Saat dilimi",

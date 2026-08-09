@@ -409,7 +409,7 @@ export const zhCN = {
   "settings.newPassword": "新密码",
   "settings.newPasswordAgain": "新密码（再次）",
   "settings.notifications": "通知",
-  "settings.privacy": "隐私",
+  "settings.privacy": "隐私与数据",
   "settings.preferences": "偏好",
   "settings.subtitle": "账户与偏好",
   "settings.timezone": "时区",

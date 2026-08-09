@@ -409,7 +409,7 @@ export const zhTW = {
   "settings.newPassword": "新密碼",
   "settings.newPasswordAgain": "新密碼（再次）",
   "settings.notifications": "通知",
-  "settings.privacy": "隱私",
+  "settings.privacy": "隱私與資料",
   "settings.preferences": "偏好",
   "settings.subtitle": "帳戶與偏好",
   "settings.timezone": "時區",

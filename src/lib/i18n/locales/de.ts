@@ -409,7 +409,7 @@ export const de = {
   "settings.newPassword": "Neues Passwort",
   "settings.newPasswordAgain": "Neues Passwort (wiederholen)",
   "settings.notifications": "Benachrichtigungen",
-  "settings.privacy": "Datenschutz",
+  "settings.privacy": "Datenschutz & Daten",
   "settings.preferences": "Einstellungen",
   "settings.subtitle": "Konto & Einstellungen",
   "settings.timezone": "Zeitzone",

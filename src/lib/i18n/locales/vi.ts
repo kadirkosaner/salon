@@ -409,7 +409,7 @@ export const vi = {
   "settings.newPassword": "Mật khẩu mới",
   "settings.newPasswordAgain": "Mật khẩu mới (lại)",
   "settings.notifications": "Thông báo",
-  "settings.privacy": "Quyền riêng tư",
+  "settings.privacy": "Quyền riêng tư & dữ liệu",
   "settings.preferences": "Tuỳ chọn",
   "settings.subtitle": "Tài khoản & tuỳ chọn",
   "settings.timezone": "Múi giờ",

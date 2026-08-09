@@ -409,7 +409,7 @@ export const ja = {
   "settings.newPassword": "新しいパスワード",
   "settings.newPasswordAgain": "新しいパスワード（再入力）",
   "settings.notifications": "通知",
-  "settings.privacy": "プライバシー",
+  "settings.privacy": "プライバシーとデータ",
   "settings.preferences": "設定",
   "settings.subtitle": "アカウントと設定",
   "settings.timezone": "タイムゾーン",

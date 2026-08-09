@@ -409,7 +409,7 @@ export const ptBR = {
   "settings.newPassword": "Nova senha",
   "settings.newPasswordAgain": "Nova senha (de novo)",
   "settings.notifications": "Notificações",
-  "settings.privacy": "Privacidade",
+  "settings.privacy": "Privacidade e dados",
   "settings.preferences": "Preferências",
   "settings.subtitle": "Conta e preferências",
   "settings.timezone": "Fuso horário",

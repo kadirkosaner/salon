@@ -409,7 +409,7 @@ export const id = {
   "settings.newPassword": "Kata sandi baru",
   "settings.newPasswordAgain": "Kata sandi baru (lagi)",
   "settings.notifications": "Notifikasi",
-  "settings.privacy": "Privasi",
+  "settings.privacy": "Privasi & data",
   "settings.preferences": "Preferensi",
   "settings.subtitle": "Akun & preferensi",
   "settings.timezone": "Zona waktu",

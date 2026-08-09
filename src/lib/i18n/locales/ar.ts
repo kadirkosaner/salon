@@ -409,7 +409,7 @@ export const ar = {
   "settings.newPassword": "كلمة مرور جديدة",
   "settings.newPasswordAgain": "كلمة مرور جديدة (مرة أخرى)",
   "settings.notifications": "الإشعارات",
-  "settings.privacy": "الخصوصية",
+  "settings.privacy": "الخصوصية والبيانات",
   "settings.preferences": "التفضيلات",
   "settings.subtitle": "الحساب والتفضيلات",
   "settings.timezone": "المنطقة الزمنية",

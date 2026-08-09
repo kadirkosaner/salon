@@ -37,7 +37,7 @@ import {
   getMyProfileHub,
   type ProfileHub,
 } from "@/lib/server/social";
-import { setComparisonOptIn } from "@/lib/server/benchmarks";
+import { setComparisonOptIn, getComparisonOptIn } from "@/lib/server/benchmarks";
 import { Spinner } from "@/components/ui/spinner";
 import { useTheme } from "@/lib/theme/provider";
 import {
@@ -54,7 +54,7 @@ type Panel =
   | "password"
   | "language"
   | "timezone"
-    | "units"
+  | "units"
   | "appearance"
   | "delete";
 
@@ -107,6 +107,11 @@ function SettingsPage() {
     void getMyProfileHub()
       .then((h) => {
         setHub(h);
+      })
+      .catch(() => {});
+    void getComparisonOptIn()
+      .then((r) => {
+        setCompareOpt(r.optIn !== false);
       })
       .catch(() => {});
   }, [user?.id, setThemeAndAccent]);
@@ -328,28 +333,6 @@ function SettingsPage() {
               />
             </SettingsGroup>
 
-            <SettingsGroup label={t("settings.privacy")}>
-              <SettingsRow
-                icon={Eye}
-                label={t("compare.optIn")}
-                value={compareOpt ? t("common.yes") : t("common.no")}
-                onClick={() => {
-                  const next = !compareOpt;
-                  setCompareOpt(next);
-                  void setComparisonOptIn({ data: { optIn: next } })
-                    .then(() => toast.success(t("common.saved")))
-                    .catch(() => {
-                      setCompareOpt(!next);
-                      toast.error(t("common.error"));
-                    });
-                }}
-                last
-              />
-              <p className="px-4 pb-3 text-[11px] leading-relaxed text-text-3">
-                {t("compare.optInHint")}
-              </p>
-            </SettingsGroup>
-
             <SettingsGroup label={t("settings.preferences")}>
               <SettingsRow
                 icon={Palette}
@@ -414,7 +397,25 @@ function SettingsPage() {
               />
             </SettingsGroup>
 
-            <SettingsGroup label={t("settings.danger")}>
+            <SettingsGroup label={t("settings.privacy")}>
+              <SettingsRow
+                icon={Eye}
+                label={t("compare.optIn")}
+                value={compareOpt ? t("common.yes") : t("common.no")}
+                onClick={() => {
+                  const next = !compareOpt;
+                  setCompareOpt(next);
+                  void setComparisonOptIn({ data: { optIn: next } })
+                    .then(() => toast.success(t("common.saved")))
+                    .catch(() => {
+                      setCompareOpt(!next);
+                      toast.error(t("common.error"));
+                    });
+                }}
+              />
+              <p className="-mt-1 px-4 pb-2 text-[11px] leading-relaxed text-text-3">
+                {t("compare.optInHint")}
+              </p>
               <SettingsRow
                 icon={Download}
                 label={t("settings.export")}
@@ -423,6 +424,7 @@ function SettingsPage() {
               <SettingsRow
                 icon={Trash2}
                 label={t("settings.deleteAccount")}
+                danger
                 onClick={() => setPanel("delete")}
                 last
               />
@@ -699,12 +701,14 @@ function SettingsRow({
   value,
   onClick,
   last,
+  danger,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value?: string;
   onClick: () => void;
   last?: boolean;
+  danger?: boolean;
 }) {
   return (
     <button
@@ -715,11 +719,23 @@ function SettingsRow({
         !last && "border-b border-rule/60",
       )}
     >
-      <span className="grid size-9 place-items-center rounded-lg bg-raised text-accent">
+      <span
+        className={cn(
+          "grid size-9 place-items-center rounded-lg bg-raised",
+          danger ? "text-danger" : "text-accent",
+        )}
+      >
         <Icon className="size-4" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">{label}</span>
+        <span
+          className={cn(
+            "block text-sm font-medium",
+            danger && "text-danger",
+          )}
+        >
+          {label}
+        </span>
         {value ? (
           <span className="mt-0.5 block truncate text-xs text-text-2">{value}</span>
         ) : null}

@@ -409,7 +409,7 @@ export const ko = {
   "settings.newPassword": "새 비밀번호",
   "settings.newPasswordAgain": "새 비밀번호 (다시)",
   "settings.notifications": "알림",
-  "settings.privacy": "개인정보",
+  "settings.privacy": "개인정보 및 데이터",
   "settings.preferences": "환경설정",
   "settings.subtitle": "계정 & 환경설정",
   "settings.timezone": "시간대",

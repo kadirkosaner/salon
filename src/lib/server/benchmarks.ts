@@ -551,6 +551,18 @@ export const getProgramSocial = createServerFn({ method: "GET" })
     };
   });
 
+export const getComparisonOptIn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql<{ comparison_opt_in: boolean }>`
+      select coalesce(comparison_opt_in, true) as comparison_opt_in
+      from user_profiles
+      where user_id = ${context.userId}
+    `;
+    return { optIn: rows[0]?.comparison_opt_in !== false };
+  });
+
 export const setComparisonOptIn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(v(z.object({ optIn: z.boolean() })))

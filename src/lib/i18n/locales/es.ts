@@ -409,7 +409,7 @@ export const es = {
   "settings.newPassword": "Nueva contraseña",
   "settings.newPasswordAgain": "Nueva contraseña (otra vez)",
   "settings.notifications": "Notificaciones",
-  "settings.privacy": "Privacidad",
+  "settings.privacy": "Privacidad y datos",
   "settings.preferences": "Preferencias",
   "settings.subtitle": "Cuenta y preferencias",
   "settings.timezone": "Zona horaria",
