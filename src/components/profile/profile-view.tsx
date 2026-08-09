@@ -214,9 +214,11 @@ export function ProfileView({
       </div>
 
       {tab === "activity" && (
-        <div className="space-y-3">
+        <div className="space-y-5">
           {hub.is_self ? (
-            <ComposePost onPosted={() => onChanged?.()} />
+            <div className="pb-1">
+              <ComposePost onPosted={() => onChanged?.()} />
+            </div>
           ) : null}
           {hub.recent.length === 0 ? (
             <div className="py-6">
@@ -300,7 +302,7 @@ export function ProfileView({
                     </span>
                     {hub.is_self ? (
                       <span className="shrink-0 text-xs font-medium text-accent">
-                        {t("discover.goToProgram")}
+                        {t("discover.inspect")}
                       </span>
                     ) : null}
                   </button>

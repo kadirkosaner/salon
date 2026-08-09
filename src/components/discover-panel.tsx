@@ -592,14 +592,6 @@ export function DetailModal({
             )}
             {t("discover.selectToStart")}
           </button>
-        ) : data?.is_own ? (
-          <Link
-            to="/program"
-            onClick={onClose}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-on-primary shadow-[var(--shadow-primary)] active:scale-[0.98]"
-          >
-            {t("discover.goToProgram")}
-          </Link>
         ) : null
       }
     >

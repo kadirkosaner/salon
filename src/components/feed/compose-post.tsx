@@ -58,7 +58,7 @@ export function ComposePost({ onPosted }: { onPosted: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-rule bg-sunken px-3.5 py-3 text-left transition active:scale-[0.99]"
+        className="flex w-full items-center gap-3 rounded-2xl border border-rule bg-sunken px-4 py-3.5 text-left transition active:scale-[0.99]"
       >
         <span className="grid size-9 place-items-center rounded-full bg-accent/15 text-accent">
           <ImagePlus className="size-4" />
@@ -71,7 +71,7 @@ export function ComposePost({ onPosted }: { onPosted: () => void }) {
   return (
     <form
       onSubmit={(e) => void submit(e)}
-      className="rounded-2xl border border-accent/25 bg-sunken p-3 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
+      className="rounded-2xl border border-accent/25 bg-sunken p-4 shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-accent)_35%,transparent)]"
     >
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-3">

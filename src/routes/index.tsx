@@ -172,7 +172,7 @@ function FeedPage() {
   return (
     <AppShell title={t("feed.title")} subtitle={t("panel.hello", { name: greeting })}>
       <div
-        className="w-full min-w-0 space-y-4"
+        className="w-full min-w-0 space-y-5"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={() => void onTouchEnd()}
