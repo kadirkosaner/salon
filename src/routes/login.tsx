@@ -239,9 +239,9 @@ function LoginPage() {
               key={p.providerId}
               type="button"
               onClick={() => void signIn(p.providerId, { callbackURL: "/" })}
-              className="h-12 w-full rounded-md border border-line bg-surface text-sm font-medium text-text hover:bg-surface2"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-line bg-surface text-sm font-medium text-text hover:bg-surface2"
             >
-              {p.label}
+              {t("auth.continueWith", { provider: p.label })}
             </button>
           ))}
         </div>
